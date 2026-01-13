@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ingeniería UPS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" height="35" class="rounded">
+            <span class="fw-bold fs-5">INGENIERÍA DE DETALLE</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/gestion" class="btn btn-outline-light btn-sm">Base de Datos</a>
+        </div>
+    </header>
+
+    <form method="POST" id="mainForm" class="main-grid">
+        
+        <aside class="sidebar">
+            
+            <div class="control-group">
+                <div class="group-title"><i class="bi bi-building"></i> 1. CLIENTE</div>
+                
+                <input type="hidden" name="cliente_texto" id="h_cliente" value="{{ request.form.get('cliente_texto', '') }}">
+                <input type="hidden" name="sucursal_texto" id="h_sucursal" value="{{ request.form.get('sucursal_texto', '') }}">
+                <input type="hidden" name="lat_oculta" id="h_lat" value="{{ request.form.get('lat_oculta', '') }}">
+                <input type="hidden" name="lon_oculta" id="h_lon" value="{{ request.form.get('lon_oculta', '') }}">
+
+                <div class="mb-2">
+                    <label class="small text-muted">Empresa</label>
+                    <select id="sel_cliente" class="form-select form-select-sm">
+                        <option value="">Seleccionar...</option>
+                        {% for c in clientes %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="small text-muted">Sucursal</label>
+                    <select id="sel_sucursal" class="form-select form-select-sm" disabled>
+                        <option value="">...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="group-title"><i class="bi bi-box-seam"></i> 2. EQUIPO</div>
+                
+                <div class="mb-2">
+                    <label class="small text-muted">Modelo UPS</label>
+                    <select name="id_ups" id="sel_ups" class="form-select form-select-sm" required>
+                        <option value="">Seleccionar...</option>
+                        {% for u in ups %}
+                        <option value="{{ u.id }}" 
+                                data-kva="{{ u.kva }}" 
+                                data-vin="{{ u.v_entrada }}"
+                                {% if request.form.get('id_ups') and request.form.get('id_ups')|int == u.id %}selected{% endif %}>
+                            {{ u.fabricante }} {{ u.modelo }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="small text-muted">kVA</label>
+                        <input type="text" id="txt_kva" class="form-control form-control-sm bg-light" readonly value="{{ res.kva if res else '' }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="small text-muted">Volts In</label>
+                        <input type="text" id="txt_vin" class="form-control form-control-sm bg-light" readonly value="{{ res.voltaje if res else '' }}">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="small text-muted fw-bold text-primary">No. Pedido</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" 
+                               value="{{ request.form.get('pedido', '') }}" placeholder="OC-XXXX">
+                        <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-auto">
+                {% if res %}
+                <button type="button" class="btn btn-outline-secondary w-100 mb-2" onclick="activarEdicion()">
+                    <i class="bi bi-unlock"></i> DESBLOQUEAR EDICIÓN
+                </button>
+                {% endif %}
+                
+                <div class="d-flex gap-2">
+                    <button type="submit" name="accion" value="preview" class="btn btn-dark w-50">
+                        CALCULAR
+                    </button>
+                    <button type="submit" name="accion" value="publicar" class="btn btn-primary w-50">
+                        PUBLICAR
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="tech-matrix">
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="m-0 fw-bold text-secondary">MATRIZ TÉCNICA DE INSTALACIÓN</h4>
+                {% if msg %}
+                    <span class="badge bg-success fs-6">{{ msg }}</span>
+                {% endif %}
+            </div>
+
+            <div class="data-grid">
+                
+                <div class="data-cell">
+                    <span class="cell-label"><i class="bi bi-arrow-right-circle"></i> Voltaje Entrada</span>
+                    <div class="d-flex align-items-baseline">
+                        <select name="voltaje" id="sel_voltaje" class="matrix-input" style="font-size: 1.5rem;">
+                            <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220</option>
+                            <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208</option>
+                            <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480</option>
+                            <option value="127" {% if request.form.get('voltaje') == '127' %}selected{% endif %}>127</option>
+                        </select>
+                        <span class="cell-unit">V</span>
+                    </div>
+                </div>
+
+                <div class="data-cell">
+                    <span class="cell-label"><i class="bi bi-three-dots"></i> Fases</span>
+                    <select name="fases" class="matrix-input" style="font-size: 1.5rem;">
+                        <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F+N</option>
+                        <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F+N</option>
+                        <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F+N</option>
+                    </select>
+                </div>
+
+                <div class="data-cell">
+                    <span class="cell-label"><i class="bi bi-rulers"></i> Distancia</span>
+                    <div class="d-flex align-items-baseline">
+                        <input type="number" name="longitud" class="matrix-input" 
+                               value="{{ request.form.get('longitud', '') }}" placeholder="0">
+                        <span class="cell-unit">mts</span>
+                    </div>
+                </div>
+
+                <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                    <span class="cell-label">Corriente Diseño</span>
+                    <div class="d-flex align-items-baseline">
+                        <span class="cell-value">{{ res.i_diseno if res else '--' }}</span>
+                        <span class="cell-unit">Amps</span>
+                    </div>
+                </div>
+
+                <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                    <span class="cell-label"><i class="bi bi-arrow-left-circle"></i> Voltaje Salida</span>
+                    <div class="d-flex align-items-baseline">
+                        <span class="cell-value">{{ res.voltaje if res else '--' }}</span>
+                        <span class="cell-unit">V</span>
+                    </div>
+                </div>
+
+                <div class="data-cell {{ 'active' if res else 'inactive' }}" style="background: #f0fdf4; border-color: #86efac;">
+                    <span class="cell-label text-success">CABLE FASES (THHN)</span>
+                    <span class="cell-value huge text-success">{{ res.fase_sel if res else '--' }}</span>
+                    <span class="cell-unit">AWG/kcmil</span>
+                </div>
+
+                <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                    <span class="cell-label">CABLE TIERRA</span>
+                    <span class="cell-value">{{ res.gnd_sel if res else '--' }}</span>
+                    <span class="cell-unit">AWG</span>
+                </div>
+
+                <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                    <span class="cell-label">PROTECCIÓN ITM</span>
+                    <div class="d-flex align-items-baseline">
+                        <span class="cell-value">{{ res.breaker_sel if res else '--' }}</span>
+                        <span class="cell-unit">Amps</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if res %}
+            <div class="d-flex justify-content-end align-items-center bg-white p-3 rounded border shadow-sm">
+                <div class="me-auto text-muted">
+                    <small><i class="bi bi-check-circle-fill text-success"></i> Cálculo Completado</small>
+                    <div style="font-size: 0.8rem;">
+                        Caída Tensión: <strong>{{ res.dv_pct }}%</strong>
+                    </div>
+                </div>
+
+                <button type="button" onclick="descargarPDF()" class="btn btn-danger btn-lg px-5 fw-bold shadow">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> DESCARGAR PDF
+                </button>
+            </div>
+            {% endif %}
+
+        </main>
+    </form>
+
+    {% if res %}
+    <form id="pdfForm" action="{{ url_for('main.descargar_pdf') }}" method="POST" target="_blank" style="display:none;">
+        <input type="hidden" name="pedido" value="{{ res.pedido }}">
+        <input type="hidden" name="es_publicado" value="{{ res.es_publicado }}">
+        <input type="hidden" name="modelo_nombre" value="{{ res.modelo_nombre }}">
+        <input type="hidden" name="kva" value="{{ res.kva }}">
+        <input type="hidden" name="voltaje" value="{{ res.voltaje }}">
+        <input type="hidden" name="nombre" value="{{ res.cliente_nom }} - {{ res.sucursal_nom }}">
+        <input type="hidden" name="fases" value="{{ request.form.get('fases') }}">
+        <input type="hidden" name="longitud" value="{{ request.form.get('longitud') }}">
+        <input type="hidden" name="lat" value="{{ request.form.get('lat_oculta') }}">
+        <input type="hidden" name="lon" value="{{ request.form.get('lon_oculta') }}">
+    </form>
+    {% endif %}
+
+    <script>
+        // --- 1. LÓGICA DE PDF ---
+        function descargarPDF() {
+            const form = document.getElementById('pdfForm');
+            if(form) form.submit();
+            else alert("Primero debes realizar un cálculo.");
+        }
+
+        // --- 2. MODO EDICIÓN ---
+        function activarEdicion() {
+            // Quitamos el readonly de los inputs
+            document.querySelectorAll('.matrix-input').forEach(el => el.readOnly = false);
+            document.querySelectorAll('select').forEach(el => el.disabled = false);
+            alert("Modo Edición Activado. Recuerda volver a Calcular para actualizar los resultados.");
+        }
+
+        // --- 3. CASCADA CLIENTE -> SUCURSAL ---
+        const selCliente = document.getElementById('sel_cliente');
+        const selSucursal = document.getElementById('sel_sucursal');
+        
+        // Función para restaurar selecciones previas
+        const prevCliente = "{{ request.form.get('cliente_texto', '') }}"; 
+        const prevSucursal = "{{ request.form.get('sucursal_texto', '') }}";
+
+        function cargarSucursales(cliente, seleccionada = null) {
+            selSucursal.innerHTML = '<option>Cargando...</option>';
+            selSucursal.disabled = true;
+            fetch(`/api/sucursales/${encodeURIComponent(cliente)}`)
+                .then(r => r.json())
+                .then(data => {
+                    selSucursal.innerHTML = '<option value="">Seleccionar...</option>';
+                    data.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.text = s.sucursal;
+                        opt.dataset.lat = s.lat;
+                        opt.dataset.lon = s.lon;
+                        if(seleccionada && s.sucursal === seleccionada) opt.selected = true;
+                        selSucursal.appendChild(opt);
+                    });
+                    selSucursal.disabled = false;
+                });
+        }
+
+        selCliente.addEventListener('change', function() {
+            if(this.value) cargarSucursales(this.value);
+        });
+
+        if(prevCliente) {
+            for(let i=0; i<selCliente.options.length; i++) {
+                if(selCliente.options[i].value === prevCliente) selCliente.selectedIndex = i;
+            }
+            cargarSucursales(prevCliente, prevSucursal);
+        }
+
+        // --- 4. LLENAR DATOS OCULTOS ---
+        selSucursal.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if(opt.value) {
+                document.getElementById('h_cliente').value = selCliente.value;
+                document.getElementById('h_sucursal').value = opt.text;
+                document.getElementById('h_lat').value = opt.dataset.lat;
+                document.getElementById('h_lon').value = opt.dataset.lon;
+            }
+        });
+
+        // --- 5. DATOS DE UPS ---
+        document.getElementById('sel_ups').addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if(opt.value) {
+                document.getElementById('txt_kva').value = opt.dataset.kva;
+                document.getElementById('txt_vin').value = opt.dataset.vin;
+                document.getElementById('sel_voltaje').value = opt.dataset.vin;
+            }
+        });
+        
+        // --- 6. BUSCADOR PEDIDO ---
+        document.getElementById('btn_buscar').addEventListener('click', function(){
+            const ped = document.getElementById('input_pedido').value;
+            if(ped) {
+                fetch(`/api/buscar-pedido/${ped}`).then(r=>r.json()).then(d => {
+                    if(d.pedido) {
+                        alert("Pedido Encontrado. Cargando datos...");
+                        document.getElementById('input_pedido').value = d.pedido;
+                    } else {
+                        alert("Pedido no encontrado.");
+                    }
+                });
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Ignorar entorno virtual
+venv/
+env/
+
+# Ignorar archivos compilados de Python
+__pycache__/
+*.py[cod]
+
+# Ignorar bases de datos (Recomendado si tienen datos reales)
+*.db
+*.sqlite3
+
+# Ignorar archivos de sistema
+.DS_Store

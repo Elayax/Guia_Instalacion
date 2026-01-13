@@ -1,0 +1,147 @@
+:root {
+    --tech-bg: #1e293b;       /* Azul oscuro industrial */
+    --panel-bg: #ffffff;
+    --highlight: #2563eb;     /* Azul brillante */
+    --success: #059669;
+    --text-main: #334155;
+    --border-color: #e2e8f0;
+}
+
+body {
+    background-color: #f1f5f9;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* HEADER */
+.app-header {
+    height: 60px;
+    background: var(--tech-bg);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* LAYOUT PRINCIPAL */
+.main-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr; /* Panel Lateral | Matriz Gigante */
+    grid-template-rows: 1fr;
+    height: calc(100vh - 60px);
+    gap: 0;
+}
+
+/* PANEL LATERAL (CLIENTE Y MODELO) */
+.sidebar {
+    background: white;
+    border-right: 1px solid var(--border-color);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.control-group {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.group-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* MATRIZ TÉCNICA (DERECHA) */
+.tech-matrix {
+    padding: 20px;
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* Título | Grid Datos | Botones */
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 Columnas */
+    grid-template-rows: repeat(2, 1fr);    /* 2 Filas grandes */
+    gap: 15px;
+    height: 100%;
+}
+
+/* CELDAS DE DATOS */
+.data-cell {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Estado "Opaco/Inactivo" */
+.data-cell.inactive {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    background: #e2e8f0;
+}
+.data-cell.active {
+    border-color: var(--highlight);
+    background: #eff6ff;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+.cell-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.cell-value {
+    font-size: 2rem; /* FUENTE GIGANTE */
+    font-weight: 800;
+    color: var(--tech-bg);
+    line-height: 1.1;
+}
+.cell-value.huge { font-size: 2.5rem; color: var(--highlight); }
+.cell-unit { font-size: 1rem; font-weight: 500; color: #94a3b8; }
+
+/* INPUTS DENTRO DE LA MATRIZ */
+.matrix-input {
+    border: none;
+    background: transparent;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--tech-bg);
+    width: 100%;
+    border-bottom: 2px solid #ccc;
+    padding: 0;
+}
+.matrix-input:focus { outline: none; border-color: var(--highlight); }
+
+/* MODO LECTURA VS EDICIÓN */
+.locked-mode input, .locked-mode select {
+    pointer-events: none;
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: none;
+}
