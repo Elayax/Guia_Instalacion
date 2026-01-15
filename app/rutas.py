@@ -3,6 +3,8 @@ from app.calculos import CalculadoraUPS
 from app.reporte import ReportePDF
 from app.base_datos import GestorDB
 import json
+import os
+from werkzeug.utils import secure_filename
 
 main = Blueprint('main', __name__)
 db = GestorDB() 
@@ -52,7 +54,7 @@ def index():
                 'kva': ups_data['kva'],
                 'voltaje': f.get('voltaje') or ups_data['v_entrada'],
                 'fases': f.get('fases'),
-                'longitud': f.get('longitud'),
+                'longitud': f.get('longitud') or 0,
                 'lat': f.get('lat_oculta'),
                 'lon': f.get('lon_oculta')
             }
@@ -116,6 +118,9 @@ def descargar_pdf():
     if not datos.get('kva') or not datos.get('voltaje'):
          return "Error: Faltan datos técnicos.", 400
 
+    if not datos.get('longitud'):
+        datos['longitud'] = 0
+
     # Recalculamos para el PDF
     calc = CalculadoraUPS()
     res = calc.calcular(datos)
@@ -131,4 +136,52 @@ def descargar_pdf():
     response.headers['Content-Type'] = 'application/pdf'
     nombre_seguro = str(datos.get("pedido", "reporte")).replace(" ", "_")
     response.headers['Content-Disposition'] = f'attachment; filename=Memoria_{nombre_seguro}.pdf'
+    return response
+
+# --- CARGA MASIVA ---
+@main.route('/carga-masiva', methods=['GET', 'POST'])
+def carga_masiva():
+    resultado = None
+    
+    if request.method == 'POST':
+        if 'archivo_csv' not in request.files:
+            resultado = {'status': 'error', 'msg': 'No se seleccionó ningún archivo'}
+        else:
+            tipo_carga = request.form.get('tipo_carga', 'clientes') # Default a clientes
+            archivo = request.files['archivo_csv']
+            if archivo.filename == '':
+                resultado = {'status': 'error', 'msg': 'Nombre de archivo vacío'}
+            elif archivo and archivo.filename.endswith('.csv'):
+                filename = secure_filename(archivo.filename)
+                ruta_temp = os.path.join(os.path.dirname(__file__), 'static', filename)
+                archivo.save(ruta_temp)
+                
+                # Procesar
+                if tipo_carga == 'equipos':
+                    resultado = db.cargar_ups_desde_csv(ruta_temp)
+                else:
+                    resultado = db.cargar_clientes_desde_csv(ruta_temp)
+                
+                # Limpiar
+                if os.path.exists(ruta_temp):
+                    os.remove(ruta_temp)
+            else:
+                resultado = {'status': 'error', 'msg': 'Formato inválido. Solo se permite .CSV'}
+                
+    return render_template('carga_masiva.html', res=resultado)
+
+@main.route('/descargar-plantilla')
+def descargar_plantilla():
+    tipo = request.args.get('tipo', 'clientes')
+    
+    if tipo == 'equipos':
+        csv_content = "\ufeffMarca,Modelo,Capacidad\nAPC,Smart-UPS 3000,3.0\nEaton,9PX 6000,6.0"
+        nombre_archivo = "plantilla_equipos_ups.csv"
+    else:
+        csv_content = "\ufeffCliente,Sucursal,Direccion,LinkMaps,LatLon\nEmpresa Demo,Planta 1,Av. Reforma 123,https://maps.google.com/?q=...,\"19.43, -99.13\""
+        nombre_archivo = "plantilla_clientes.csv"
+        
+    response = make_response(csv_content)
+    response.headers["Content-Type"] = "text/csv"
+    response.headers["Content-Disposition"] = f"attachment; filename={nombre_archivo}"
     return response

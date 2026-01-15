@@ -72,3 +72,13 @@ Guia_Instalacion/
 ├── run.py               # Punto de entrada de la app
 ├── requirements.txt     # Lista de dependencias
 └── README.md            # Documentación
+
+## 📦 Control de Versiones de la Base de Datos
+
+El archivo de base de datos es `app/sistema_ups_master.db`. Por lo general, Git ignora los archivos `.db`.
+
+Si deseas **compartir los datos** (Clientes/UPS) a través de Git:
+1. Edita el archivo `.gitignore` y agrega la línea: `!app/sistema_ups_master.db`
+2. O usa el comando: `git add -f app/sistema_ups_master.db`
+
+> **Nota:** Se recomienda usar la función de "Carga Masiva" con archivos CSV para compartir datos iniciales, ya que los archivos binarios `.db` pueden causar conflictos en Git si varias personas los editan al mismo tiempo.

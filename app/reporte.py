@@ -18,16 +18,18 @@ class ReportePDF(FPDF):
     def header(self):
         # 1. LOGO
         directorio = os.path.dirname(os.path.abspath(__file__))
-        ruta_logo = os.path.join(directorio, 'static', 'logo.jpg')
+        ruta_logo = os.path.join(directorio, 'static', 'logo.png')
 
         try:
             if os.path.exists(ruta_logo):
                 self.image(ruta_logo, 10, 10, 33) 
             else:
-                self.set_fill_color(*COLOR_ROJO)
-                self.rect(10, 10, 33, 15, 'F')
-        except:
-            pass
+                print(f"ADVERTENCIA: No se encontro el logo en {ruta_logo}")
+                raise FileNotFoundError("Archivo de logo no encontrado")
+        except Exception as e:
+            print(f"ERROR CARGANDO LOGO: {e}")
+            self.set_fill_color(*COLOR_ROJO)
+            self.rect(10, 10, 33, 15, 'F')
 
         # 2. ENCABEZADO
         self.set_y(10)
@@ -39,7 +41,7 @@ class ReportePDF(FPDF):
         self.set_x(50)
         self.set_font('Arial', 'B', 10)
         self.set_text_color(*COLOR_GRIS_CLARO)
-        self.cell(0, 5, 'SISTEMA DE ENERGIA ININTERRUMPIDA (UPS) - BAJA TENSION', 0, 1, 'L')
+        self.cell(0, 5, 'SISTEMA DE ENERGIA ININTERRUMPIDA (UPS) ', 0, 1, 'L')
         
         self.ln(4)
         self.set_draw_color(*COLOR_ROJO)

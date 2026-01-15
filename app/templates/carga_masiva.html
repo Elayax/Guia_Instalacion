@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carga Masiva | Sistema UPS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
+            <span style="font-weight: 700; font-size: 1.2rem; letter-spacing: 1px;">SISTEMA UPS <span style="color:var(--highlight)">MANAGER</span></span>
+        </div>
+        
+        <nav class="nav-links">
+            <a href="{{ url_for('main.index') }}" class="nav-link">CALCULADORA</a>
+            <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
+            <a href="{{ url_for('main.carga_masiva') }}" class="nav-link active">CARGA MASIVA</a>
+        </nav>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div style="padding: 40px; max-width: 1000px; margin: 0 auto;">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            
+            <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+            <div class="card-panel">
+                <div class="group-title"><i class="fas fa-upload"></i> IMPORTAR DATOS</div>
+                <p style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 20px;">
+                    Sube un archivo CSV para actualizar la base de datos.
+                </p>
+
+                <form action="{{ url_for('main.carga_masiva') }}" method="POST" enctype="multipart/form-data">
+                    
+                    <div style="margin-bottom: 20px; display: flex; gap: 20px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px;">
+                        <label style="color: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="tipo_carga" value="clientes" checked onchange="cambiarModo('clientes')"> <span>Clientes</span>
+                        </label>
+                        <label style="color: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="tipo_carga" value="equipos" onchange="cambiarModo('equipos')"> <span>Equipos (UPS)</span>
+                        </label>
+                    </div>
+
+                    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <div style="font-weight: 600; color: #e5e7eb;">Arrastra tu CSV aquí</div>
+                        <div style="font-size: 0.8rem; color: #6b7280;">o haz clic para buscar</div>
+                        <input type="file" name="archivo_csv" id="fileInput" accept=".csv" style="display: none;" onchange="mostrarNombre(this)">
+                    </div>
+                    <div id="fileName" style="margin-top: 10px; color: var(--highlight); font-size: 0.9rem; font-weight: 600; min-height: 20px;"></div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        <i class="fas fa-play"></i> PROCESAR ARCHIVO
+                    </button>
+                </form>
+            </div>
+
+            <!-- COLUMNA DERECHA: INSTRUCCIONES -->
+            <div class="card-panel">
+                <div class="group-title"><i class="fas fa-info-circle"></i> FORMATO REQUERIDO</div>
+                
+                <!-- INSTRUCCIONES CLIENTES -->
+                <div id="info-clientes" style="font-size: 0.9rem; color: #d1d5db; line-height: 1.6;">
+                    <p>El archivo CSV debe contener las siguientes columnas en orden estricto (sin encabezados):</p>
+                    <ul style="padding-left: 20px; color: #9ca3af;">
+                        <li><strong>Col 1:</strong> Nombre del Cliente</li>
+                        <li><strong>Col 2:</strong> Sucursal</li>
+                        <li><strong>Col 3:</strong> Dirección</li>
+                        <li><strong>Col 4:</strong> Link Maps</li>
+                        <li><strong>Col 5:</strong> Coordenadas</li>
+                    </ul>
+                </div>
+
+                <!-- INSTRUCCIONES EQUIPOS -->
+                <div id="info-equipos" style="font-size: 0.9rem; color: #d1d5db; line-height: 1.6; display: none;">
+                    <p>El archivo CSV debe contener las siguientes columnas para Equipos:</p>
+                    <ul style="padding-left: 20px; color: #9ca3af;">
+                        <li><strong>Col 1:</strong> Marca (Fabricante)</li>
+                        <li><strong>Col 2:</strong> Modelo</li>
+                        <li><strong>Col 3:</strong> Capacidad (kVA)</li>
+                    </ul>
+                </div>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a id="btn-descarga" href="{{ url_for('main.descargar_plantilla', tipo='clientes') }}" class="btn btn-secondary" style="font-size: 0.8rem; text-decoration: none; display: inline-block; width: 100%; box-sizing: border-box;">
+                            <i class="fas fa-file-csv"></i> DESCARGAR PLANTILLA
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        {% if res %}
+        <div class="card-panel" style="margin-top: 30px; border-color: {% if res.status == 'ok' %}var(--success){% else %}var(--highlight){% endif %};">
+            <div class="group-title">
+                {% if res.status == 'ok' %}
+                    <i class="fas fa-check-circle" style="color: var(--success)"></i> RESULTADO DE IMPORTACIÓN
+                {% else %}
+                    <i class="fas fa-exclamation-triangle" style="color: var(--highlight)"></i> ERROR EN IMPORTACIÓN
+                {% endif %}
+            </div>
+
+            {% if res.status == 'ok' %}
+                <div style="display: flex; gap: 40px; margin-bottom: 20px;">
+                    <div><span style="font-size: 2rem; font-weight: 800; color: var(--success);">{{ res.insertados }}</span> <span style="color: #9ca3af;">Insertados</span></div>
+                    <div><span style="font-size: 2rem; font-weight: 800; color: var(--highlight);">{{ res.errores }}</span> <span style="color: #9ca3af;">Errores</span></div>
+                </div>
+            {% else %}
+                <div style="color: var(--highlight); font-weight: 600; margin-bottom: 15px;">{{ res.msg }}</div>
+            {% endif %}
+
+            {% if res.logs %}
+                <div class="log-container">
+                    {% for log in res.logs %}
+                        <div class="log-item {% if 'Error' in log %}log-error{% else %}log-info{% endif %}">{{ log }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function mostrarNombre(input) {
+            document.getElementById('fileName').textContent = input.files[0] ? input.files[0].name : '';
+        }
+
+        function cambiarModo(modo) {
+            const infoClientes = document.getElementById('info-clientes');
+            const infoEquipos = document.getElementById('info-equipos');
+            const btnDescarga = document.getElementById('btn-descarga');
+
+            infoClientes.style.display = (modo === 'clientes') ? 'block' : 'none';
+            infoEquipos.style.display = (modo === 'equipos') ? 'block' : 'none';
+            
+            // Actualizar link de descarga
+            btnDescarga.href = "{{ url_for('main.descargar_plantilla') }}?tipo=" + modo;
+        }
+    </script>
+</body>
+</html>
