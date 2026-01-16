@@ -60,9 +60,13 @@ class ReportePDF(FPDF):
     # ==========================================================================
     # EL DIRECTOR DE ORQUESTA
     # ==========================================================================
-    def generar_cuerpo(self, datos, res, es_publicado=False):
+    def generar_cuerpo(self, datos, res, bateria=None, es_publicado=False):
         
-        # HOJA 1
+        # HOJA 1: PORTADA (NUEVA)
+        self.add_page()
+        self._hoja_portada(datos, res)
+        
+        # HOJA 2: NORMAS Y SEGURIDAD (ANTES HOJA 1)
         self.add_page()
         
         # --- MARCA DE AGUA ---
@@ -83,7 +87,7 @@ class ReportePDF(FPDF):
 
         self._hoja_1_seguridad_instalacion()
         
-        # HOJA 2
+        # HOJA 3: DATOS SITIO (ANTES HOJA 2)
         self.add_page()
         if not es_publicado: 
             self.set_font('Arial', 'B', 40)
@@ -95,15 +99,64 @@ class ReportePDF(FPDF):
         # --- RESETEAR CURSOR HOJA 2 ---
         self.set_y(40)
 
-        self._hoja_2_datos_sitio(datos)
+        self._hoja_2_datos_sitio(datos, res)
         
-        # HOJA 3
+        # HOJA 4: INGENIERIA (ANTES HOJA 3)
+        self.add_page()
+        if not es_publicado: self._marca_agua_simple()
         self._hoja_3_ingenieria(datos, res)
         
-        # HOJA 4
+        # SECCIÓN BATERÍAS (NUEVA - EN LA MISMA HOJA 4 O NUEVA SI NO CABE)
+        # Para limpieza, forzamos nueva página si hay datos, o lo agregamos a continuación
+        self.ln(5)
+        self._seccion_baterias(bateria)
+        
+        # HOJA 5: DIAGRAMA (ANTES HOJA 4)
+        self.add_page()
+        if not es_publicado: self._marca_agua_simple()
         self._hoja_4_diagrama()
 
         return self.output()
+
+    def _marca_agua_simple(self):
+        self.set_font('Arial', 'B', 40)
+        self.set_text_color(240, 240, 240)
+        self.set_xy(10, 100)
+        self.cell(0, 10, "VISTA PREVIA", 0, 0, 'C')
+        self.set_text_color(*COLOR_NEGRO)
+        self.set_y(40)
+
+    # ==========================================================================
+    # HOJA 1: PORTADA
+    # ==========================================================================
+    def _hoja_portada(self, datos, res):
+        self.ln(40)
+        self.set_font('Arial', 'B', 24)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 12, "MEMORIA TECNICA", 0, 1, 'C')
+        self.cell(0, 12, "DE INSTALACION UPS", 0, 1, 'C')
+        
+        self.ln(20)
+        self.set_font('Arial', '', 12)
+        self.set_text_color(*COLOR_NEGRO)
+        
+        # Caja de Información
+        self.set_fill_color(245, 245, 245)
+        self.rect(35, 110, 140, 70, 'F')
+        
+        self.set_y(120)
+        self._fila_portada("PROYECTO:", datos.get('nombre', 'S/D'))
+        self._fila_portada("UBICACION:", f"{datos.get('lat', '')}, {datos.get('lon', '')}")
+        self._fila_portada("EQUIPO:", res.get('modelo_nombre', 'S/D'))
+        self._fila_portada("CAPACIDAD:", f"{res.get('kva', 'S/D')} kVA")
+        self._fila_portada("FECHA:", datetime.now().strftime("%d/%m/%Y"))
+
+    def _fila_portada(self, label, value):
+        self.set_x(45)
+        self.set_font('Arial', 'B', 11)
+        self.cell(40, 10, label, 0, 0, 'L')
+        self.set_font('Arial', '', 11)
+        self.cell(90, 10, str(value), 0, 1, 'L')
 
     # ==========================================================================
     # HOJA 1: NORMAS Y SEGURIDAD
@@ -182,7 +235,7 @@ class ReportePDF(FPDF):
     # ==========================================================================
     # HOJA 2: DATOS DEL SITIO
     # ==========================================================================
-    def _hoja_2_datos_sitio(self, datos):
+    def _hoja_2_datos_sitio(self, datos, res):
         self._titulo_seccion("2. DATOS DEL SITIO DE INSTALACION")
 
         self.set_fill_color(*COLOR_FONDO)
@@ -211,7 +264,34 @@ class ReportePDF(FPDF):
         self.set_x(col2)
         self.cell(90, 6, f"Ubicacion:           {datos.get('lat')}, {datos.get('lon')}", 0, 1)
         
+        # Agregamos Tiempo de Respaldo
+        self.set_x(col1)
+        respaldo = datos.get('tiempo_respaldo')
+        txt_respaldo = f"{respaldo} minutos" if respaldo else "Estandar"
+        self.cell(90, 6, f"Tiempo Respaldo:     {txt_respaldo}", 0, 1)
+        
         self.set_y(y_inicio + 28)
+        self.ln(5)
+
+        # --- NUEVA SECCIÓN: DIMENSIONES ---
+        self._subtitulo_rojo("DIMENSIONES Y ESPACIO FISICO")
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        
+        largo = datos.get('dim_largo', 'S/D')
+        ancho = datos.get('dim_ancho', 'S/D')
+        alto = datos.get('dim_alto', 'S/D')
+        peso = datos.get('peso', 'S/D')
+        modelo = datos.get('modelo_nombre', 'el equipo')
+
+        texto_dims = (
+            f"Para el correcto emplazamiento del gabinete modelo {modelo}, se deben considerar sus dimensiones fisicas de "
+            f"{largo} mm de largo (profundidad), {ancho} mm de ancho (frente) y {alto} mm de alto. "
+            f"El equipo ocupa un volumen considerable en sala, por lo que se recomienda prever un espacio libre adicional perimetral para ventilacion y mantenimiento. "
+            f"El peso operativo aproximado es de {peso} kg, dato critico para verificar la capacidad de carga del suelo en el sitio de instalacion."
+        )
+        self.multi_cell(0, 5, texto_dims)
+        self.ln(5)
 
     # ==========================================================================
     # HOJA 3: INGENIERÍA
@@ -262,10 +342,38 @@ class ReportePDF(FPDF):
         self.ln(5)
 
     # ==========================================================================
+    # SECCIÓN BATERÍAS
+    # ==========================================================================
+    def _seccion_baterias(self, bateria):
+        self._titulo_seccion("4. BANCO DE BATERIAS")
+        
+        if not bateria:
+            bateria = {}
+
+        # Preparar datos con valor por defecto S/D
+        modelo = bateria.get('modelo', 'S/D')
+        voltaje = f"{bateria.get('voltaje_nominal', 'S/D')} V"
+        capacidad = f"{bateria.get('capacidad_nominal_ah', 'S/D')} Ah"
+        resistencia = f"{bateria.get('resistencia_interna_mohm', 'S/D')} mOhm"
+        dims = f"{bateria.get('largo_mm', 'S/D')}x{bateria.get('ancho_mm', 'S/D')}x{bateria.get('alto_total_mm', 'S/D')} mm"
+        peso = f"{bateria.get('peso_kg', 'S/D')} kg"
+        terminal = bateria.get('tipo_terminal', 'S/D')
+
+        self._dibujar_encabezado_tabla(["PARAMETRO", "VALOR", "UNIDAD"])
+        self._dibujar_fila_tabla("Modelo Bateria", str(modelo), "-")
+        self._dibujar_fila_tabla("Voltaje Nominal", str(voltaje), "Volts DC")
+        self._dibujar_fila_tabla("Capacidad", str(capacidad), "Amper-Hora")
+        self._dibujar_fila_tabla("Resistencia Interna", str(resistencia), "mOhm")
+        self._dibujar_fila_tabla("Dimensiones", str(dims), "Milimetros")
+        self._dibujar_fila_tabla("Peso Aprox.", str(peso), "Kilogramos")
+        self._dibujar_fila_tabla("Tipo Terminal", str(terminal), "-")
+        self.ln(5)
+
+    # ==========================================================================
     # HOJA 4: DIAGRAMA
     # ==========================================================================
     def _hoja_4_diagrama(self):
-        self._titulo_seccion("4. DIAGRAMA DE CONEXION SUGERIDO")
+        self._titulo_seccion("5. DIAGRAMA DE CONEXION SUGERIDO")
         
         self.set_fill_color(230, 230, 230)
         y = self.get_y()

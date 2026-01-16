@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Baterías</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { background-color: #333; color: #fff; }
+        .app-header { background-color: #fff; color: #333; border-bottom: 1px solid #ddd; }
+        .nav-link { color: #555 !important; font-weight: 600; }
+        .nav-link.active { color: #d32f2f !important; border-bottom: 3px solid #d32f2f; }
+        .card { background-color: #424242; color: #fff; border: 1px solid #555; }
+        .form-control, .form-select { background-color: #2c2c2c; border: 1px solid #666; color: #fff; }
+        .table { color: #fff; }
+    </style>
+</head>
+<body>
+    <header class="app-header p-2 px-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
+            <span class="fw-bold fs-5 text-dark">SISTEMA UPS MANAGER</span>
+        </div>
+        <nav class="nav-links d-flex gap-4">
+            <a href="{{ url_for('main.index') }}" class="nav-link text-decoration-none">CALCULADORA</a>
+            <a href="{{ url_for('main.equipos') }}" class="nav-link text-decoration-none">EDICIÓN EQUIPOS</a>
+            <a href="{{ url_for('main.baterias') }}" class="nav-link active text-decoration-none">BATERÍAS</a>
+            <a href="{{ url_for('main.gestion') }}" class="nav-link text-decoration-none">GESTIÓN BD</a>
+            <a href="{{ url_for('main.carga_masiva') }}" class="nav-link text-decoration-none">CARGA MASIVA</a>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+        <h2>🔋 Gestión de Baterías</h2>
+        
+        {% if msg %}
+        <div class="alert alert-info">{{ msg }}</div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header">Seleccionar Batería para Editar</div>
+            <div class="card-body">
+                <form method="POST" class="row g-3">
+                    <input type="hidden" name="accion" value="buscar">
+                    <div class="col-md-10">
+                        <select name="id_bateria_buscar" class="form-select">
+                            <option value="">-- Seleccione un Modelo --</option>
+                            {% for b in baterias_lista %}
+                            <option value="{{ b.id }}" {% if bateria and bateria.id == b.id %}selected{% endif %}>
+                                {{ b.modelo }} ({{ b.capacidad_nominal_ah }}Ah / {{ b.voltaje_nominal }}V)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Cargar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if bateria %}
+        <div class="row">
+            <!-- Formulario de Edición -->
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">Ficha Técnica: {{ bateria.modelo }}</div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <input type="hidden" name="accion" value="guardar">
+                            <input type="hidden" name="id" value="{{ bateria.id }}">
+                            
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label>Modelo</label>
+                                    <input type="text" name="modelo" class="form-control" value="{{ bateria.modelo }}" required>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label>Serie</label>
+                                    <input type="text" name="serie" class="form-control" value="{{ bateria.serie }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label>Voltaje (V)</label>
+                                    <input type="number" step="0.1" name="voltaje_nominal" class="form-control" value="{{ bateria.voltaje_nominal }}">
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label>Capacidad (Ah)</label>
+                                    <input type="number" step="0.1" name="capacidad_nominal_ah" class="form-control" value="{{ bateria.capacidad_nominal_ah }}">
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-2 text-warning border-bottom border-secondary">Dimensiones y Peso</h6>
+                            <div class="row">
+                                <div class="col-3 mb-2">
+                                    <label>Largo</label>
+                                    <input type="number" step="1" name="largo_mm" class="form-control" value="{{ bateria.largo_mm }}">
+                                </div>
+                                <div class="col-3 mb-2">
+                                    <label>Ancho</label>
+                                    <input type="number" step="1" name="ancho_mm" class="form-control" value="{{ bateria.ancho_mm }}">
+                                </div>
+                                <div class="col-3 mb-2">
+                                    <label>Alto Tot</label>
+                                    <input type="number" step="1" name="alto_total_mm" class="form-control" value="{{ bateria.alto_total_mm }}">
+                                </div>
+                                <div class="col-3 mb-2">
+                                    <label>Peso (kg)</label>
+                                    <input type="number" step="0.1" name="peso_kg" class="form-control" value="{{ bateria.peso_kg }}">
+                                </div>
+                            </div>
+
+                            <h6 class="mt-2 text-warning border-bottom border-secondary">Características</h6>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label>Terminal</label>
+                                    <input type="text" name="tipo_terminal" class="form-control" value="{{ bateria.tipo_terminal }}">
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label>Material</label>
+                                    <input type="text" name="material_contenedor" class="form-control" value="{{ bateria.material_contenedor }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label>Resistencia (mΩ)</label>
+                                    <input type="number" step="0.1" name="resistencia_interna_mohm" class="form-control" value="{{ bateria.resistencia_interna_mohm }}">
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label>Max Descarga (5s)</label>
+                                    <input type="number" step="0.1" name="max_corriente_descarga_5s_a" class="form-control" value="{{ bateria.max_corriente_descarga_5s_a }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label>Autodescarga (Meses)</label>
+                                <input type="number" name="autodescarga_meses_max" class="form-control" value="{{ bateria.autodescarga_meses_max }}">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100">Guardar Cambios</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Curvas -->
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <span>Curvas de Descarga (Watts/Celda)</span>
+                        <a href="{{ url_for('main.descargar_plantilla', tipo='baterias_curvas') }}" class="btn btn-sm btn-light" style="font-size: 0.7rem;">Descargar Plantilla CSV</a>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-striped table-bordered table-sm mb-0 text-center" style="font-size: 0.85rem;">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Tiempo (min)</th>
+                                    {% if pivot_data %}
+                                        {% for v in pivot_data.headers %}
+                                        <th>{{ v }} V</th>
+                                        {% endfor %}
+                                    {% else %}
+                                        <th>Sin Datos</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if pivot_data %}
+                                    {% for row in pivot_data.data %}
+                                    <tr>
+                                        <td class="fw-bold">{{ row.tiempo }}</td>
+                                        {% for v in pivot_data.headers %}
+                                        <td>{{ row[v] if row[v] else '-' }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center py-3">Seleccione una batería o cargue datos.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer bg-dark">
+                        <form method="POST" enctype="multipart/form-data" class="row g-2 align-items-center">
+                            <input type="hidden" name="accion" value="subir_curvas">
+                            <input type="hidden" name="id" value="{{ bateria.id }}">
+                            <div class="col-auto">
+                                <label class="text-white small">Carga Masiva (CSV):</label>
+                            </div>
+                            <div class="col">
+                                <input type="file" name="archivo_csv" class="form-control form-control-sm" required accept=".csv">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-warning btn-sm">Subir</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -7,132 +7,66 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        :root {
-            --bg-body: #333333; /* Gris Oscuro Industrial */
-            --bg-card: #424242; /* Gris Medio */
-            --text-main: #ffffff;
-            --text-muted: #cccccc;
-            --primary: #d32f2f; /* Rojo Clásico */
-            --success: #388e3c; /* Verde Ingeniería */
-            --warning: #fbc02d; /* Amarillo Seguridad */
-            --accent: #03a9f4; /* Azul Vivo para contraste */
-            --header-bg: #ffffff;
-            --header-text: #2c2c2c;
-        }
-        body {
-            background-color: var(--bg-body) !important;
-            color: var(--text-main) !important;
-        }
-        /* Header Blanco */
-        .app-header {
-            background-color: var(--header-bg) !important;
-            color: var(--header-text) !important;
-            box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14);
-            border-bottom: 1px solid #ddd;
-        }
-        .app-header span { color: var(--header-text) !important; }
-        .nav-link { color: #555 !important; font-weight: 600; }
-        .nav-link.active { color: var(--primary) !important; border-bottom: 3px solid var(--primary); }
-        
-        /* Contenedores Oscuros */
-        .sidebar, .tech-matrix, .card {
-            background-color: var(--bg-card) !important;
-            border: 1px solid #555 !important;
-            color: var(--text-main) !important;
-            box-shadow: 0 1px 20px 0px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Inputs Oscuros */
-        .form-control, .form-select, .matrix-input {
-            background-color: #2c2c2c !important;
-            border: 1px solid #666 !important;
-            color: #fff !important;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.25) !important;
-        }
-        .text-muted { color: var(--text-muted) !important; }
-        .group-title { color: var(--accent) !important; border-bottom: 2px solid var(--accent); font-weight: bold; letter-spacing: 1px; margin-bottom: 10px;}
-        
-        /* Panel de Ficha Técnica */
-        .specs-panel {
-            background: rgba(0,0,0,0.2);
-            border-radius: 4px;
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            border-left: 3px solid var(--primary);
-        }
-        .spec-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #555; padding-bottom: 2px;}
-        .spec-label { color: var(--text-muted); }
-        .spec-val { color: #fff; font-weight: bold; }
-    </style>
 </head>
-
 <body>
     <header class="app-header">
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight: 700; font-size: 1.2rem; letter-spacing: 1px;">SISTEMA UPS <span style="color:var(--highlight)">MANAGER</span></span>
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px;">SISTEMA UPS <span style="color:#dc2626">MANAGER</span></span>
         </div>
-        
         <nav class="nav-links">
             <a href="{{ url_for('main.index') }}" class="nav-link active">CALCULADORA</a>
             <a href="{{ url_for('main.equipos') }}" class="nav-link">EDICIÓN EQUIPOS</a>
+            <a href="{{ url_for('main.baterias') }}" class="nav-link">BATERÍAS</a>
             <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
         </nav>
     </header>
 
-    <form method="POST" id="mainForm" class="main-grid">
-        
-        <aside class="sidebar">
-            
-            <div class="control-group">
-                <div class="group-title"><i class="bi bi-building"></i> 1. CLIENTE</div>
-                
-                <input type="hidden" name="cliente_texto" id="h_cliente" value="{{ request.form.get('cliente_texto', '') }}">
-                <input type="hidden" name="sucursal_texto" id="h_sucursal" value="{{ request.form.get('sucursal_texto', '') }}">
-                <input type="hidden" name="lat_oculta" id="h_lat" value="{{ request.form.get('lat_oculta', '') }}">
-                <input type="hidden" name="lon_oculta" id="h_lon" value="{{ request.form.get('lon_oculta', '') }}">
+    <form method="POST" id="mainForm" class="new-layout">
+        <!-- Ocultos para backend -->
+        <input type="hidden" name="cliente_texto" id="h_cliente" value="{{ request.form.get('cliente_texto', '') }}">
+        <input type="hidden" name="sucursal_texto" id="h_sucursal" value="{{ request.form.get('sucursal_texto', '') }}">
+        <input type="hidden" name="lat_oculta" id="h_lat" value="{{ request.form.get('lat_oculta', '') }}">
+        <input type="hidden" name="lon_oculta" id="h_lon" value="{{ request.form.get('lon_oculta', '') }}">
 
-                <div class="mb-2">
-                    <label class="small text-muted">Empresa</label>
-                    <select id="sel_cliente" class="form-select form-select-sm">
-                        <option value="">Seleccionar...</option>
-                        {% for c in clientes %}
-                        <option value="{{ c }}">{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="small text-muted">Sucursal</label>
-                    <select id="sel_sucursal" class="form-select form-select-sm" disabled>
+        <!-- =================== CONTROLES SUPERIORES =================== -->
+        <section class="top-controls">
+            <!-- CLIENTE -->
+            <div class="card-control">
+                <div class="control-title"><i class="bi bi-building me-1"></i> CLIENTE</div>
+                <label class="small text-muted">Empresa</label>
+                <select id="sel_cliente" class="form-select form-select-sm">
+                    <option value="">Seleccionar...</option>
+                    {% for c in clientes %}
+                    <option value="{{ c }}" {% if request.form.get('cliente_texto','')==c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="small text-muted mt-2">Sucursal</label>
+                <select id="sel_sucursal" class="form-select form-select-sm" {% if not request.form.get('sucursal_texto') %}disabled{% endif %}>
+                    {% if request.form.get('sucursal_texto') %}
+                        <option value="">{{ request.form.get('sucursal_texto') }}</option>
+                    {% else %}
                         <option value="">...</option>
-                    </select>
-                </div>
+                    {% endif %}
+                </select>
             </div>
 
-            <div class="control-group">
-                <div class="group-title"><i class="bi bi-box-seam"></i> 2. EQUIPO</div>
-                
-                <div class="mb-2">
-                    <label class="small text-muted">Modelo UPS</label>
-                    <select name="id_ups" id="sel_ups" class="form-select form-select-sm" required>
-                        <option value="">Seleccionar...</option>
-                        {% for u in ups %}
-                        <option value="{{ u.id }}" 
-                                data-kva="{{ u.Capacidad_kVA }}" 
-                                data-vin="{{ u.Voltaje_Entrada_1_V }}"
-                                {% if request.form.get('id_ups') and request.form.get('id_ups')|int == u.id %}selected{% endif %}>
-                            {{ u.Serie }} {{ u.Nombre_del_Producto }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="row g-2 mb-2">
+            <!-- EQUIPO -->
+            <div class="card-control">
+                <div class="control-title"><i class="bi bi-box-seam me-1"></i> EQUIPO</div>
+                <label class="small text-muted">Modelo UPS</label>
+                <select name="id_ups" id="sel_ups" class="form-select form-select-sm" required>
+                    <option value="">Seleccionar...</option>
+                    {% for u in ups %}
+                    <option value="{{ u.id }}" data-kva="{{ u.Capacidad_kVA }}" data-vin="{{ u.Voltaje_Entrada_1_V }}"
+                        {% if request.form.get('id_ups') and request.form.get('id_ups')|int == u.id %}selected{% endif %}>
+                        {{ u.Serie }} {{ u.Nombre_del_Producto }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <div class="row g-2 mt-2">
                     <div class="col-6">
                         <label class="small text-muted">kVA</label>
                         <input type="text" id="txt_kva" class="form-control form-control-sm bg-light" readonly value="{{ res.kva if res else '' }}">
@@ -143,60 +77,98 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="small text-muted fw-bold text-primary">No. Pedido</label>
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" 
-                               value="{{ request.form.get('pedido', '') }}" placeholder="OC-XXXX">
-                        <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
-                    </div>
-                </div>
-
-                <!-- ZONA DE CARACTERÍSTICAS DEL UPS -->
-                <div id="ups_specs_container" class="specs-panel" style="display: none;">
-                    <div class="text-center mb-2" style="color: var(--primary); font-weight: bold;">FICHA TÉCNICA RÁPIDA</div>
-                    <div class="spec-row"><span class="spec-label">Serie:</span> <span class="spec-val" id="sp_serie">--</span></div>
-                    <div class="spec-row"><span class="spec-label">Potencia kW:</span> <span class="spec-val" id="sp_kw">--</span></div>
-                    <div class="spec-row"><span class="spec-label">Eficiencia AC:</span> <span class="spec-val" id="sp_eff">--</span>%</div>
-                    <div class="spec-row"><span class="spec-label">Baterías (VDC):</span> <span class="spec-val" id="sp_bat">--</span></div>
-                    <div class="spec-row"><span class="spec-label">Dimensiones:</span> <span class="spec-val" id="sp_dim">--</span></div>
-                    <div class="spec-row"><span class="spec-label">Peso:</span> <span class="spec-val" id="sp_peso">--</span> kg</div>
+                <!-- FICHA UPS COMPACTA -->
+                <div id="ups_specs_container" class="specs-panel mt-2 d-none" style="border-top:1px solid #555; padding-top:6px;">
+                    <div class="text-center mb-1" style="color: var(--highlight); font-weight:700;">FICHA TÉCNICA RÁPIDA</div>
+                    <div class="d-flex justify-content-between small"><span>Serie:</span><span id="sp_serie">--</span></div>
+                    <div class="d-flex justify-content-between small"><span>Potencia kW:</span><span id="sp_kw">--</span></div>
+                    <div class="d-flex justify-content-between small"><span>Eficiencia AC:</span><span id="sp_eff">--</span>%</div>
+                    <div class="d-flex justify-content-between small"><span>Baterías (VDC):</span><span id="sp_bat">--</span></div>
+                    <div class="d-flex justify-content-between small"><span>Dimensiones:</span><span id="sp_dim">--</span></div>
+                    <div class="d-flex justify-content-between small"><span>Peso:</span><span id="sp_peso">--</span> kg</div>
                 </div>
             </div>
 
-            <div class="mt-auto">
-                {% if res %}
-                <button type="button" class="btn btn-outline-secondary w-100 mb-2" onclick="activarEdicion()">
-                    <i class="bi bi-unlock"></i> DESBLOQUEAR EDICIÓN
-                </button>
-                {% endif %}
-                
-                <div class="d-flex gap-2">
-                    <button type="submit" name="accion" value="preview" class="btn btn-dark w-50">
-                        CALCULAR
-                    </button>
-                    <button type="submit" name="accion" value="publicar" class="btn btn-primary w-50">
-                        PUBLICAR
-                    </button>
+            <!-- BATERÍA -->
+            <div class="card-control">
+                <div class="control-title"><i class="bi bi-battery-charging me-1"></i> BATERÍA</div>
+                <label class="small text-muted">Modelo Batería</label>
+                <select name="id_bateria" id="sel_bateria" class="form-select form-select-sm">
+                    <option value="">Seleccionar...</option>
+                    {% for b in baterias %}
+                    <!-- CORRECCIÓN: Usar capacidad_nominal_ah según base_datos.py -->
+                    <option value="{{ b.id }}" {% if request.form.get('id_bateria') and request.form.get('id_bateria')|int == b.id %}selected{% endif %}>{{ b.modelo }} ({{ b.capacidad_nominal_ah }}Ah)</option>
+                    {% endfor %}
+                </select>
+                <!-- Ficha compacta -->
+                <div id="bat_specs_container" class="specs-panel mt-2" style="display: none; border-top:1px solid #555; padding-top:6px;">
+                    <div class="text-center mb-1" style="color: var(--success); font-size: .75rem; font-weight:700;">DATOS BATERÍA</div>
+                    <div class="d-flex justify-content-between small"><span>Voltaje:</span><span id="bat_volt">--</span> V</div>
+                    <div class="d-flex justify-content-between small"><span>Capacidad:</span><span id="bat_ah">--</span> Ah</div>
+                    <div class="d-flex justify-content-between small"><span>Dimensiones:</span><span id="bat_dim">--</span></div>
+                </div>
+
+                <label class="small text-muted mt-2">Tiempo de Respaldo (min)</label>
+                <input type="number" name="tiempo_respaldo" class="form-control form-control-sm" value="{{ request.form.get('tiempo_respaldo', '') }}" placeholder="Ej. 15">
+            </div>
+
+            <!-- PEDIDO + ACCIONES -->
+            <div class="card-control">
+                <div class="control-title"><i class="bi bi-clipboard-check me-1"></i> PEDIDO & ACCIONES</div>
+                <label class="small text-muted fw-bold text-primary">No. Pedido</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="OC-XXXX">
+                    <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
+                </div>
+                <div class="d-grid gap-2 mt-2">
+                    <button type="submit" name="accion" value="preview" class="btn btn-dark">CALCULAR</button>
+                    <button type="submit" name="accion" value="publicar" class="btn btn-primary">PUBLICAR</button>
                 </div>
             </div>
-        </aside>
+        </section>
 
+        <!-- =================== MATRIZ + RECÁPITULO =================== -->
         <main class="tech-matrix">
-            
-            <div class="d-flex justify-content-between align-items-center">
-                <h4 class="m-0 fw-bold" style="color: var(--text-main);">MATRIZ TÉCNICA DE INSTALACIÓN</h4>
-                {% if msg %}
-                    <span class="badge bg-success fs-6">{{ msg }}</span>
-                {% endif %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="m-0 fw-bold">Recapitulado de Instalación</h5>
+                {% if msg %}<span class="badge bg-success fs-6">{{ msg }}</span>{% endif %}
             </div>
 
-            <div class="data-grid">
-                
+            <!-- Resumen superior -->
+            <section class="recap-grid mb-3">
+                <div class="recap-item">
+                    <div class="recap-label">Cliente</div>
+                    <div class="recap-value">{{ res.cliente_nom if res else (request.form.get('cliente_texto','') or '--') }}</div>
+                </div>
+                <div class="recap-item">
+                    <div class="recap-label">Sucursal</div>
+                    <div class="recap-value">{{ res.sucursal_nom if res else (request.form.get('sucursal_texto','') or '--') }}</div>
+                </div>
+                <div class="recap-item">
+                    <div class="recap-label">Pedido</div>
+                    <div class="recap-value">{{ res.pedido if res else (request.form.get('pedido','') or '--') }}</div>
+                </div>
+                <div class="recap-item">
+                    <div class="recap-label">UPS</div>
+                    <div class="recap-value">{{ res.modelo_nombre if res else '--' }} ({{ res.kva if res else '--' }} kVA)</div>
+                </div>
+                <div class="recap-item">
+                    <div class="recap-label">Batería</div>
+                    <div class="recap-value" id="recap_bateria">--</div>
+                </div>
+                <div class="recap-item">
+                    <div class="recap-label">Respaldo</div>
+                    <div class="recap-value">{{ res.tiempo_respaldo if res and res.tiempo_respaldo else '--' }} min</div>
+                </div>
+            </section>
+
+            <!-- Matriz de datos reorganizada -->
+            <div class="data-grid redesigned">
+                <!-- Entrada -->
                 <div class="data-cell">
                     <span class="cell-label"><i class="bi bi-arrow-right-circle"></i> Voltaje Entrada</span>
-                    <div class="d-flex align-items-baseline">
-                        <select name="voltaje" id="sel_voltaje" class="matrix-input" style="font-size: 1.5rem;">
+                    <div class="d-flex align-items-baseline gap-2">
+                        <select name="voltaje" id="sel_voltaje" class="matrix-input">
                             <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220</option>
                             <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208</option>
                             <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480</option>
@@ -208,7 +180,7 @@
 
                 <div class="data-cell">
                     <span class="cell-label"><i class="bi bi-three-dots"></i> Fases</span>
-                    <select name="fases" class="matrix-input" style="font-size: 1.5rem;">
+                    <select name="fases" class="matrix-input">
                         <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F+N</option>
                         <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F+N</option>
                         <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F+N</option>
@@ -217,16 +189,16 @@
 
                 <div class="data-cell">
                     <span class="cell-label"><i class="bi bi-rulers"></i> Distancia</span>
-                    <div class="d-flex align-items-baseline">
-                        <input type="number" name="longitud" class="matrix-input" 
-                               value="{{ request.form.get('longitud', '') }}" placeholder="0">
+                    <div class="d-flex align-items-baseline gap-2">
+                        <input type="number" name="longitud" class="matrix-input" value="{{ request.form.get('longitud', '') }}" placeholder="0">
                         <span class="cell-unit">mts</span>
                     </div>
                 </div>
 
+                <!-- Resultados principales -->
                 <div class="data-cell {{ 'active' if res else 'inactive' }}">
                     <span class="cell-label">Corriente Diseño</span>
-                    <div class="d-flex align-items-baseline">
+                    <div class="d-flex align-items-baseline gap-2">
                         <span class="cell-value">{{ res.i_diseno if res else '--' }}</span>
                         <span class="cell-unit">Amps</span>
                     </div>
@@ -234,12 +206,21 @@
 
                 <div class="data-cell {{ 'active' if res else 'inactive' }}">
                     <span class="cell-label"><i class="bi bi-arrow-left-circle"></i> Voltaje Salida</span>
-                    <div class="d-flex align-items-baseline">
+                    <div class="d-flex align-items-baseline gap-2">
                         <span class="cell-value">{{ res.voltaje if res else '--' }}</span>
                         <span class="cell-unit">V</span>
                     </div>
                 </div>
 
+                <div class="data-cell {{ 'active' if res else 'inactive' }}" style="border-color: #f59e0b;">
+                    <span class="cell-label text-warning">Caída de Tensión</span>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="cell-value">{{ res.dv_pct if res else '--' }}</span>
+                        <span class="cell-unit">%</span>
+                    </div>
+                </div>
+
+                <!-- Selección de conductores y protección -->
                 <div class="data-cell {{ 'active' if res else 'inactive' }}" style="border-color: var(--success);">
                     <span class="cell-label text-success">CABLE FASES (THHN)</span>
                     <span class="cell-value huge text-success">{{ res.fase_sel if res else '--' }}</span>
@@ -254,7 +235,7 @@
 
                 <div class="data-cell {{ 'active' if res else 'inactive' }}">
                     <span class="cell-label">PROTECCIÓN ITM</span>
-                    <div class="d-flex align-items-baseline">
+                    <div class="d-flex align-items-baseline gap-2">
                         <span class="cell-value">{{ res.breaker_sel if res else '--' }}</span>
                         <span class="cell-unit">Amps</span>
                     </div>
@@ -262,20 +243,16 @@
             </div>
 
             {% if res %}
-            <div class="d-flex justify-content-end align-items-center p-3 rounded border shadow-sm" style="background-color: var(--bg-card);">
+            <div class="d-flex justify-content-end align-items-center p-3 rounded border shadow-sm mt-3" style="background-color: var(--bg-card);">
                 <div class="me-auto text-muted">
                     <small><i class="bi bi-check-circle-fill text-success"></i> Cálculo Completado</small>
-                    <div style="font-size: 0.8rem;">
-                        Caída Tensión: <strong>{{ res.dv_pct }}%</strong>
-                    </div>
+                    <div style="font-size: 0.85rem;">Cliente: <strong>{{ res.cliente_nom }}</strong> — Sucursal: <strong>{{ res.sucursal_nom }}</strong></div>
                 </div>
-
                 <button type="button" onclick="descargarPDF()" class="btn btn-danger btn-lg px-5 fw-bold shadow">
                     <i class="bi bi-file-earmark-pdf-fill"></i> DESCARGAR PDF
                 </button>
             </div>
             {% endif %}
-
         </main>
     </form>
 
@@ -291,113 +268,122 @@
         <input type="hidden" name="longitud" value="{{ request.form.get('longitud') }}">
         <input type="hidden" name="lat" value="{{ request.form.get('lat_oculta') }}">
         <input type="hidden" name="lon" value="{{ request.form.get('lon_oculta') }}">
+        <input type="hidden" name="id_bateria" value="{{ request.form.get('id_bateria') }}">
+        <input type="hidden" name="tiempo_respaldo" value="{{ request.form.get('tiempo_respaldo') }}">
+        <input type="hidden" name="dim_largo" value="{{ res.dim_largo }}">
+        <input type="hidden" name="dim_ancho" value="{{ res.dim_ancho }}">
+        <input type="hidden" name="dim_alto" value="{{ res.dim_alto }}">
+        <input type="hidden" name="peso" value="{{ res.peso }}">
     </form>
     {% endif %}
 
     <script>
-        // --- 1. LÓGICA DE PDF ---
-        function descargarPDF() {
-            const form = document.getElementById('pdfForm');
-            if(form) form.submit();
-            else alert("Primero debes realizar un cálculo.");
-        }
+    // --- 1. PDF ---
+    function descargarPDF(){ const form = document.getElementById('pdfForm'); if(form) form.submit(); else alert("Primero debes realizar un cálculo."); }
 
-        // --- 2. MODO EDICIÓN ---
-        function activarEdicion() {
-            // Quitamos el readonly de los inputs
-            document.querySelectorAll('.matrix-input').forEach(el => el.readOnly = false);
-            document.querySelectorAll('select').forEach(el => el.disabled = false);
-            alert("Modo Edición Activado. Recuerda volver a Calcular para actualizar los resultados.");
-        }
+    // --- 2. Cargar sucursales por cliente ---
+    const selCliente = document.getElementById('sel_cliente');
+    const selSucursal = document.getElementById('sel_sucursal');
+    const prevCliente = "{{ request.form.get('cliente_texto', '') }}";
+    const prevSucursal = "{{ request.form.get('sucursal_texto', '') }}";
 
-        // --- 3. CASCADA CLIENTE -> SUCURSAL ---
-        const selCliente = document.getElementById('sel_cliente');
-        const selSucursal = document.getElementById('sel_sucursal');
-        
-        // Función para restaurar selecciones previas
-        const prevCliente = "{{ request.form.get('cliente_texto', '') }}"; 
-        const prevSucursal = "{{ request.form.get('sucursal_texto', '') }}";
-
-        function cargarSucursales(cliente, seleccionada = null) {
-            selSucursal.innerHTML = '<option>Cargando...</option>';
-            selSucursal.disabled = true;
-            fetch(`/api/sucursales/${encodeURIComponent(cliente)}`)
-                .then(r => r.json())
-                .then(data => {
-                    selSucursal.innerHTML = '<option value="">Seleccionar...</option>';
-                    data.forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s.id;
-                        opt.text = s.sucursal;
-                        opt.dataset.lat = s.lat;
-                        opt.dataset.lon = s.lon;
-                        if(seleccionada && s.sucursal === seleccionada) opt.selected = true;
-                        selSucursal.appendChild(opt);
-                    });
-                    selSucursal.disabled = false;
-                });
-        }
-
-        selCliente.addEventListener('change', function() {
-            if(this.value) cargarSucursales(this.value);
+    function cargarSucursales(cliente, seleccionada=null){
+        if(!selSucursal) return;
+        selSucursal.innerHTML = '<option>Cargando...</option>';
+        selSucursal.disabled = true;
+        fetch(`/api/sucursales/${encodeURIComponent(cliente)}`)
+        .then(r=>r.json())
+        .then(data=>{
+            selSucursal.innerHTML = '<option value="">Seleccionar...</option>';
+            data.forEach(s=>{
+                const opt=document.createElement('option');
+                opt.value = s.id; opt.text = s.sucursal; opt.dataset.lat=s.lat; opt.dataset.lon=s.lon;
+                if(seleccionada && s.sucursal===seleccionada) opt.selected = true;
+                selSucursal.appendChild(opt);
+            });
+            selSucursal.disabled = false;
         });
+    }
 
-        if(prevCliente) {
-            for(let i=0; i<selCliente.options.length; i++) {
-                if(selCliente.options[i].value === prevCliente) selCliente.selectedIndex = i;
-            }
+    if(selCliente){
+        selCliente.addEventListener('change', function(){ if(this.value) cargarSucursales(this.value); });
+        if(prevCliente){
+            for(let i=0;i<selCliente.options.length;i++){ if(selCliente.options[i].value===prevCliente) selCliente.selectedIndex=i; }
             cargarSucursales(prevCliente, prevSucursal);
         }
+    }
 
-        // --- 4. LLENAR DATOS OCULTOS ---
-        selSucursal.addEventListener('change', function() {
-            const opt = this.options[this.selectedIndex];
-            if(opt.value) {
+    // --- 3. Guardar datos ocultos cuando cambia sucursal ---
+    if(selSucursal){
+        selSucursal.addEventListener('change', function(){
+            const opt=this.options[this.selectedIndex];
+            if(opt && opt.value){
                 document.getElementById('h_cliente').value = selCliente.value;
                 document.getElementById('h_sucursal').value = opt.text;
-                document.getElementById('h_lat').value = opt.dataset.lat;
-                document.getElementById('h_lon').value = opt.dataset.lon;
+                document.getElementById('h_lat').value = opt.dataset.lat || '';
+                document.getElementById('h_lon').value = opt.dataset.lon || '';
             }
         });
+    }
 
-        // --- 5. DATOS DE UPS ---
-        document.getElementById('sel_ups').addEventListener('change', function() {
-            const opt = this.options[this.selectedIndex];
-            if(opt.value) {
-                document.getElementById('txt_kva').value = opt.dataset.kva;
-                document.getElementById('txt_vin').value = opt.dataset.vin;
-                document.getElementById('sel_voltaje').value = opt.dataset.vin;
-                
-                // Cargar Ficha Técnica Rápida
-                fetch(`/api/ups/${opt.value}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        document.getElementById('sp_serie').textContent = data.Serie || '--';
-                        document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--';
-                        document.getElementById('sp_eff').textContent = data.Eficiencia_Modo_AC_pct || '--';
-                        document.getElementById('sp_bat').textContent = data.Bateria_Vdc || '--';
-                        document.getElementById('sp_dim').textContent = `${data.Dim_Alto_mm}x${data.Dim_Ancho_mm}x${data.Dim_Largo_mm}`;
-                        document.getElementById('sp_peso').textContent = data.Peso_Gabinete_kg || '--';
-                        
-                        document.getElementById('ups_specs_container').style.display = 'block';
-                    });
-            }
-        });
-        
-        // --- 6. BUSCADOR PEDIDO ---
-        document.getElementById('btn_buscar').addEventListener('click', function(){
-            const ped = document.getElementById('input_pedido').value;
-            if(ped) {
-                fetch(`/api/buscar-pedido/${ped}`).then(r=>r.json()).then(d => {
-                    if(d.pedido) {
-                        alert("Pedido Encontrado. Cargando datos...");
-                        document.getElementById('input_pedido').value = d.pedido;
-                    } else {
-                        alert("Pedido no encontrado.");
-                    }
+    // --- 4. Datos UPS + Ficha rápida ---
+    const selUps = document.getElementById('sel_ups');
+    if(selUps){
+        selUps.addEventListener('change', function(){
+            const opt=this.options[this.selectedIndex];
+            if(opt && opt.value){
+                document.getElementById('txt_kva').value = opt.dataset.kva || '';
+                document.getElementById('txt_vin').value = opt.dataset.vin || '';
+                const vSel = document.getElementById('sel_voltaje');
+                if(vSel && opt.dataset.vin) vSel.value = opt.dataset.vin;
+                fetch(`/api/ups/${opt.value}`).then(r=>r.json()).then(data=>{
+                    const upsCont = document.getElementById('ups_specs_container');
+                    if(upsCont) upsCont.classList.remove('d-none');
+                    document.getElementById('sp_serie') && (document.getElementById('sp_serie').textContent = data.Serie || '--');
+                    document.getElementById('sp_kw') && (document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--');
+                    document.getElementById('sp_eff') && (document.getElementById('sp_eff').textContent = data.Eficiencia_Modo_AC_pct || '--');
+                    document.getElementById('sp_bat') && (document.getElementById('sp_bat').textContent = data.Bateria_Vdc || '--');
+                    const dim = `${data.Dim_Alto_mm}x${data.Dim_Ancho_mm}x${data.Dim_Largo_mm}`;
+                    document.getElementById('sp_dim') && (document.getElementById('sp_dim').textContent = dim);
+                    document.getElementById('sp_peso') && (document.getElementById('sp_peso').textContent = data.Peso_Gabinete_kg || '--');
                 });
             }
         });
+    }
+
+    // --- 5. Buscador pedido ---
+    const btnBuscar = document.getElementById('btn_buscar');
+    if(btnBuscar){
+        btnBuscar.addEventListener('click', function(){
+            const ped = document.getElementById('input_pedido').value;
+            if(ped){
+                fetch(`/api/buscar-pedido/${ped}`).then(r=>r.json()).then(d=>{
+                    if(d.pedido){
+                        alert("Pedido Encontrado. Cargando datos...");
+                        document.getElementById('input_pedido').value = d.pedido;
+                    } else { alert("Pedido no encontrado."); }
+                });
+            }
+        });
+    }
+
+    // --- 6. Datos de batería para recap ---
+    const selBat = document.getElementById('sel_bateria');
+    if(selBat){
+        selBat.addEventListener('change', function(){
+            const idBat=this.value; if(!idBat) return;
+            fetch(`/api/bateria/${idBat}`).then(r=>r.json()).then(data=>{
+                const cont=document.getElementById('bat_specs_container');
+                if(cont) cont.style.display='block';
+                // CORRECCIÓN: Nombres de campos según base_datos.py
+                const txt=(data.modelo?data.modelo:'--')+ (data.capacidad_nominal_ah?` (${data.capacidad_nominal_ah}Ah)`:'');
+                const recap = document.getElementById('recap_bateria'); if(recap) recap.textContent = txt;
+                document.getElementById('bat_volt').textContent = data.voltaje_nominal || '--';
+                document.getElementById('bat_ah').textContent = data.capacidad_nominal_ah || '--';
+                document.getElementById('bat_dim').textContent = `${data.largo_mm}x${data.ancho_mm}x${data.alto_total_mm} mm`;
+            });
+        });
+    }
 
     </script>
 </body>

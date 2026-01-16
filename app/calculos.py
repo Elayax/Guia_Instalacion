@@ -37,14 +37,31 @@ class CalculadoraUPS:
 
     def calcular(self, datos):
         # 1. Extracción de variables
-        kva = float(datos.get('kva'))
-        voltaje = int(datos.get('voltaje'))
-        fases = int(datos.get('fases'))
-        longitud = float(datos.get('longitud'))
+        kva = float(datos.get('kva') or 0)
+        voltaje = int(datos.get('voltaje') or 0)
+        fases = int(datos.get('fases') or 0)
+        longitud = float(datos.get('longitud') or 0)
+        tiempo_respaldo = datos.get('tiempo_respaldo')
         
         # Simulación de variables ambientales
         altitud = 2240 
         temp_amb = 30 # °C
+
+        # Validación de seguridad para evitar división por cero
+        if voltaje <= 0:
+            return {
+                'i_nom': 0,
+                'i_diseno': 0,
+                'fase_sel': "Error: Voltaje 0",
+                'gnd_sel': "N/A",
+                'breaker_sel': 0,
+                'dv_pct': 0,
+                'i_real_cable': 0,
+                'nota_altitud': "Voltaje inválido",
+                'altitud': altitud,
+                'temp': temp_amb,
+                'tiempo_respaldo': tiempo_respaldo
+            }
 
         # PASO 2: Cálculo de Corriente Nominal (I_nom)
         if fases == 1:
@@ -125,5 +142,6 @@ class CalculadoraUPS:
             'i_real_cable': round(i_real_cable, 2),
             'nota_altitud': nota_altitud,
             'altitud': altitud,
-            'temp': temp_amb
+            'temp': temp_amb,
+            'tiempo_respaldo': tiempo_respaldo
         }

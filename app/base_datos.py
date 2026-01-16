@@ -12,6 +12,7 @@ class GestorDB:
     def _conectar(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
     def _inicializar_tablas(self):
@@ -19,8 +20,6 @@ class GestorDB:
         cursor = conn.cursor()
         
         # LIMPIEZA: Eliminar tabla antigua para asegurar que solo se use la nueva
-        cursor.execute("DROP TABLE IF EXISTS ups_catalogo")
-        cursor.execute("DROP TABLE IF EXISTS ups_specs")
         
         # 1. TABLA CLIENTES
         # Nota: Mantenemos lat y lon separados porque es mejor para futuros cálculos
@@ -43,7 +42,6 @@ class GestorDB:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Nombre_del_Producto TEXT,
                 Serie TEXT,
-                Fuente TEXT,
                 Capacidad_kVA REAL,
                 Capacidad_kW REAL,
                 Eficiencia_Modo_AC_pct REAL,
@@ -80,11 +78,6 @@ class GestorDB:
                 Dim_Ancho_mm REAL,
                 Dim_Alto_mm REAL,
                 Nivel_Ruido_dB REAL,
-                Torque_M6_Nm REAL,
-                Torque_M8_Nm REAL,
-                Torque_M10_Nm REAL,
-                Torque_M12_Nm REAL,
-                Torque_M16_Nm REAL,
                 Cable_Entrada_mm2 REAL,
                 Cable_Entrada_conductores REAL,
                 Cable_Salida_mm2 REAL,
@@ -115,6 +108,79 @@ class GestorDB:
                 calibre_tierra TEXT
             )
         ''')
+
+        # 4. TABLAS BATERIAS (NUEVO MODULO - ADAPTADO)
+        # Reiniciamos tablas para aplicar nuevo esquema
+        cursor.execute("DROP TABLE IF EXISTS baterias_curvas_potencia")
+        cursor.execute("DROP TABLE IF EXISTS baterias_curvas_descarga") # Asegurar limpieza
+        cursor.execute("DROP TABLE IF EXISTS baterias_modelos")
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS baterias_modelos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                modelo TEXT UNIQUE NOT NULL,
+                serie TEXT,
+                voltaje_nominal REAL,
+                capacidad_nominal_ah REAL,
+                resistencia_interna_mohm REAL,
+                max_corriente_descarga_5s_a REAL,
+                largo_mm REAL,
+                ancho_mm REAL,
+                alto_contenedor_mm REAL,
+                alto_total_mm REAL,
+                peso_kg REAL,
+                tipo_terminal TEXT,
+                material_contenedor TEXT,
+                carga_flotacion_v_min REAL,
+                carga_flotacion_v_max REAL,
+                coef_temp_flotacion_mv_c REAL,
+                carga_ciclica_v_min REAL,
+                carga_ciclica_v_max REAL,
+                corriente_inicial_max_a REAL,
+                coef_temp_ciclica_mv_c REAL,
+                temp_descarga_min_c REAL,
+                temp_descarga_max_c REAL,
+                temp_carga_min_c REAL,
+                temp_carga_max_c REAL,
+                temp_almacenaje_min_c REAL,
+                temp_almacenaje_max_c REAL,
+                temp_nominal_c REAL,
+                capacidad_40c_pct REAL,
+                capacidad_25c_pct REAL,
+                capacidad_0c_pct REAL,
+                autodescarga_meses_max REAL
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS baterias_curvas_descarga (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                bateria_id INTEGER NOT NULL,
+                tiempo_minutos INTEGER,
+                voltaje_corte_fv REAL,
+                valor REAL,
+                unidad TEXT DEFAULT 'W', -- 'W' para Watts/celda, 'A' para Amperes
+                FOREIGN KEY(bateria_id) REFERENCES baterias_modelos(id) ON DELETE CASCADE
+            )
+        ''')
+        
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_curva_descarga ON baterias_curvas_descarga(bateria_id, unidad, tiempo_minutos, voltaje_corte_fv);")
+
+        # CARGA DE DATOS DE EJEMPLO (SI LA TABLA ESTÁ VACÍA)
+        check = cursor.execute("SELECT count(*) FROM baterias_modelos").fetchone()[0]
+        if check == 0:
+            datos_ejemplo = [
+                ("LBS12-7.2","General Purpose",12,7.2,18.0,108.0,151,65,93.5,99,2.35,"T2","ABS",13.5,13.8,-20,14.4,15.0,2.16,-30,-15,50,0,40,-15,40,25,103,100,86,6),
+                ("LBS12-9.0","General Purpose",12,8.6,19.0,129.0,151,65,93.5,99,2.66,"T2","ABS",13.5,13.8,-20,14.4,15.0,2.58,-30,-15,50,0,40,-15,40,25,103,100,86,6),
+                ("LBS12-10","General Purpose",12,10.0,22.0,150.0,151,65,111,117,3.20,"T2","ABS",13.5,13.8,-20,14.4,15.0,3.00,-30,-15,50,0,40,-15,40,25,103,100,86,6),
+                ("LBS12-55","General Purpose",12,55.0,7.5,660.0,229,138,205,211,16.2,"T6","ABS",13.5,13.8,-20,14.4,15.0,16.5,-30,-15,50,0,40,-15,40,25,103,100,86,6),
+                ("LBS12-75","General Purpose",12,75.0,6.6,900.0,260,168,208,214,22.3,"T6","ABS",13.5,13.8,-20,14.4,15.0,22.5,-30,-15,50,0,40,-15,40,25,103,100,86,6),
+                ("LBS12-100","General Purpose",12,100.0,4.9,1200.0,330,173,212,220,30.6,"T11","ABS",13.5,13.8,-20,14.4,15.0,30.0,-30,-15,50,0,40,-15,40,25,103,100,86,6)
+            ]
+            cols = "modelo,serie,voltaje_nominal,capacidad_nominal_ah,resistencia_interna_mohm,max_corriente_descarga_5s_a,largo_mm,ancho_mm,alto_contenedor_mm,alto_total_mm,peso_kg,tipo_terminal,material_contenedor,carga_flotacion_v_min,carga_flotacion_v_max,coef_temp_flotacion_mv_c,carga_ciclica_v_min,carga_ciclica_v_max,corriente_inicial_max_a,coef_temp_ciclica_mv_c,temp_descarga_min_c,temp_descarga_max_c,temp_carga_min_c,temp_carga_max_c,temp_almacenaje_min_c,temp_almacenaje_max_c,temp_nominal_c,capacidad_40c_pct,capacidad_25c_pct,capacidad_0c_pct,autodescarga_meses_max"
+            placeholders = ",".join(["?"] * 31)
+            cursor.executemany(f"INSERT INTO baterias_modelos ({cols}) VALUES ({placeholders})", datos_ejemplo)
+
         conn.commit()
         conn.close()
 
@@ -212,11 +278,18 @@ class GestorDB:
 
                 for i, fila in enumerate(lector, start=1):
                     try:
-                        # Normalizar claves del CSV (reemplazar espacios por guiones bajos)
-                        fila_norm = {k.strip().replace(' ', '_'): v.strip() for k, v in fila.items() if k}
+                        # Normalizar claves y limpiar valores "S/D"
+                        fila_norm = {}
+                        for k, v in fila.items():
+                            if k:
+                                key_clean = k.strip().replace(' ', '_')
+                                val_clean = v.strip()
+                                # Si es "S/D" o vacío, no lo agregamos (se insertará como NULL)
+                                if val_clean and val_clean != 'S/D':
+                                    fila_norm[key_clean] = val_clean
                         
                         # 2. Filtrar datos del CSV: Solo columnas que existen en la BD y no están vacías
-                        datos_limpios = {k: v for k, v in fila_norm.items() if k in columnas_validas and v}
+                        datos_limpios = {k: v for k, v in fila_norm.items() if k in columnas_validas}
                         
                         if not datos_limpios:
                             continue
@@ -378,3 +451,322 @@ class GestorDB:
         row = cursor.fetchone()
         conn.close()
         return dict(row) if row else None
+
+    # --- GESTIÓN DE BATERÍAS (NUEVO MÓDULO) ---
+    def agregar_modelo_bateria(self, datos_dict):
+        conn = self._conectar()
+        try:
+            # Filtrar solo columnas válidas
+            campos_validos = ['modelo','serie','voltaje_nominal','capacidad_nominal_ah','resistencia_interna_mohm','max_corriente_descarga_5s_a','largo_mm','ancho_mm','alto_contenedor_mm','alto_total_mm','peso_kg','tipo_terminal','material_contenedor','carga_flotacion_v_min','carga_flotacion_v_max','coef_temp_flotacion_mv_c','carga_ciclica_v_min','carga_ciclica_v_max','corriente_inicial_max_a','coef_temp_ciclica_mv_c','temp_descarga_min_c','temp_descarga_max_c','temp_carga_min_c','temp_carga_max_c','temp_almacenaje_min_c','temp_almacenaje_max_c','temp_nominal_c','capacidad_40c_pct','capacidad_25c_pct','capacidad_0c_pct','autodescarga_meses_max']
+            datos_limpios = {k: datos_dict[k] for k in campos_validos if k in datos_dict}
+            
+            columnas = ', '.join(datos_limpios.keys())
+            placeholders = ', '.join(['?'] * len(datos_limpios))
+            valores = list(datos_limpios.values())
+            
+            sql = f"INSERT INTO baterias_modelos ({columnas}) VALUES ({placeholders})"
+            conn.execute(sql, valores)
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error agregando batería: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def importar_curva_bateria_csv(self, modelo_bateria, ruta_csv):
+        if not os.path.exists(ruta_csv):
+            return {'status': 'error', 'msg': 'Archivo CSV no encontrado'}
+
+        conn = self._conectar()
+        try:
+            # 1. Obtener ID de la batería
+            row = conn.execute("SELECT id FROM baterias_modelos WHERE modelo = ?", (modelo_bateria,)).fetchone()
+            if not row:
+                return {'status': 'error', 'msg': f'Modelo de batería {modelo_bateria} no encontrado'}
+            
+            bateria_id = row['id']
+            insertados = 0
+            
+            # 2. Leer CSV y transformar (Unpivot)
+            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
+                lector = csv.DictReader(f)
+                # Identificar columnas de voltaje (ej: FV_1.60, FV_1.70)
+                cols_fv = [c for c in lector.fieldnames if c.upper().startswith('FV_')]
+                
+                for fila in lector:
+                    try:
+                        tiempo = int(fila.get('Tiempo_Min', 0))
+                        if tiempo <= 0: continue
+                        
+                        for col in cols_fv:
+                            try:
+                                # Extraer voltaje del nombre de la columna (FV_1.60 -> 1.60)
+                                voltaje_corte = float(col.upper().replace('FV_', ''))
+                                valor = float(fila[col])
+                                
+                                conn.execute('''
+                                    INSERT INTO baterias_curvas_descarga 
+                                    (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad)
+                                    VALUES (?, ?, ?, ?, ?)
+                                ''', (bateria_id, tiempo, voltaje_corte, valor, 'W'))
+                                insertados += 1
+                            except ValueError:
+                                continue 
+                    except ValueError:
+                        continue
+
+            conn.commit()
+            return {'status': 'ok', 'insertados': insertados}
+        except Exception as e:
+            return {'status': 'error', 'msg': str(e)}
+        finally:
+            conn.close()
+
+    def buscar_bateria_optima(self, watts_requeridos_celda, tiempo_minutos, fv_inversor):
+        conn = self._conectar()
+        try:
+            # Buscamos registros que cumplan con los requisitos mínimos
+            # Ordenamos por watts_celda ASC para encontrar la opción más ajustada (menor sobredimensionamiento)
+            query = '''
+                SELECT m.modelo, m.capacidad_nominal_ah, m.voltaje_nominal,
+                       c.valor as watts_celda, c.tiempo_minutos, c.voltaje_corte_fv, c.unidad
+                FROM baterias_curvas_descarga c
+                JOIN baterias_modelos m ON c.bateria_id = m.id
+                WHERE c.tiempo_minutos >= ?
+                  AND c.voltaje_corte_fv >= ?
+                  AND c.valor >= ?
+                  AND c.unidad = 'W'
+                ORDER BY c.valor ASC
+                LIMIT 10
+            '''
+            cursor = conn.execute(query, (tiempo_minutos, fv_inversor, watts_requeridos_celda))
+            return [dict(row) for row in cursor.fetchall()]
+        finally:
+            conn.close()
+
+    def obtener_baterias_modelos(self):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM baterias_modelos ORDER BY modelo").fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
+    def eliminar_bateria(self, id_bateria):
+        conn = self._conectar()
+        conn.execute("DELETE FROM baterias_modelos WHERE id = ?", (id_bateria,))
+        conn.commit()
+        conn.close()
+
+    def cargar_baterias_modelos_desde_csv(self, ruta_csv):
+        if not os.path.exists(ruta_csv):
+            return {'status': 'error', 'msg': 'Archivo no encontrado', 'logs': []}
+
+        conn = self._conectar()
+        filas_insertadas = 0
+        errores = 0
+        logs = []
+
+        try:
+            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
+                lector = csv.DictReader(f)
+                cursor = conn.execute("PRAGMA table_info(baterias_modelos)")
+                columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
+
+                for i, fila in enumerate(lector, start=1):
+                    try:
+                        datos_limpios = {k: v.strip() for k, v in fila.items() if k in columnas_validas and v and v.strip()}
+                        if not datos_limpios: continue
+
+                        columnas = ', '.join(datos_limpios.keys())
+                        placeholders = ', '.join(['?'] * len(datos_limpios))
+                        valores = list(datos_limpios.values())
+
+                        sql = f"INSERT INTO baterias_modelos ({columnas}) VALUES ({placeholders})"
+                        conn.execute(sql, valores)
+                        filas_insertadas += 1
+                    except Exception as e:
+                        errores += 1
+                        logs.append(f"Fila {i} Error: {str(e)}")
+
+            conn.commit()
+            return {'status': 'ok', 'insertados': filas_insertadas, 'errores': errores, 'logs': logs}
+        except Exception as e:
+            return {'status': 'error', 'msg': str(e), 'logs': logs}
+        finally:
+            conn.close()
+
+    def cargar_curvas_baterias_masiva(self, ruta_csv):
+        if not os.path.exists(ruta_csv):
+            return {'status': 'error', 'msg': 'Archivo CSV no encontrado', 'logs': []}
+
+        conn = self._conectar()
+        insertados = 0
+        errores = 0
+        logs = []
+
+        try:
+            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
+                lector = csv.DictReader(f)
+                cols_fv = [c for c in lector.fieldnames if c.upper().startswith('FV_')]
+                
+                if not cols_fv:
+                     return {'status': 'error', 'msg': 'No se encontraron columnas de voltaje (FV_x.xx)', 'logs': []}
+
+                for i, fila in enumerate(lector, start=1):
+                    modelo = fila.get('Modelo')
+                    unidad = fila.get('Unidad', 'W').strip().upper() # Default W si no se especifica
+                    if unidad not in ['W', 'A']: unidad = 'W'
+
+                    if not modelo:
+                        logs.append(f"Fila {i}: Falta columna 'Modelo'")
+                        errores += 1
+                        continue
+                    
+                    row_bat = conn.execute("SELECT id FROM baterias_modelos WHERE modelo = ?", (modelo,)).fetchone()
+                    if not row_bat:
+                        logs.append(f"Fila {i}: Modelo '{modelo}' no existe en BD")
+                        errores += 1
+                        continue
+                    
+                    bateria_id = row_bat['id']
+                    
+                    try:
+                        tiempo = int(fila.get('Tiempo_Min', 0))
+                        if tiempo <= 0: continue
+                        
+                        for col in cols_fv:
+                            try:
+                                voltaje_corte = float(col.upper().replace('FV_', ''))
+                                valor = float(fila[col])
+                                
+                                conn.execute('''
+                                    INSERT INTO baterias_curvas_descarga 
+                                    (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad)
+                                    VALUES (?, ?, ?, ?, ?)
+                                ''', (bateria_id, tiempo, voltaje_corte, valor, unidad))
+                                insertados += 1
+                            except ValueError:
+                                continue
+                    except ValueError as e:
+                        logs.append(f"Fila {i}: Error de datos - {e}")
+                        errores += 1
+
+            conn.commit()
+            return {'status': 'ok', 'insertados': insertados, 'errores': errores, 'logs': logs}
+        except Exception as e:
+            return {'status': 'error', 'msg': str(e), 'logs': logs}
+        finally:
+            conn.close()
+
+    def obtener_bateria_id(self, id_bateria):
+        conn = self._conectar()
+        row = conn.execute("SELECT * FROM baterias_modelos WHERE id = ?", (id_bateria,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def actualizar_bateria(self, id_bateria, datos):
+        conn = self._conectar()
+        try:
+            cursor = conn.execute("PRAGMA table_info(baterias_modelos)")
+            columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
+            
+            datos_limpios = {k: v for k, v in datos.items() if k in columnas_validas}
+            if not datos_limpios: return False
+
+            set_clause = ', '.join([f"{k} = ?" for k in datos_limpios.keys()])
+            valores = list(datos_limpios.values())
+            valores.append(id_bateria)
+            
+            conn.execute(f"UPDATE baterias_modelos SET {set_clause} WHERE id = ?", valores)
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando batería: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def obtener_curvas_por_bateria(self, id_bateria):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM baterias_curvas_descarga WHERE bateria_id = ? ORDER BY unidad, tiempo_minutos, voltaje_corte_fv", (id_bateria,)).fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
+    def obtener_curvas_pivot(self, bateria_id, unidad='W'):
+        """Retorna las curvas organizadas como matriz para visualización: {headers: [1.60, 1.70...], data: [{tiempo: 5, 1.60: 100...}]}"""
+        conn = self._conectar()
+        rows = conn.execute("SELECT tiempo_minutos, voltaje_corte_fv, valor FROM baterias_curvas_descarga WHERE bateria_id = ? AND unidad = ? ORDER BY tiempo_minutos, voltaje_corte_fv", (bateria_id, unidad)).fetchall()
+        conn.close()
+
+        if not rows:
+            return None
+
+        # 1. Obtener columnas dinámicas (Voltajes de corte)
+        voltajes = sorted(list(set(r['voltaje_corte_fv'] for r in rows)))
+        
+        # 2. Agrupar por tiempo
+        datos_por_tiempo = {}
+        for r in rows:
+            t = r['tiempo_minutos']
+            if t not in datos_por_tiempo:
+                datos_por_tiempo[t] = {'tiempo': t}
+            datos_por_tiempo[t][r['voltaje_corte_fv']] = r['valor']
+
+        # 3. Convertir a lista ordenada por tiempo
+        data_list = sorted(datos_por_tiempo.values(), key=lambda x: x['tiempo'])
+        
+        return {'headers': voltajes, 'data': data_list}
+
+    def cargar_curvas_por_id_csv(self, bateria_id, ruta_csv):
+        """Carga curvas para una batería específica, limpiando las anteriores."""
+        if not os.path.exists(ruta_csv):
+            return {'status': 'error', 'msg': 'Archivo no encontrado'}
+        
+        conn = self._conectar()
+        insertados = 0
+        try:
+            # Limpiar curvas anteriores de esta batería para evitar duplicados
+            conn.execute("DELETE FROM baterias_curvas_descarga WHERE bateria_id = ?", (bateria_id,))
+            
+            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
+                lector = csv.DictReader(f)
+                cols_fv = [c for c in lector.fieldnames if c.upper().startswith('FV_')]
+                
+                for fila in lector:
+                    try:
+                        tiempo = int(fila.get('Tiempo_Min', 0))
+                        unidad = fila.get('Unidad', 'W').strip().upper()
+                        if unidad not in ['W', 'A']: unidad = 'W'
+                        if tiempo <= 0: continue
+                        
+                        for col in cols_fv:
+                            try:
+                                v_corte = float(col.upper().replace('FV_', ''))
+                                valor = float(fila[col])
+                                conn.execute("INSERT INTO baterias_curvas_descarga (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad) VALUES (?, ?, ?, ?, ?)", (bateria_id, tiempo, v_corte, valor, unidad))
+                                insertados += 1
+                            except ValueError: continue
+                    except ValueError: continue
+            
+            conn.commit()
+            return {'status': 'ok', 'insertados': insertados}
+        except Exception as e:
+            return {'status': 'error', 'msg': str(e)}
+        finally:
+            conn.close()
+
+    def obtener_datos_tabla(self, tabla):
+        conn = self._conectar()
+        try:
+            tablas_validas = ['clientes', 'ups_specs', 'baterias_modelos', 'baterias_curvas_descarga', 'proyectos_publicados']
+            if tabla not in tablas_validas:
+                return [], []
+            
+            cursor = conn.execute(f"SELECT * FROM {tabla}")
+            filas = cursor.fetchall()
+            headers = [d[0] for d in cursor.description]
+            return headers, filas
+        except Exception:
+            return [], []
+        finally:
+            conn.close()
