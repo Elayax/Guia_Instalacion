@@ -6,7 +6,7 @@ from datetime import datetime
 class GestorDB:
     def __init__(self):
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.db_path = os.path.join(base_dir, 'sistema_ups_master.db')
+        self.db_path = os.path.join(base_dir, 'Equipos.db')
         self._inicializar_tablas()
 
     def _conectar(self):
@@ -17,6 +17,10 @@ class GestorDB:
     def _inicializar_tablas(self):
         conn = self._conectar()
         cursor = conn.cursor()
+        
+        # LIMPIEZA: Eliminar tabla antigua para asegurar que solo se use la nueva
+        cursor.execute("DROP TABLE IF EXISTS ups_catalogo")
+        cursor.execute("DROP TABLE IF EXISTS ups_specs")
         
         # 1. TABLA CLIENTES
         # Nota: Mantenemos lat y lon separados porque es mejor para futuros cálculos
@@ -33,17 +37,68 @@ class GestorDB:
             )
         ''')
 
-        # 2. TABLA UPS
+        # 2. TABLA UPS_SPECS (NUEVO ESQUEMA)
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS ups_catalogo (
+            CREATE TABLE IF NOT EXISTS ups_specs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                fabricante TEXT,
-                modelo TEXT UNIQUE NOT NULL,
-                kva REAL,
-                v_entrada INTEGER,
-                v_salida INTEGER
+                Nombre_del_Producto TEXT,
+                Serie TEXT,
+                Fuente TEXT,
+                Capacidad_kVA REAL,
+                Capacidad_kW REAL,
+                Eficiencia_Modo_AC_pct REAL,
+                Eficiencia_Modo_Bateria_pct REAL,
+                Eficiencia_Modo_ECO_pct REAL,
+                FP_Salida REAL,
+                Voltaje_Entrada_1_V REAL,
+                Voltaje_Entrada_2_V REAL,
+                Voltaje_Entrada_3_V REAL,
+                Conexion_Entrada TEXT,
+                Voltaje_Salida_1_V REAL,
+                Voltaje_Salida_2_V REAL,
+                Voltaje_Salida_3_V REAL,
+                Conexion_Salida TEXT,
+                Frecuencia_1_Hz REAL,
+                Frecuencia_2_Hz REAL,
+                Frecuencia_Precision_pct REAL,
+                THDu_Lineal_pct REAL,
+                THDu_NoLineal_pct REAL,
+                Sobrecarga_110_pct_min REAL,
+                Sobrecarga_125_pct_min REAL,
+                Sobrecarga_150_pct_min REAL,
+                Bateria_Vdc REAL,
+                Bateria_Piezas_min REAL,
+                Bateria_Piezas_max REAL,
+                Bateria_Piezas_defecto REAL,
+                Precision_Voltaje_pct REAL,
+                TempTrabajo_min_C REAL,
+                TempTrabajo_max_C REAL,
+                Humedad_min_pct REAL,
+                Humedad_max_pct REAL,
+                Peso_Gabinete_kg REAL,
+                Dim_Largo_mm REAL,
+                Dim_Ancho_mm REAL,
+                Dim_Alto_mm REAL,
+                Nivel_Ruido_dB REAL,
+                Torque_M6_Nm REAL,
+                Torque_M8_Nm REAL,
+                Torque_M10_Nm REAL,
+                Torque_M12_Nm REAL,
+                Torque_M16_Nm REAL,
+                Cable_Entrada_mm2 REAL,
+                Cable_Entrada_conductores REAL,
+                Cable_Salida_mm2 REAL,
+                Cable_Salida_conductores REAL,
+                Cable_Bateria_mm2 REAL,
+                Cable_Bateria_conductores REAL,
+                Cable_PE_mm2 REAL
             )
         ''')
+        
+        # Creación de Índices
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_serie ON ups_specs(Serie);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_nombre ON ups_specs(Nombre_del_Producto);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_cap_kva ON ups_specs(Capacidad_kVA);")
 
         # 3. TABLA PROYECTOS
         cursor.execute('''
@@ -127,9 +182,17 @@ class GestorDB:
         finally:
             conn.close()
 
+    # --- GESTIÓN DE UPS (NUEVO) ---
+    def obtener_ups_todos(self):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM ups_specs ORDER BY Capacidad_kVA").fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
     def cargar_ups_desde_csv(self, ruta_csv):
         """
-        Carga equipos UPS desde CSV con formato: [Marca, Modelo, Capacidad]
+        Carga masiva de equipos UPS desde CSV.
+        Las columnas del CSV deben coincidir con los nombres de la tabla ups_specs.
         """
         if not os.path.exists(ruta_csv):
             return {'status': 'error', 'msg': 'Archivo no encontrado', 'logs': []}
@@ -141,32 +204,82 @@ class GestorDB:
 
         try:
             with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
-                lector = csv.reader(f)
-                for fila in lector:
-                    # Formato esperado: Marca, Modelo, Capacidad
-                    if len(fila) < 3:
-                        logs.append(f"⚠️ Fila ignorada (datos insuficientes): {fila}")
-                        continue
+                lector = csv.DictReader(f)
+                
+                # 1. Obtener columnas válidas de la BD para evitar errores
+                cursor = conn.execute("PRAGMA table_info(ups_specs)")
+                columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
 
+                for i, fila in enumerate(lector, start=1):
                     try:
-                        marca = fila[0].strip()      # Se guarda en 'fabricante'
-                        modelo = fila[1].strip()     # Se guarda en 'modelo'
-                        capacidad = fila[2].strip()  # Se guarda en 'kva'
+                        # Normalizar claves del CSV (reemplazar espacios por guiones bajos)
+                        fila_norm = {k.strip().replace(' ', '_'): v.strip() for k, v in fila.items() if k}
                         
-                        # Insertamos asumiendo voltajes estándar (220V) si no se especifican
-                        conn.execute('''
-                            INSERT OR IGNORE INTO ups_catalogo (fabricante, modelo, kva, v_entrada, v_salida)
-                            VALUES (?, ?, ?, 220, 220)
-                        ''', (marca, modelo, capacidad))
+                        # 2. Filtrar datos del CSV: Solo columnas que existen en la BD y no están vacías
+                        datos_limpios = {k: v for k, v in fila_norm.items() if k in columnas_validas and v}
                         
+                        if not datos_limpios:
+                            continue
+
+                        # 3. Construcción dinámica del INSERT
+                        columnas = ', '.join(datos_limpios.keys())
+                        placeholders = ', '.join(['?'] * len(datos_limpios))
+                        valores = list(datos_limpios.values())
+
+                        sql = f"INSERT INTO ups_specs ({columnas}) VALUES ({placeholders})"
+                        conn.execute(sql, valores)
                         filas_insertadas += 1
                     except Exception as e:
-                        logs.append(f"❌ Error en fila {fila}: {e}")
                         errores += 1
+                        logs.append(f"Fila {i} Error: {str(e)}")
+
             conn.commit()
             return {'status': 'ok', 'insertados': filas_insertadas, 'errores': errores, 'logs': logs}
         except Exception as e:
             return {'status': 'error', 'msg': str(e), 'logs': logs}
+        finally:
+            conn.close()
+
+    def insertar_ups_manual(self, datos_dict):
+        conn = self._conectar()
+        try:
+            columnas = ', '.join(datos_dict.keys())
+            placeholders = ', '.join(['?'] * len(datos_dict))
+            valores = list(datos_dict.values())
+            
+            sql = f"INSERT INTO ups_specs ({columnas}) VALUES ({placeholders})"
+            conn.execute(sql, valores)
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error insertando UPS: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def actualizar_ups(self, id_ups, datos):
+        """Actualiza un registro existente en ups_specs"""
+        conn = self._conectar()
+        try:
+            # Filtrar solo columnas válidas para evitar errores de SQL injection o campos extra
+            cursor = conn.execute("PRAGMA table_info(ups_specs)")
+            columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
+            
+            datos_limpios = {k: v for k, v in datos.items() if k in columnas_validas}
+            
+            if not datos_limpios:
+                return False
+
+            set_clause = ', '.join([f"{k} = ?" for k in datos_limpios.keys()])
+            valores = list(datos_limpios.values())
+            valores.append(id_ups)
+            
+            conn.execute(f"UPDATE ups_specs SET {set_clause} WHERE id = ?", valores)
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando UPS: {e}")
+            return False
         finally:
             conn.close()
 
@@ -211,35 +324,15 @@ class GestorDB:
         conn.close()
         return resultados
 
-    # --- RESTO DE MÉTODOS (UPS Y PROYECTOS) IGUAL QUE ANTES ---
-    def agregar_ups(self, datos):
-        conn = self._conectar()
-        try:
-            conn.execute('''
-                INSERT INTO ups_catalogo (fabricante, modelo, kva, v_entrada, v_salida)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (datos['fabricante'], datos['modelo'], datos['kva'], datos['v_in'], datos['v_out']))
-            conn.commit()
-        except:
-            pass
-        finally:
-            conn.close()
-
-    def obtener_ups_todos(self):
-        conn = self._conectar()
-        res = conn.execute("SELECT * FROM ups_catalogo ORDER BY fabricante").fetchall()
-        conn.close()
-        return [dict(row) for row in res]
-        
     def obtener_ups_id(self, id_ups):
         conn = self._conectar()
-        row = conn.execute("SELECT * FROM ups_catalogo WHERE id = ?", (id_ups,)).fetchone()
+        row = conn.execute("SELECT * FROM ups_specs WHERE id = ?", (id_ups,)).fetchone()
         conn.close()
         return dict(row) if row else None
 
     def eliminar_ups(self, id_ups):
         conn = self._conectar()
-        conn.execute("DELETE FROM ups_catalogo WHERE id = ?", (id_ups,))
+        conn.execute("DELETE FROM ups_specs WHERE id = ?", (id_ups,))
         conn.commit()
         conn.close()
 
@@ -253,8 +346,8 @@ class GestorDB:
             ''', (
                 form_data['pedido'],
                 datetime.now().strftime("%Y-%m-%d %H:%M"),
-                datos_calculados['modelo_nombre'],
-                datos_calculados['kva'],
+                datos_calculados.get('Nombre_del_Producto', 'Desconocido'),
+                datos_calculados.get('Capacidad_kVA', 0),
                 form_data['cliente_nombre'],
                 form_data['sucursal_nombre'],
                 datos_calculados['fase_sel'],
@@ -279,7 +372,7 @@ class GestorDB:
         cursor = conn.execute('''
             SELECT p.*, m.id as modelo_id_real 
             FROM proyectos_publicados p
-            LEFT JOIN ups_catalogo m ON m.modelo = p.modelo_snap
+            LEFT JOIN ups_specs m ON m.Nombre_del_Producto = p.modelo_snap
             WHERE p.pedido = ?
         ''', (pedido,))
         row = cursor.fetchone()
