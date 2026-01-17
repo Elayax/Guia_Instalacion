@@ -323,6 +323,8 @@ def gestion():
             pass
         elif tipo == 'del_ups':
             db.eliminar_ups(request.form.get('id'))
+        elif tipo == 'add_bateria':
+            db.agregar_modelo_bateria(request.form)
         elif tipo == 'del_bateria':
             db.eliminar_bateria(request.form.get('id'))
         return redirect(url_for('main.gestion'))

@@ -6,19 +6,291 @@
     <title>Sistema de Ingeniería UPS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --accent-red: #ff453a;
+            --accent-red-dim: #cf2e26;
+            --text-main: #f5f5f7;
+            --text-sec: #a1a1a6;
+            --bg-body: #1c1c1e;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(60, 20, 20, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Header Glass */
+        .app-header {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            gap: 2px;
+        }
+
+        .nav-link {
+            color: var(--text-sec) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 0.4rem 1.2rem;
+            border-radius: 20px;
+        }
+        .nav-link:hover {
+            color: var(--text-main) !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link.active {
+            color: var(--text-main) !important;
+            background: rgba(60, 60, 60, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Layout Grid */
+        .top-controls {
+            display: flex;
+            width: 100%;
+            gap: 15px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        /* Glass Cards */
+        .card-control {
+            flex: 1;
+            min-width: 240px;
+            background: rgba(30, 30, 30, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .card-control:hover {
+            border-color: var(--accent-red);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(255, 69, 58, 0.15);
+            background: rgba(40, 40, 40, 0.6);
+        }
+
+        .control-title {
+            color: var(--accent-red);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            opacity: 0.9;
+        }
+
+        /* Inputs Modernos */
+        .form-select, .form-control {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: var(--text-main) !important;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            transition: all 0.2s;
+        }
+        .form-select:focus, .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15) !important;
+            border-color: var(--accent-red) !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+        .form-control::placeholder { color: rgba(255,255,255,0.2); }
+        .form-control:disabled, .form-select:disabled { opacity: 0.5; }
+
+        /* Botones */
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 10px 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dim));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff5e55, #d63a30);
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
+        .btn-dark {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+        .btn-dark:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .btn-warning {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+        .btn-warning:hover {
+            background: var(--text-main);
+            color: black;
+        }
+
+        /* Matriz de Resultados */
+        .tech-matrix {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+            margin: 20px auto 50px auto;
+            max-width: 1400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .recap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        .recap-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 15px;
+            border-radius: 16px;
+            border-left: 2px solid var(--accent-red);
+        }
+        .recap-label { font-size: 0.7rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .recap-value { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+
+        .data-grid.redesigned {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .data-cell {
+            background: rgba(40, 40, 40, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .data-cell::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+        .data-cell.active {
+            background: rgba(255, 59, 48, 0.03);
+            border-color: rgba(255, 59, 48, 0.2);
+        }
+        .data-cell:hover {
+            background: rgba(255, 69, 58, 0.08);
+            border-color: var(--accent-red);
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 69, 58, 0.25);
+            z-index: 10;
+        }
+
+        .cell-label {
+            font-size: 0.75rem;
+            color: var(--text-sec);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        .cell-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+        .cell-unit {
+            font-size: 0.9rem;
+            color: var(--text-sec);
+            margin-left: 6px;
+            font-weight: 400;
+        }
+        
+        /* Text Colors overrides */
+        .text-muted { color: var(--text-sec) !important; }
+        .text-primary { color: var(--accent-red) !important; }
+        .text-success { color: #32d74b !important; }
+        .text-warning { color: #ff9f0a !important; }
+        .text-danger { color: #ff453a !important; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Ficha técnica rápida */
+        .specs-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+    </style>
 </head>
 <body>
     <header class="app-header">
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px;">SISTEMA UPS <span style="color:#dc2626">MANAGER</span></span>
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span style="color:var(--accent-red)">MANAGER</span></span>
         </div>
         <nav class="nav-links">
-            <a href="{{ url_for('main.index') }}" class="nav-link active">CALCULADORA</a>
+            <a href="{{ url_for('main.index') }}" class="nav-link active"><i class="bi bi-calculator me-1"></i> CALCULADORA</a>
             <a href="{{ url_for('main.equipos') }}" class="nav-link">EDICIÓN EQUIPOS</a>
             <a href="{{ url_for('main.baterias') }}" class="nav-link">BATERÍAS</a>
             <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
+            <a href="{{ url_for('main.carga_masiva') }}" class="nav-link">CARGA MASIVA</a>
         </nav>
     </header>
 
@@ -33,7 +305,7 @@
         <section class="top-controls">
             <!-- CLIENTE -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-building me-1"></i> CLIENTE</div>
+                <div class="control-title"><i class="bi bi-building me-2"></i> CLIENTE</div>
                 <label class="small text-muted">Empresa</label>
                 <select id="sel_cliente" class="form-select form-select-sm">
                     <option value="">Seleccionar...</option>
@@ -52,9 +324,38 @@
                 </select>
             </div>
 
+            <!-- DATOS DE PROYECTO -->
+            <div class="card-control">
+                <div class="control-title"><i class="bi bi-sliders me-2"></i> DATOS DE PROYECTO</div>
+                
+                <div class="mb-2">
+                    <label class="small text-muted">Voltaje Entrada</label>
+                    <select name="voltaje" id="sel_voltaje" class="form-select form-select-sm">
+                        <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220 V</option>
+                        <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208 V</option>
+                        <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480 V</option>
+                        <option value="127" {% if request.form.get('voltaje') == '127' %}selected{% endif %}>127 V</option>
+                    </select>
+                </div>
+
+                <div class="mb-2">
+                    <label class="small text-muted">Fases</label>
+                    <select name="fases" class="form-select form-select-sm">
+                        <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F + Neutro</option>
+                        <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F + Neutro</option>
+                        <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F + Neutro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="small text-muted">Distancia (mts)</label>
+                    <input type="number" name="longitud" class="form-control form-control-sm" value="{{ request.form.get('longitud', '') }}" placeholder="0">
+                </div>
+            </div>
+
             <!-- EQUIPO -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-box-seam me-1"></i> EQUIPO</div>
+                <div class="control-title"><i class="bi bi-box-seam me-2"></i> EQUIPO</div>
                 <label class="small text-muted">Modelo UPS</label>
                 <select name="id_ups" id="sel_ups" class="form-select form-select-sm" required>
                     <option value="">Seleccionar...</option>
@@ -69,17 +370,17 @@
                 <div class="row g-2 mt-2">
                     <div class="col-6">
                         <label class="small text-muted">kVA</label>
-                        <input type="text" id="txt_kva" class="form-control form-control-sm bg-light" readonly value="{{ res.kva if res else '' }}">
+                        <input type="text" id="txt_kva" class="form-control form-control-sm" readonly value="{{ res.kva if res else '' }}">
                     </div>
                     <div class="col-6">
                         <label class="small text-muted">Volts In</label>
-                        <input type="text" id="txt_vin" class="form-control form-control-sm bg-light" readonly value="{{ res.voltaje if res else '' }}">
+                        <input type="text" id="txt_vin" class="form-control form-control-sm" readonly value="{{ res.voltaje if res else '' }}">
                     </div>
                 </div>
 
                 <!-- FICHA UPS COMPACTA -->
-                <div id="ups_specs_container" class="specs-panel mt-2 d-none" style="border-top:1px solid #555; padding-top:6px;">
-                    <div class="text-center mb-1" style="color: var(--highlight); font-weight:700;">FICHA TÉCNICA RÁPIDA</div>
+                <div id="ups_specs_container" class="specs-panel d-none">
+                    <div class="text-center mb-2" style="color: var(--text-main); font-weight:700; font-size:0.75rem; letter-spacing:1px;">FICHA TÉCNICA</div>
                     <div class="d-flex justify-content-between small"><span>Serie:</span><span id="sp_serie">--</span></div>
                     <div class="d-flex justify-content-between small"><span>Potencia kW:</span><span id="sp_kw">--</span></div>
                     <div class="d-flex justify-content-between small"><span>Eficiencia AC:</span><span id="sp_eff">--</span>%</div>
@@ -91,7 +392,7 @@
 
             <!-- BATERÍA -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-battery-charging me-1"></i> BATERÍA</div>
+                <div class="control-title"><i class="bi bi-battery-charging me-2"></i> BATERÍA</div>
                 <label class="small text-muted">Modelo Batería</label>
                 <select name="id_bateria" id="sel_bateria" class="form-select form-select-sm">
                     <option value="">Seleccionar...</option>
@@ -101,8 +402,8 @@
                     {% endfor %}
                 </select>
                 <!-- Ficha compacta -->
-                <div id="bat_specs_container" class="specs-panel mt-2" style="display: none; border-top:1px solid #555; padding-top:6px;">
-                    <div class="text-center mb-1" style="color: var(--success); font-size: .75rem; font-weight:700;">DATOS BATERÍA</div>
+                <div id="bat_specs_container" class="specs-panel" style="display: none;">
+                    <div class="text-center mb-2" style="color: var(--text-success); font-size: .75rem; font-weight:700;">DATOS BATERÍA</div>
                     <div class="d-flex justify-content-between small"><span>Voltaje:</span><span id="bat_volt">--</span> V</div>
                     <div class="d-flex justify-content-between small"><span>Capacidad:</span><span id="bat_ah">--</span> Ah</div>
                     <div class="d-flex justify-content-between small"><span>Dimensiones:</span><span id="bat_dim">--</span></div>
@@ -114,14 +415,14 @@
 
             <!-- PEDIDO + ACCIONES -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-clipboard-check me-1"></i> PEDIDO & ACCIONES</div>
+                <div class="control-title"><i class="bi bi-clipboard-check me-2"></i> PEDIDO & ACCIONES</div>
                 <label class="small text-muted fw-bold text-primary">No. Pedido</label>
                 <div class="input-group input-group-sm">
                     <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="OC-XXXX">
                     <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
                 </div>
                 <div class="d-grid gap-2 mt-2">
-                    <button type="submit" name="accion" value="preview" class="btn btn-dark">CALCULAR</button>
+                    <button type="submit" name="accion" value="preview" class="btn btn-dark">VISTA PREVIA</button>
                     <button type="submit" name="accion" value="publicar" class="btn btn-primary">PUBLICAR</button>
                 </div>
             </div>
@@ -130,7 +431,7 @@
         <!-- =================== MATRIZ + RECÁPITULO =================== -->
         <main class="tech-matrix">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="m-0 fw-bold">Recapitulado de Instalación</h5>
+                <h5 class="m-0 fw-bold" style="letter-spacing: -0.5px;">Recapitulado de Instalación</h5>
                 {% if msg %}<span class="badge bg-success fs-6">{{ msg }}</span>{% endif %}
             </div>
 
@@ -164,37 +465,6 @@
 
             <!-- Matriz de datos reorganizada -->
             <div class="data-grid redesigned">
-                <!-- Entrada -->
-                <div class="data-cell">
-                    <span class="cell-label"><i class="bi bi-arrow-right-circle"></i> Voltaje Entrada</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <select name="voltaje" id="sel_voltaje" class="matrix-input">
-                            <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220</option>
-                            <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208</option>
-                            <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480</option>
-                            <option value="127" {% if request.form.get('voltaje') == '127' %}selected{% endif %}>127</option>
-                        </select>
-                        <span class="cell-unit">V</span>
-                    </div>
-                </div>
-
-                <div class="data-cell">
-                    <span class="cell-label"><i class="bi bi-three-dots"></i> Fases</span>
-                    <select name="fases" class="matrix-input">
-                        <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F+N</option>
-                        <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F+N</option>
-                        <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F+N</option>
-                    </select>
-                </div>
-
-                <div class="data-cell">
-                    <span class="cell-label"><i class="bi bi-rulers"></i> Distancia</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <input type="number" name="longitud" class="matrix-input" value="{{ request.form.get('longitud', '') }}" placeholder="0">
-                        <span class="cell-unit">mts</span>
-                    </div>
-                </div>
-
                 <!-- Resultados principales -->
                 <div class="data-cell {{ 'active' if res else 'inactive' }}">
                     <span class="cell-label">Corriente Diseño</span>
@@ -212,7 +482,7 @@
                     </div>
                 </div>
 
-                <div class="data-cell {{ 'active' if res else 'inactive' }}" style="border-color: #f59e0b;">
+                <div class="data-cell {{ 'active' if res else 'inactive' }}">
                     <span class="cell-label text-warning">Caída de Tensión</span>
                     <div class="d-flex align-items-baseline gap-2">
                         <span class="cell-value">{{ res.dv_pct if res else '--' }}</span>
@@ -221,7 +491,7 @@
                 </div>
 
                 <!-- Selección de conductores y protección -->
-                <div class="data-cell {{ 'active' if res else 'inactive' }}" style="border-color: var(--success);">
+                <div class="data-cell {{ 'active' if res else 'inactive' }}">
                     <span class="cell-label text-success">CABLE FASES (THHN)</span>
                     <span class="cell-value huge text-success">{{ res.fase_sel if res else '--' }}</span>
                     <span class="cell-unit">AWG/kcmil</span>
@@ -243,12 +513,12 @@
             </div>
 
             {% if res %}
-            <div class="d-flex justify-content-end align-items-center p-3 rounded border shadow-sm mt-3" style="background-color: var(--bg-card);">
+            <div class="d-flex justify-content-end align-items-center p-4 rounded border shadow-sm mt-4" style="background-color: rgba(0,0,0,0.3); border-color: var(--glass-border);">
                 <div class="me-auto text-muted">
                     <small><i class="bi bi-check-circle-fill text-success"></i> Cálculo Completado</small>
                     <div style="font-size: 0.85rem;">Cliente: <strong>{{ res.cliente_nom }}</strong> — Sucursal: <strong>{{ res.sucursal_nom }}</strong></div>
                 </div>
-                <button type="button" onclick="descargarPDF()" class="btn btn-danger btn-lg px-5 fw-bold shadow">
+                <button type="button" onclick="descargarPDF()" class="btn btn-primary btn-lg px-5 fw-bold shadow">
                     <i class="bi bi-file-earmark-pdf-fill"></i> DESCARGAR PDF
                 </button>
             </div>
