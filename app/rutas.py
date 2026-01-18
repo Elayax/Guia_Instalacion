@@ -139,37 +139,6 @@ def index():
 
     return render_template('index.html', clientes=lista_clientes_unicos, ups=lista_ups, baterias=lista_baterias, res=resultado, msg=mensaje)
 
-# --- CARGA MASIVA ---
-@main.route('/carga-masiva', methods=['GET', 'POST'])
-def carga_masiva():
-    if request.method == 'POST':
-        file = request.files.get('archivo_csv')
-        tipo = request.form.get('tipo_carga') # 'ups' o 'clientes'
-        
-        if file and file.filename != '':
-            # Guardar archivo temporalmente
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            upload_dir = os.path.join(base_dir, 'static', 'uploads')
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir)
-            
-            filepath = os.path.join(upload_dir, file.filename)
-            file.save(filepath)
-            
-            # Procesar según selección
-            if tipo == 'ups':
-                db.cargar_ups_desde_csv(filepath)
-            elif tipo == 'clientes':
-                db.cargar_clientes_desde_csv(filepath)
-            elif tipo == 'baterias_modelos':
-                db.cargar_baterias_modelos_desde_csv(filepath)
-            elif tipo == 'baterias_curvas':
-                db.cargar_curvas_baterias_masiva(filepath)
-                
-            return redirect(url_for('main.gestion'))
-            
-    return render_template('carga_masiva.html')
-
 @main.route('/descargar-plantilla/<tipo>')
 def descargar_plantilla(tipo):
     si = io.StringIO()
@@ -232,7 +201,7 @@ def exportar_bd(tabla):
     output.headers["Content-type"] = "text/csv"
     return output
 
-# --- EDICIÓN DE EQUIPOS ---
+# --- EDICIÓN DE EQUIPOS (RESTAURADO) ---
 @main.route('/equipos', methods=['GET', 'POST'])
 def equipos():
     ups_seleccionado = None
@@ -249,23 +218,20 @@ def equipos():
                 
         elif accion == 'guardar':
             id_ups = request.form.get('id')
-            # Actualizamos en BD
             if db.actualizar_ups(id_ups, request.form):
                 mensaje = "✅ Equipo actualizado correctamente."
-                # Recargamos los datos actualizados
                 ups_seleccionado = db.obtener_ups_id(id_ups)
             else:
                 mensaje = "❌ Error al actualizar el equipo."
                 
     return render_template('equipos.html', ups_lista=lista_ups, ups=ups_seleccionado, msg=mensaje)
 
-# --- GESTIÓN DE BATERÍAS (NUEVA RUTA) ---
+# --- GESTIÓN DE BATERÍAS (RESTAURADO) ---
 @main.route('/baterias', methods=['GET', 'POST'])
 def baterias():
     bateria_seleccionada = None
     mensaje = None
     lista_baterias = db.obtener_baterias_modelos()
-    curvas = []
     pivot_data = None
     
     if request.method == 'POST':
@@ -312,28 +278,162 @@ def baterias():
 # --- GESTIÓN DE BD ---
 @main.route('/gestion', methods=['GET', 'POST'])
 def gestion():
+    mensaje = None
+    active_tab = 'ups' # Pestaña por defecto
+    ups_seleccionado = None
+    agregando_ups = False
+    bateria_seleccionada = None
+    agregando_bateria = False
+    pivot_data = None
+    unidad_curva = 'W'
+
     if request.method == 'POST':
         tipo = request.form.get('tipo')
-        if tipo == 'add_cliente':
+        accion = request.form.get('accion')
+        
+        if request.form.get('active_tab'):
+            active_tab = request.form.get('active_tab')
+            
+        if request.form.get('unidad_curva'):
+            unidad_curva = request.form.get('unidad_curva')
+
+        # --- CARGA MASIVA ---
+        if request.files.get('archivo_csv'):
+            file = request.files.get('archivo_csv')
+            tipo_carga = request.form.get('tipo_carga')
+            if file and file.filename != '':
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                upload_dir = os.path.join(base_dir, 'static', 'uploads')
+                if not os.path.exists(upload_dir): os.makedirs(upload_dir)
+                filepath = os.path.join(upload_dir, file.filename)
+                file.save(filepath)
+                
+                if tipo_carga == 'ups': db.cargar_ups_desde_csv(filepath)
+                elif tipo_carga == 'clientes': db.cargar_clientes_desde_csv(filepath)
+                elif tipo_carga == 'baterias_modelos': db.cargar_baterias_modelos_desde_csv(filepath)
+                elif tipo_carga == 'baterias_curvas': db.cargar_curvas_baterias_masiva(filepath)
+                mensaje = "✅ Carga masiva procesada."
+            active_tab = 'carga'
+
+        # --- CLIENTES ---
+        elif tipo == 'add_cliente':
             db.agregar_cliente(request.form)
+            active_tab = 'clientes'
         elif tipo == 'del_cliente':
             db.eliminar_cliente(request.form.get('id'))
-        elif tipo == 'add_ups':
-            # db.agregar_ups(request.form) # Deshabilitado temporalmente por cambio de esquema
-            pass
+            active_tab = 'clientes'
+            
+        # --- UPS (Solo eliminar y agregar, editar va a su página) ---
         elif tipo == 'del_ups':
             db.eliminar_ups(request.form.get('id'))
+            active_tab = 'ups'
         elif tipo == 'add_bateria':
             db.agregar_modelo_bateria(request.form)
+            active_tab = 'baterias'
         elif tipo == 'del_bateria':
             db.eliminar_bateria(request.form.get('id'))
-        return redirect(url_for('main.gestion'))
+            active_tab = 'baterias'
+            
+        # --- EDICIÓN / CREACIÓN INTEGRADA UPS ---
+        elif accion == 'iniciar_agregar_ups':
+            agregando_ups = True
+            active_tab = 'ups'
+        elif accion == 'editar_ups':
+            id_ups = request.form.get('id_ups')
+            ups_seleccionado = db.obtener_ups_id(id_ups)
+            active_tab = 'ups'
+        elif accion == 'guardar_ups':
+            id_ups = request.form.get('id')
+            if id_ups:
+                if db.actualizar_ups(id_ups, request.form):
+                    mensaje = "✅ Equipo actualizado correctamente."
+                else:
+                    mensaje = "❌ Error al actualizar el equipo."
+            else:
+                if db.insertar_ups_manual(request.form):
+                    mensaje = "✅ Nuevo equipo agregado correctamente."
+                else:
+                    mensaje = "❌ Error al agregar el equipo."
+            active_tab = 'ups'
+        elif accion == 'cancelar_edicion_ups':
+            active_tab = 'ups'
+            ups_seleccionado = None
+            agregando_ups = False
+
+        # --- EDICIÓN INTEGRADA BATERÍAS ---
+        elif accion == 'iniciar_agregar_bateria':
+            agregando_bateria = True
+            active_tab = 'baterias'
+        elif accion == 'editar_bateria':
+            id_bat = request.form.get('id_bateria')
+            bateria_seleccionada = db.obtener_bateria_id(id_bat)
+            if bateria_seleccionada:
+                pivot_data = db.obtener_curvas_pivot(bateria_seleccionada['id'], unidad=unidad_curva)
+            active_tab = 'baterias'
+        elif accion == 'cambiar_unidad_curva':
+            id_bat = request.form.get('id')
+            bateria_seleccionada = db.obtener_bateria_id(id_bat)
+            if bateria_seleccionada:
+                pivot_data = db.obtener_curvas_pivot(bateria_seleccionada['id'], unidad=unidad_curva)
+            active_tab = 'baterias'
+        elif accion == 'guardar_bateria':
+            id_bat = request.form.get('id')
+            if id_bat:
+                if db.actualizar_bateria(id_bat, request.form):
+                    mensaje = "✅ Batería actualizada correctamente."
+                    # Recargar para seguir editando si se desea, o volver a lista
+                    bateria_seleccionada = db.obtener_bateria_id(id_bat)
+                    pivot_data = db.obtener_curvas_pivot(id_bat, unidad=unidad_curva)
+                else:
+                    mensaje = "❌ Error al actualizar la batería."
+            else:
+                if db.agregar_modelo_bateria(request.form):
+                    mensaje = "✅ Nueva batería agregada correctamente."
+                else:
+                    mensaje = "❌ Error al agregar la batería."
+            active_tab = 'baterias'
+        elif accion == 'subir_curvas':
+            id_bat = request.form.get('id')
+            file = request.files.get('archivo_csv')
+            if id_bat and file and file.filename != '':
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                upload_dir = os.path.join(base_dir, 'static', 'uploads')
+                if not os.path.exists(upload_dir): os.makedirs(upload_dir)
+                filepath = os.path.join(upload_dir, file.filename)
+                file.save(filepath)
+                
+                res = db.cargar_curvas_por_id_csv(id_bat, filepath)
+                if res['status'] == 'ok':
+                    mensaje = f"✅ Curvas actualizadas. {res['insertados']} registros insertados."
+                else:
+                    mensaje = f"❌ Error: {res['msg']}"
+                
+                bateria_seleccionada = db.obtener_bateria_id(id_bat)
+                pivot_data = db.obtener_curvas_pivot(id_bat, unidad=unidad_curva)
+            active_tab = 'baterias'
+        elif accion == 'cancelar_edicion_bateria':
+            active_tab = 'baterias'
+            bateria_seleccionada = None
+            agregando_bateria = False
 
     clientes = db.obtener_clientes()
     ups_lista = db.obtener_ups_todos()
     proyectos = db.obtener_proyectos()
     baterias = db.obtener_baterias_modelos()
-    return render_template('gestion.html', clientes=clientes, ups=ups_lista, proyectos=proyectos, baterias=baterias)
+    
+    return render_template('gestion.html', 
+                           clientes=clientes, 
+                           ups=ups_lista, 
+                           proyectos=proyectos, 
+                           baterias=baterias,
+                           msg=mensaje,
+                           ups_seleccionado=ups_seleccionado,
+                           agregando_ups=agregando_ups,
+                           bateria_seleccionada=bateria_seleccionada,
+                           agregando_bateria=agregando_bateria,
+                           unidad_curva=unidad_curva,
+                           pivot_data=pivot_data,
+                           active_tab=active_tab)
 
 # --- GENERAR PDF ---
 @main.route('/descargar-pdf', methods=['POST'])
