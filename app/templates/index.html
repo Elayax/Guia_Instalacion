@@ -6,6 +6,8 @@
     <title>Sistema de Ingeniería UPS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.03);
@@ -291,7 +293,7 @@
         </nav>
     </header>
 
-    <form method="POST" id="mainForm" class="new-layout">
+    <form method="POST" id="mainForm" class="new-layout" novalidate>
         <!-- Ocultos para backend -->
         <input type="hidden" name="cliente_texto" id="h_cliente" value="{{ request.form.get('cliente_texto', '') }}">
         <input type="hidden" name="sucursal_texto" id="h_sucursal" value="{{ request.form.get('sucursal_texto', '') }}">
@@ -370,8 +372,10 @@
                         <input type="text" id="txt_kva" class="form-control form-control-sm" readonly value="{{ res.kva if res else '' }}">
                     </div>
                     <div class="col-6">
-                        <label class="small text-muted">Volts In</label>
-                        <input type="text" id="txt_vin" class="form-control form-control-sm" readonly value="{{ res.voltaje if res else '' }}">
+                        <label class="small text-muted">Volts Out</label>
+                        <select id="sel_vout_ups" class="form-select form-select-sm" disabled>
+                            <option value="">--</option>
+                        </select>
                     </div>
                 </div>
 
@@ -452,7 +456,7 @@
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">Batería</div>
-                    <div class="recap-value" id="recap_bateria">--</div>
+                    <div class="recap-value" id="recap_bateria">{{ res.bateria_modelo if res and res.bateria_modelo else '--' }}</div>
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">Respaldo</div>
@@ -460,51 +464,71 @@
                 </div>
             </section>
 
-            <!-- Matriz de datos reorganizada -->
-            <div class="data-grid redesigned">
-                <!-- Resultados principales -->
-                <div class="data-cell {{ 'active' if res else 'inactive' }}">
-                    <span class="cell-label">Corriente Diseño</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="cell-value">{{ res.i_diseno if res else '--' }}</span>
-                        <span class="cell-unit">Amps</span>
+            <!-- TABS RESULTADOS -->
+            <ul class="nav nav-tabs border-bottom-0 mb-3" id="resTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-white bg-transparent border-0 border-bottom border-danger" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-pane" type="button">Resultados</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-muted bg-transparent border-0" id="math-tab" data-bs-toggle="tab" data-bs-target="#math-pane" type="button">Justificación Matemática</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="grid-pane" role="tabpanel">
+                    <div class="data-grid redesigned">
+                        <!-- Resultados principales -->
+                        <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                            <span class="cell-label">Corriente Diseño</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.i_diseno if res else '--' }}</span>
+                                <span class="cell-unit">Amps</span>
+                            </div>
+                        </div>
+
+                        <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                            <span class="cell-label"><i class="bi bi-arrow-left-circle"></i> Voltaje Salida</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.voltaje if res else '--' }}</span>
+                                <span class="cell-unit">V</span>
+                            </div>
+                        </div>
+
+                        <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                            <span class="cell-label text-warning">Caída de Tensión</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.dv_pct if res else '--' }}</span>
+                                <span class="cell-unit">%</span>
+                            </div>
+                        </div>
+
+                        <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                            <span class="cell-label text-success">CABLE FASES (THHN)</span>
+                            <span class="cell-value huge text-success">{{ res.fase_sel if res else '--' }}</span>
+                            <span class="cell-unit">AWG/kcmil</span>
+                        </div>
+
+                        <div class="data-cell {{ 'active' if res else 'inactive' }}">
+                            <span class="cell-label">PROTECCIÓN ITM</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.breaker_sel if res else '--' }}</span>
+                                <span class="cell-unit">Amps</span>
+                            </div>
+                        </div>
+
+                        <div class="data-cell {{ 'active' if res else 'inactive' }}" style="border-color: var(--accent-red);">
+                            <span class="cell-label text-danger">BATERÍAS (STRINGS)</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.bat_strings if res and res.bat_strings else '--' }}</span>
+                                <span class="cell-unit">Juegos</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="data-cell {{ 'active' if res else 'inactive' }}">
-                    <span class="cell-label"><i class="bi bi-arrow-left-circle"></i> Voltaje Salida</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="cell-value">{{ res.voltaje if res else '--' }}</span>
-                        <span class="cell-unit">V</span>
-                    </div>
-                </div>
-
-                <div class="data-cell {{ 'active' if res else 'inactive' }}">
-                    <span class="cell-label text-warning">Caída de Tensión</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="cell-value">{{ res.dv_pct if res else '--' }}</span>
-                        <span class="cell-unit">%</span>
-                    </div>
-                </div>
-
-                <!-- Selección de conductores y protección -->
-                <div class="data-cell {{ 'active' if res else 'inactive' }}">
-                    <span class="cell-label text-success">CABLE FASES (THHN)</span>
-                    <span class="cell-value huge text-success">{{ res.fase_sel if res else '--' }}</span>
-                    <span class="cell-unit">AWG/kcmil</span>
-                </div>
-
-                <div class="data-cell {{ 'active' if res else 'inactive' }}">
-                    <span class="cell-label">CABLE TIERRA</span>
-                    <span class="cell-value">{{ res.gnd_sel if res else '--' }}</span>
-                    <span class="cell-unit">AWG</span>
-                </div>
-
-                <div class="data-cell {{ 'active' if res else 'inactive' }}">
-                    <span class="cell-label">PROTECCIÓN ITM</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <span class="cell-value">{{ res.breaker_sel if res else '--' }}</span>
-                        <span class="cell-unit">Amps</span>
+                <div class="tab-pane fade p-4 rounded" id="math-pane" role="tabpanel" style="background: rgba(0,0,0,0.2);">
+                    <h6 class="text-danger fw-bold mb-3">Cálculo de Banco de Baterías</h6>
+                    <div class="text-light">
+                        {{ res.bat_justificacion|safe if res and res.bat_justificacion else 'Realice un cálculo para ver la justificación.' }}
                     </div>
                 </div>
             </div>
@@ -543,6 +567,39 @@
         <input type="hidden" name="peso" value="{{ res.peso }}">
     </form>
     {% endif %}
+
+    <!-- MODAL ERROR BATERIA -->
+    <div class="modal fade" id="errorBatModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-danger">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error de Cálculo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorBatMsg"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VALIDACION -->
+    <div class="modal fade" id="validationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Faltan Datos</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="validationMsg" class="mb-0"></p>
+                </div>
+                <div class="modal-footer border-secondary p-1">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
     // --- 1. PDF ---
@@ -600,10 +657,36 @@
             const opt=this.options[this.selectedIndex];
             if(opt && opt.value){
                 document.getElementById('txt_kva').value = opt.dataset.kva || '';
-                document.getElementById('txt_vin').value = opt.dataset.vin || '';
-                const vSel = document.getElementById('sel_voltaje');
-                if(vSel && opt.dataset.vin) vSel.value = opt.dataset.vin;
+                
                 fetch(`/api/ups/${opt.value}`).then(r=>r.json()).then(data=>{
+                    // Populate Volts Out Select
+                    const selVout = document.getElementById('sel_vout_ups');
+                    const selVoltajeProyecto = document.getElementById('sel_voltaje');
+                    
+                    if(selVout){
+                        selVout.innerHTML = '';
+                        const vouts = [];
+                        if(data.Voltaje_Salida_1_V) vouts.push(data.Voltaje_Salida_1_V);
+                        if(data.Voltaje_Salida_2_V) vouts.push(data.Voltaje_Salida_2_V);
+                        if(data.Voltaje_Salida_3_V) vouts.push(data.Voltaje_Salida_3_V);
+                        
+                        if(vouts.length > 0){
+                            vouts.forEach(v => {
+                                const option = document.createElement('option');
+                                option.value = v;
+                                option.text = v + ' V';
+                                selVout.appendChild(option);
+                            });
+                            selVout.disabled = false;
+                            selVout.value = vouts[0];
+                            // Sync with Project Voltage
+                            syncProjectVoltage(vouts[0]);
+                        } else {
+                            selVout.innerHTML = '<option value="">S/D</option>';
+                            selVout.disabled = true;
+                        }
+                    }
+
                     const upsCont = document.getElementById('ups_specs_container');
                     if(upsCont) upsCont.classList.remove('d-none');
                     document.getElementById('sp_serie') && (document.getElementById('sp_serie').textContent = data.Serie || '--');
@@ -616,6 +699,32 @@
                 });
             }
         });
+    }
+
+    // --- 4.1 Sync Volts Out -> Project Voltage ---
+    const selVout = document.getElementById('sel_vout_ups');
+    if(selVout){
+        selVout.addEventListener('change', function(){
+            syncProjectVoltage(this.value);
+        });
+    }
+
+    function syncProjectVoltage(val){
+        const selVoltajeProyecto = document.getElementById('sel_voltaje');
+        if(selVoltajeProyecto && val){
+            // Check if option exists, if not add it
+            let exists = false;
+            for(let i=0; i<selVoltajeProyecto.options.length; i++){
+                if(selVoltajeProyecto.options[i].value == val) exists = true;
+            }
+            if(!exists){
+                const newOpt = document.createElement('option');
+                newOpt.value = val;
+                newOpt.text = val + ' V';
+                selVoltajeProyecto.add(newOpt);
+            }
+            selVoltajeProyecto.value = val;
+        }
     }
 
     // --- 5. Buscador pedido ---
@@ -652,6 +761,49 @@
         });
     }
 
+    // --- 7. Popup Error Batería ---
+    {% if res and res.bat_error %}
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('errorBatMsg').textContent = "{{ res.bat_error }}";
+        new bootstrap.Modal(document.getElementById('errorBatModal')).show();
+    });
+    {% endif %}
+
+    // --- 8. Validación Formulario ---
+    const mainForm = document.getElementById('mainForm');
+    if(mainForm){
+        mainForm.addEventListener('submit', function(e){
+            let errors = [];
+            let firstField = null;
+            
+            const ups = document.getElementById('sel_ups');
+            if(ups && !ups.value) {
+                errors.push("Seleccione un Modelo de UPS");
+                if(!firstField) firstField = ups;
+            }
+
+            const longInput = document.querySelector('input[name="longitud"]');
+            if(longInput && !longInput.value) {
+                errors.push("Ingrese la Distancia (mts)");
+                if(!firstField) firstField = longInput;
+            }
+
+            if(errors.length > 0){
+                e.preventDefault();
+                const msgContainer = document.getElementById('validationMsg');
+                msgContainer.innerHTML = "<strong>Faltan los siguientes datos para calcular:</strong><ul class='mt-2 mb-0 text-start'>" + 
+                                         errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+                
+                const modalEl = document.getElementById('validationModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                
+                modalEl.addEventListener('hidden.bs.modal', function () {
+                    if(firstField) firstField.focus();
+                }, {once:true});
+            }
+        });
+    }
     </script>
 </body>
 </html>

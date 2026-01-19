@@ -19,10 +19,7 @@ class GestorDB:
         conn = self._conectar()
         cursor = conn.cursor()
         
-        # LIMPIEZA: Eliminar tabla antigua para asegurar que solo se use la nueva
-        
         # 1. TABLA CLIENTES
-        # Nota: Mantenemos lat y lon separados porque es mejor para futuros cálculos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS clientes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,11 +107,6 @@ class GestorDB:
         ''')
 
         # 4. TABLAS BATERIAS (NUEVO MODULO - ADAPTADO)
-        # Reiniciamos tablas para aplicar nuevo esquema
-        cursor.execute("DROP TABLE IF EXISTS baterias_curvas_potencia")
-        cursor.execute("DROP TABLE IF EXISTS baterias_curvas_descarga") # Asegurar limpieza
-        cursor.execute("DROP TABLE IF EXISTS baterias_modelos")
-
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS baterias_modelos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,11 +247,8 @@ class GestorDB:
         conn.close()
         return [dict(row) for row in res]
 
-    def cargar_ups_desde_csv(self, ruta_csv):
-        """
-        Carga masiva de equipos UPS desde CSV.
-        Las columnas del CSV deben coincidir con los nombres de la tabla ups_specs.
-        """
+    def _importar_csv_simple(self, ruta_csv, tabla):
+        """Método genérico para importar CSV a una tabla plana (ups o baterias_modelos)"""
         if not os.path.exists(ruta_csv):
             return {'status': 'error', 'msg': 'Archivo no encontrado', 'logs': []}
 
@@ -272,34 +261,27 @@ class GestorDB:
             with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
                 lector = csv.DictReader(f)
                 
-                # 1. Obtener columnas válidas de la BD para evitar errores
-                cursor = conn.execute("PRAGMA table_info(ups_specs)")
+                # Obtener columnas válidas de la BD
+                cursor = conn.execute(f"PRAGMA table_info({tabla})")
                 columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
 
                 for i, fila in enumerate(lector, start=1):
                     try:
-                        # Normalizar claves y limpiar valores "S/D"
-                        fila_norm = {}
+                        # Limpiar datos: quitar espacios, ignorar vacíos o S/D
+                        datos_limpios = {}
                         for k, v in fila.items():
-                            if k:
-                                key_clean = k.strip().replace(' ', '_')
-                                val_clean = v.strip()
-                                # Si es "S/D" o vacío, no lo agregamos (se insertará como NULL)
-                                if val_clean and val_clean != 'S/D':
-                                    fila_norm[key_clean] = val_clean
-                        
-                        # 2. Filtrar datos del CSV: Solo columnas que existen en la BD y no están vacías
-                        datos_limpios = {k: v for k, v in fila_norm.items() if k in columnas_validas}
-                        
-                        if not datos_limpios:
-                            continue
+                            if k and v and v.strip() and v.strip() != 'S/D':
+                                key_clean = k.strip().replace(' ', '_') # Normalizar header si es necesario
+                                if key_clean in columnas_validas:
+                                    datos_limpios[key_clean] = v.strip()
 
-                        # 3. Construcción dinámica del INSERT
+                        if not datos_limpios: continue
+
                         columnas = ', '.join(datos_limpios.keys())
                         placeholders = ', '.join(['?'] * len(datos_limpios))
                         valores = list(datos_limpios.values())
 
-                        sql = f"INSERT INTO ups_specs ({columnas}) VALUES ({placeholders})"
+                        sql = f"INSERT INTO {tabla} ({columnas}) VALUES ({placeholders})"
                         conn.execute(sql, valores)
                         filas_insertadas += 1
                     except Exception as e:
@@ -312,6 +294,12 @@ class GestorDB:
             return {'status': 'error', 'msg': str(e), 'logs': logs}
         finally:
             conn.close()
+
+    def cargar_ups_desde_csv(self, ruta_csv):
+        return self._importar_csv_simple(ruta_csv, 'ups_specs')
+
+    def cargar_baterias_modelos_desde_csv(self, ruta_csv):
+        return self._importar_csv_simple(ruta_csv, 'baterias_modelos')
 
     def insertar_ups_manual(self, datos_dict):
         conn = self._conectar()
@@ -474,55 +462,6 @@ class GestorDB:
         finally:
             conn.close()
 
-    def importar_curva_bateria_csv(self, modelo_bateria, ruta_csv):
-        if not os.path.exists(ruta_csv):
-            return {'status': 'error', 'msg': 'Archivo CSV no encontrado'}
-
-        conn = self._conectar()
-        try:
-            # 1. Obtener ID de la batería
-            row = conn.execute("SELECT id FROM baterias_modelos WHERE modelo = ?", (modelo_bateria,)).fetchone()
-            if not row:
-                return {'status': 'error', 'msg': f'Modelo de batería {modelo_bateria} no encontrado'}
-            
-            bateria_id = row['id']
-            insertados = 0
-            
-            # 2. Leer CSV y transformar (Unpivot)
-            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
-                lector = csv.DictReader(f)
-                # Identificar columnas de voltaje (ej: FV_1.60, FV_1.70)
-                cols_fv = [c for c in lector.fieldnames if c.upper().startswith('FV_')]
-                
-                for fila in lector:
-                    try:
-                        tiempo = int(fila.get('Tiempo_Min', 0))
-                        if tiempo <= 0: continue
-                        
-                        for col in cols_fv:
-                            try:
-                                # Extraer voltaje del nombre de la columna (FV_1.60 -> 1.60)
-                                voltaje_corte = float(col.upper().replace('FV_', ''))
-                                valor = float(fila[col])
-                                
-                                conn.execute('''
-                                    INSERT INTO baterias_curvas_descarga 
-                                    (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad)
-                                    VALUES (?, ?, ?, ?, ?)
-                                ''', (bateria_id, tiempo, voltaje_corte, valor, 'W'))
-                                insertados += 1
-                            except ValueError:
-                                continue 
-                    except ValueError:
-                        continue
-
-            conn.commit()
-            return {'status': 'ok', 'insertados': insertados}
-        except Exception as e:
-            return {'status': 'error', 'msg': str(e)}
-        finally:
-            conn.close()
-
     def buscar_bateria_optima(self, watts_requeridos_celda, tiempo_minutos, fv_inversor):
         conn = self._conectar()
         try:
@@ -545,9 +484,18 @@ class GestorDB:
         finally:
             conn.close()
 
-    def obtener_baterias_modelos(self):
+    def obtener_baterias_modelos(self, solo_con_curvas=False):
         conn = self._conectar()
-        res = conn.execute("SELECT * FROM baterias_modelos ORDER BY modelo").fetchall()
+        if solo_con_curvas:
+            sql = """
+                SELECT DISTINCT m.* 
+                FROM baterias_modelos m
+                JOIN baterias_curvas_descarga c ON m.id = c.bateria_id
+                ORDER BY m.modelo
+            """
+            res = conn.execute(sql).fetchall()
+        else:
+            res = conn.execute("SELECT * FROM baterias_modelos ORDER BY modelo").fetchall()
         conn.close()
         return [dict(row) for row in res]
 
@@ -556,44 +504,6 @@ class GestorDB:
         conn.execute("DELETE FROM baterias_modelos WHERE id = ?", (id_bateria,))
         conn.commit()
         conn.close()
-
-    def cargar_baterias_modelos_desde_csv(self, ruta_csv):
-        if not os.path.exists(ruta_csv):
-            return {'status': 'error', 'msg': 'Archivo no encontrado', 'logs': []}
-
-        conn = self._conectar()
-        filas_insertadas = 0
-        errores = 0
-        logs = []
-
-        try:
-            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
-                lector = csv.DictReader(f)
-                cursor = conn.execute("PRAGMA table_info(baterias_modelos)")
-                columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
-
-                for i, fila in enumerate(lector, start=1):
-                    try:
-                        datos_limpios = {k: v.strip() for k, v in fila.items() if k in columnas_validas and v and v.strip()}
-                        if not datos_limpios: continue
-
-                        columnas = ', '.join(datos_limpios.keys())
-                        placeholders = ', '.join(['?'] * len(datos_limpios))
-                        valores = list(datos_limpios.values())
-
-                        sql = f"INSERT INTO baterias_modelos ({columnas}) VALUES ({placeholders})"
-                        conn.execute(sql, valores)
-                        filas_insertadas += 1
-                    except Exception as e:
-                        errores += 1
-                        logs.append(f"Fila {i} Error: {str(e)}")
-
-            conn.commit()
-            return {'status': 'ok', 'insertados': filas_insertadas, 'errores': errores, 'logs': logs}
-        except Exception as e:
-            return {'status': 'error', 'msg': str(e), 'logs': logs}
-        finally:
-            conn.close()
 
     def cargar_curvas_baterias_masiva(self, ruta_csv):
         if not os.path.exists(ruta_csv):

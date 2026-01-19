@@ -20,8 +20,7 @@ El sistema facilita el cumplimiento de la normativa **NOM-001-SEDE-2012** y gest
 * **Frontend:** HTML5, CSS3, JavaScript (Jinja2 Templates).
 * **Base de Datos:** SQLite.
 * **Librerías Clave:**
-    * `pandas` (Manejo de datos).
-    * `reportlab` / `fpdf` (Generación de PDFs).
+    * `fpdf` (Generación de PDFs).
 
 ## 📋 Requisitos Previos
 
@@ -67,8 +66,8 @@ Guia_Instalacion/
 │   ├── static/          # Archivos CSS, JS e imágenes
 │   ├── templates/       # Plantillas HTML
 │   ├── calculos.py      # Lógica de ingeniería eléctrica
+│   ├── base_datos.py    # Gestión de SQLite
 │   ├── rutas.py         # Controladores de la web
-│   └── ...
 ├── run.py               # Punto de entrada de la app
 ├── requirements.txt     # Lista de dependencias
 └── README.md            # Documentación
