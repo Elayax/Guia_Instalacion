@@ -1,4 +1,6 @@
 import math
+import json
+import urllib.request
 
 # --- AQUÍ DEBE DECIR EXACTAMENTE ESTO: ---
 class CalculadoraUPS: 
@@ -41,10 +43,34 @@ class CalculadoraUPS:
         fases = int(datos.get('fases') or 0)
         longitud = float(datos.get('longitud') or 0)
         tiempo_respaldo = datos.get('tiempo_respaldo')
+        lat = datos.get('lat')
+        lon = datos.get('lon')
         
-        # Simulación de variables ambientales
+        # Valores por defecto para variables ambientales
         altitud = 2240 
         temp_amb = 30 # °C
+
+        # --- Consulta a API externa para datos ambientales ---
+        if lat and lon:
+            try:
+                # 1. Obtener altitud
+                url_alt = f"https://api.open-meteo.com/v1/elevation?latitude={lat}&longitude={lon}"
+                with urllib.request.urlopen(url_alt, timeout=5) as response:
+                    data_alt = json.loads(response.read())
+                    if data_alt.get('elevation'):
+                        altitud = int(data_alt['elevation'][0])
+
+                # 2. Obtener temperatura actual
+                url_temp = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m"
+                with urllib.request.urlopen(url_temp, timeout=5) as response:
+                    data_temp = json.loads(response.read())
+                    if data_temp.get('current') and 'temperature_2m' in data_temp['current']:
+                        temp_amb = int(data_temp['current']['temperature_2m'])
+
+            except Exception as e:
+                print(f"WARN: No se pudo obtener datos ambientales de la API. Usando valores por defecto. Error: {e}")
+                # En caso de error (timeout, sin internet, etc.), se usan los valores por defecto ya definidos.
+                pass
 
         # Validación de seguridad para evitar división por cero
         if voltaje <= 0:
@@ -158,90 +184,103 @@ class CalculadoraBaterias:
         # 2. Celdas y Series
         if not v_dc: raise ValueError("El UPS no tiene voltaje DC configurado.")
         v_dc = float(v_dc)
-        n_celdas = v_dc / 2.0 # Estándar plomo-ácido (2V/celda)
+        n_celdas = v_dc / 2.0
         
         try:
             v_bat_nom = float(bat_voltaje_nominal)
             if v_bat_nom <= 0: v_bat_nom = 12.0
-        except:
+        except (ValueError, TypeError):
             v_bat_nom = 12.0
             
         bloques_serie = int(round(v_dc / v_bat_nom))
         w_celda_req = potencia_dc_total / n_celdas
         
-        # 3. Curvas (Filtrar W)
+        # 3. Curvas (Filtrar W y seleccionar FV)
         curvas_w = [c for c in curvas if c['unidad'] == 'W']
         if not curvas_w: raise ValueError("La batería no tiene curvas en Watts.")
         
-        # 4. Seleccionar FV (Norma/Estándar: 1.70V o 1.75V)
-        target_fv = 1.70
-        curvas_fv = [c for c in curvas_w if abs(c['voltaje_corte_fv'] - target_fv) < 0.03]
-        if not curvas_fv:
-            target_fv = 1.75
-            curvas_fv = [c for c in curvas_w if abs(c['voltaje_corte_fv'] - target_fv) < 0.03]
-        if not curvas_fv and curvas_w: # Fallback
-            target_fv = curvas_w[0]['voltaje_corte_fv']
-            curvas_fv = [c for c in curvas_w if abs(c['voltaje_corte_fv'] - target_fv) < 0.03]
-            
-        if not curvas_fv: raise ValueError("No se encontraron curvas compatibles para el cálculo.")
+        target_fv = 1.75
+        curvas_fv_list = [c for c in curvas_w if abs(c['voltaje_corte_fv'] - target_fv) < 0.03]
+        if not curvas_fv_list: # Fallback a otro FV si 1.75 no existe
+            if curvas_w:
+                target_fv = curvas_w[0]['voltaje_corte_fv']
+                curvas_fv_list = [c for c in curvas_w if abs(c['voltaje_corte_fv'] - target_fv) < 0.03]
+            else:
+                raise ValueError("No se encontraron curvas de potencia (W) para la batería.")
+
+        curvas_fv_list.sort(key=lambda x: x['tiempo_minutos'])
         
-        # 5. Interpolación Tiempo
-        curvas_fv.sort(key=lambda x: x['tiempo_minutos'])
-        tiempos = [c['tiempo_minutos'] for c in curvas_fv]
-        valores = [c['valor'] for c in curvas_fv]
+        # 4. Encontrar W/celda disponible para el tiempo solicitado
+        tiempos = [c['tiempo_minutos'] for c in curvas_fv_list]
+        valores_w_celda = [c['valor'] for c in curvas_fv_list]
         
-        w_disponible = 0
-        if tiempo_min in tiempos:
-            w_disponible = valores[tiempos.index(tiempo_min)]
-        elif tiempo_min < tiempos[0]:
-            w_disponible = valores[0] # Conservador
-        elif tiempo_min > tiempos[-1]:
-            raise ValueError(f"Tiempo solicitado ({tiempo_min} min) excede el rango de la batería ({tiempos[-1]} min).")
-        else:
-            for i in range(len(tiempos)-1):
-                if tiempos[i] < tiempo_min < tiempos[i+1]:
-                    # Interpolación Lineal
-                    t1, t2 = tiempos[i], tiempos[i+1]
-                    v1, v2 = valores[i], valores[i+1]
-                    w_disponible = v1 + (tiempo_min - t1) * (v2 - v1) / (t2 - t1)
-                    break
-                    
-        num_strings = math.ceil(w_celda_req / w_disponible)
+        w_disponible_punto_solicitado = 0
+        if not tiempo_min or tiempo_min <= 0:
+            tiempo_min = 1 # Evitar división por cero
+        
+        if tiempo_min > tiempos[-1]:
+             raise ValueError(f"Tiempo solicitado ({tiempo_min} min) excede el rango máximo de la batería ({tiempos[-1]} min).")
+        
+        w_disponible_punto_solicitado = self._interpolar(tiempos, valores_w_celda, tiempo_min)
+        
+        # 5. Calcular configuración del banco
+        num_strings = math.ceil(w_celda_req / w_disponible_punto_solicitado) if w_disponible_punto_solicitado > 0 else float('inf')
         total_baterias = num_strings * bloques_serie
         
-        # Cálculos eléctricos finales
-        v_corte_total = n_celdas * target_fv
-        i_descarga_nom = potencia_dc_total / v_dc
-        i_descarga_max = potencia_dc_total / v_corte_total
+        # 6. Calcular curva de rendimiento del BANCO COMPLETO
+        potencia_total_disponible_banco = [w * num_strings * n_celdas for w in valores_w_celda]
         
-        justificacion = f"""
-        <div style="font-size: 0.9rem;">
-        <p><strong>1. Potencia DC Requerida:</strong><br>
-        $$ P_{{DC}} = \\frac{{P_{{load}}}}{{\\eta}} = \\frac{{{potencia_carga:.0f}W}}{{{eff:.2f}}} = {potencia_dc_total:.0f} W $$</p>
+        # 7. Interpolar para encontrar el tiempo máximo de respaldo
+        tiempo_maximo_calculado = self._interpolar_inverso(potencia_total_disponible_banco, tiempos, potencia_dc_total)
+        tiempo_extra = tiempo_maximo_calculado - tiempo_min
         
-        <p><strong>2. Requerimiento por Celda:</strong><br>
-        $$ N_{{celdas}} = \\frac{{{v_dc}V}}{{2V}} = {int(n_celdas)} \\text{{ celdas}} $$<br>
-        $$ W_{{req}} = \\frac{{{potencia_dc_total:.0f} W}}{{{int(n_celdas)}}} = {w_celda_req:.2f} \\text{{ W/celda}} $$</p>
-        
-        <p><strong>3. Capacidad Disponible (Interpolación):</strong><br>
-        $$ W_{{disp}} (@{tiempo_min}min, {target_fv}V/c) = {w_disponible:.2f} \\text{{ W/celda}} $$</p>
-        
-        <p><strong>4. Configuración del Banco:</strong><br>
-        $$ Strings = \\lceil \\frac{{{w_celda_req:.2f}}}{{{w_disponible:.2f}}} \\rceil = \\mathbf{{{num_strings}}} \\text{{ (Paralelo)}} $$<br>
-        $$ Bloques_{{serie}} = \\frac{{{v_dc}V}}{{{v_bat_nom}V}} = \\mathbf{{{bloques_serie}}} \\text{{ (Serie)}} $$<br>
-        $$ Total_{{baterias}} = {num_strings} \\times {bloques_serie} = \\mathbf{{{total_baterias}}} \\text{{ Unidades}} $$</p>
-        
-        <p><strong>5. Parámetros Eléctricos Finales:</strong><br>
-        $$ V_{{corte\_total}} = {int(n_celdas)} \\times {target_fv}V = {v_corte_total:.1f} V $$<br>
-        $$ I_{{descarga}} = {i_descarga_nom:.1f}A \\text{{ (Nom)}} \\to {i_descarga_max:.1f}A \\text{{ (Max)}} $$</p>
-        </div>
-        """
-        
+        # 8. Preparar datos para la gráfica
+        grafica_data = {
+            'tiempos': tiempos,
+            'potencia_disponible': potencia_total_disponible_banco,
+            'potencia_requerida': potencia_dc_total,
+            'tiempo_solicitado': tiempo_min,
+            'tiempo_maximo': tiempo_maximo_calculado,
+        }
+
         return {
             'bat_strings': num_strings, 
             'bat_series': bloques_serie,
             'bat_total': total_baterias,
-            'bat_justificacion': justificacion, 
+            'bat_justificacion': "", # Justificación se genera en el reporte
             'bat_fv': target_fv,
-            'bat_i_max': round(i_descarga_max, 1)
+            'bat_i_max': round(potencia_dc_total / (n_celdas * target_fv), 1),
+            'tiempo_maximo_calculado': round(tiempo_maximo_calculado, 1),
+            'tiempo_extra': round(tiempo_extra, 1),
+            'grafica_data': grafica_data
         }
+
+    def _interpolar(self, x_puntos, y_puntos, x_valor):
+        if x_valor in x_puntos:
+            return y_puntos[x_puntos.index(x_valor)]
+        if x_valor < x_puntos[0]:
+            return y_puntos[0] # Conservador
+        if x_valor > x_puntos[-1]:
+            return y_puntos[-1] # Extrapolación simple
+
+        for i in range(len(x_puntos)-1):
+            if x_puntos[i] < x_valor < x_puntos[i+1]:
+                x1, x2 = x_puntos[i], x_puntos[i+1]
+                y1, y2 = y_puntos[i], y_puntos[i+1]
+                return y1 + (x_valor - x1) * (y2 - y1) / (x2 - x1)
+        return y_puntos[-1]
+
+    def _interpolar_inverso(self, y_puntos, x_puntos, y_valor):
+        # Asumimos que y_puntos es decreciente
+        if y_valor > y_puntos[0]:
+            return x_puntos[0] # Si se requiere más potencia de la que da al inicio, el tiempo es el mínimo
+        if y_valor < y_puntos[-1]:
+            return x_puntos[-1] # Si se requiere menos que al final, el tiempo es el máximo
+        
+        for i in range(len(y_puntos)-1):
+            if y_puntos[i] > y_valor >= y_puntos[i+1]:
+                y1, y2 = y_puntos[i], y_puntos[i+1]
+                x1, x2 = x_puntos[i], x_puntos[i+1]
+                # Interpolación lineal inversa
+                return x1 + (y_valor - y1) * (x2 - x1) / (y2 - y1)
+        return x_puntos[0] # Fallback

@@ -379,6 +379,10 @@
                     </div>
                 </div>
 
+                <div id="ups_image_container" class="mt-2 border rounded" style="height: 100px; display: none; background-color: rgba(0,0,0,0.2);">
+                    <img id="ups_image" src="" alt="Imagen de UPS" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+
                 <!-- FICHA UPS COMPACTA -->
                 <div id="ups_specs_container" class="specs-panel d-none">
                     <div class="text-center mb-2" style="color: var(--text-main); font-weight:700; font-size:0.75rem; letter-spacing:1px;">FICHA TÉCNICA</div>
@@ -516,11 +520,27 @@
                             </div>
                         </div>
 
-                        <div class="data-cell {{ 'active' if res else 'inactive' }}" style="border-color: var(--accent-red);">
-                            <span class="cell-label text-danger">BATERÍAS (STRINGS)</span>
+                        <div class="data-cell {{ 'active' if res and res.bat_series else 'inactive' }}" style="border-color: var(--accent-red);">
+                            <span class="cell-label text-danger">Baterías por String (Serie)</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.bat_series if res and res.bat_series else '--' }}</span>
+                                <span class="cell-unit">Unidades</span>
+                            </div>
+                        </div>
+
+                        <div class="data-cell {{ 'active' if res and res.bat_strings else 'inactive' }}" style="border-color: var(--accent-red);">
+                            <span class="cell-label text-danger">Baterías en Paralelo (Strings)</span>
                             <div class="d-flex align-items-baseline gap-2">
                                 <span class="cell-value">{{ res.bat_strings if res and res.bat_strings else '--' }}</span>
                                 <span class="cell-unit">Juegos</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-cell {{ 'active' if res and res.bat_total else 'inactive' }}" style="border-color: var(--accent-red);">
+                            <span class="cell-label text-danger">Total de Baterías</span>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="cell-value">{{ res.bat_total if res and res.bat_total else '--' }}</span>
+                                <span class="cell-unit">Unidades</span>
                             </div>
                         </div>
                     </div>
@@ -549,6 +569,7 @@
 
     {% if res %}
     <form id="pdfForm" action="{{ url_for('main.descargar_pdf') }}" method="POST" target="_blank" style="display:none;">
+        <input type="hidden" name="id_ups" value="{{ request.form.get('id_ups') }}">
         <input type="hidden" name="pedido" value="{{ res.pedido }}">
         <input type="hidden" name="es_publicado" value="{{ res.es_publicado }}">
         <input type="hidden" name="modelo_nombre" value="{{ res.modelo_nombre }}">
@@ -688,6 +709,17 @@
                     }
 
                     const upsCont = document.getElementById('ups_specs_container');
+                    
+                    const upsImgContainer = document.getElementById('ups_image_container');
+                    const upsImg = document.getElementById('ups_image');
+
+                    if(data.imagen_url) {
+                        upsImg.src = `/static/img/ups/${data.imagen_url}`;
+                        upsImgContainer.style.display = 'block';
+                    } else {
+                        upsImgContainer.style.display = 'none';
+                    }
+
                     if(upsCont) upsCont.classList.remove('d-none');
                     document.getElementById('sp_serie') && (document.getElementById('sp_serie').textContent = data.Serie || '--');
                     document.getElementById('sp_kw') && (document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--');

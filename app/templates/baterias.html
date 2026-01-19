@@ -190,6 +190,17 @@
         <div class="alert alert-info">{{ msg }}</div>
         {% endif %}
 
+        {% if error_logs %}
+        <div class="alert alert-danger">
+            <strong>Detalles del error de carga:</strong>
+            <ul>
+                {% for log in error_logs %}
+                <li>{{ log }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="tech-matrix mb-4">
             <div class="control-title">Seleccionar Batería para Editar</div>
             <div>

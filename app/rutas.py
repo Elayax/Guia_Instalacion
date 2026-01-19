@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, make_response, redirect, url_for
 from datetime import datetime
-from app.calculos import CalculadoraUPS
+from app.calculos import CalculadoraUPS, CalculadoraBaterias
 from app.reporte import ReportePDF
 from app.base_datos import GestorDB
 from app.auxiliares import (
@@ -141,42 +141,60 @@ def baterias():
     mensaje = None
     lista_baterias = db.obtener_baterias_modelos()
     pivot_data = None
+    error_logs = None # <--- Nueva variable para logs de error
     
     if request.method == 'POST':
         accion = request.form.get('accion')
         
+        # Recargar datos de la batería seleccionada si se está trabajando en una
+        id_bat_actual = request.form.get('id_bateria_buscar') or request.form.get('id')
+        if id_bat_actual:
+            bateria_seleccionada = db.obtener_bateria_id(id_bat_actual)
+
         if accion == 'buscar':
-            id_busqueda = request.form.get('id_bateria_buscar')
-            if id_busqueda:
-                bateria_seleccionada = db.obtener_bateria_id(id_busqueda)
-                if bateria_seleccionada:
-                    pivot_data = db.obtener_curvas_pivot(bateria_seleccionada['id'])
+            if bateria_seleccionada:
+                pivot_data = db.obtener_curvas_pivot(bateria_seleccionada['id'])
                 
         elif accion == 'guardar':
             id_bat = request.form.get('id')
             if db.actualizar_bateria(id_bat, request.form):
                 mensaje = "✅ Batería actualizada correctamente."
-                bateria_seleccionada = db.obtener_bateria_id(id_bat)
-                if bateria_seleccionada:
-                    pivot_data = db.obtener_curvas_pivot(bateria_seleccionada['id'])
+                bateria_seleccionada = db.obtener_bateria_id(id_bat) # Recargar
             else:
                 mensaje = "❌ Error al actualizar la batería."
-        
+            
+            if bateria_seleccionada:
+                pivot_data = db.obtener_curvas_pivot(bateria_seleccionada['id'])
+
         elif accion == 'subir_curvas':
             id_bat = request.form.get('id')
             file = request.files.get('archivo_csv')
+            
             if id_bat and file and file.filename != '':
                 filepath = guardar_archivo_temporal(file)
                 res = db.cargar_curvas_por_id_csv(id_bat, filepath)
-                if res['status'] == 'ok':
-                    mensaje = f"✅ Curvas actualizadas. {res['insertados']} registros insertados."
-                else:
-                    mensaje = f"❌ Error: {res['msg']}"
                 
+                if res['status'] == 'ok':
+                    mensaje = f"✅ Curvas actualizadas. {res.get('insertados', 0)} registros procesados."
+                    if res.get('logs'):
+                        # Si hay logs incluso con 'ok', son advertencias
+                        error_logs = res.get('logs')
+                else:
+                    mensaje = f"❌ Error al cargar el archivo: {res.get('msg', 'Revisa los detalles abajo.')}"
+                    error_logs = res.get('logs')
+                
+                # Siempre recargar los datos para mostrar el estado actual
                 bateria_seleccionada = db.obtener_bateria_id(id_bat)
                 pivot_data = db.obtener_curvas_pivot(id_bat)
-                
-    return render_template('baterias.html', baterias_lista=lista_baterias, bateria=bateria_seleccionada, pivot_data=pivot_data, msg=mensaje)
+            else:
+                mensaje = "❌ No se seleccionó ningún archivo para subir."
+
+    return render_template('baterias.html', 
+                           baterias_lista=lista_baterias, 
+                           bateria=bateria_seleccionada, 
+                           pivot_data=pivot_data, 
+                           msg=mensaje,
+                           error_logs=error_logs)
 
 # --- GESTIÓN DE BD ---
 @main.route('/gestion', methods=['GET', 'POST'])
@@ -184,6 +202,7 @@ def gestion():
     # Estado inicial de la vista (Diccionario de contexto)
     state = {
         'mensaje': None,
+        'error_logs': None,
         'active_tab': 'ups',
         'ups_seleccionado': None,
         'agregando_ups': False,
@@ -202,6 +221,7 @@ def gestion():
                            proyectos=db.obtener_proyectos(), 
                            baterias=db.obtener_baterias_modelos(),
                            msg=state['mensaje'],
+                           error_logs=state['error_logs'],
                            ups_seleccionado=state['ups_seleccionado'],
                            agregando_ups=state['agregando_ups'],
                            bateria_seleccionada=state['bateria_seleccionada'],
@@ -215,25 +235,45 @@ def gestion():
 def descargar_pdf():
     datos = request.form.to_dict()
     
-    if not datos.get('kva') or not datos.get('voltaje'):
-         return "Error: Faltan datos técnicos.", 400
-
-    # Obtener datos de batería si se seleccionó alguna
-    id_bateria = datos.get('id_bateria')
-    bateria_info = {}
-    if id_bateria:
-        bateria_info = db.obtener_bateria_id(id_bateria) or {}
+    if not datos.get('id_ups'):
+        return "Error: ID de UPS no proporcionado.", 400
+    
+    ups_data = db.obtener_ups_id(datos['id_ups'])
+    if not ups_data:
+        return "Error: UPS no encontrado.", 404
 
     # Recalculamos para el PDF
     calc = CalculadoraUPS()
     res = calc.calcular(datos)
     
+    # Añadir cálculo de baterías
+    id_bateria = datos.get('id_bateria')
+    bateria_info = {}
+    if id_bateria and datos.get('tiempo_respaldo'):
+        try:
+            bateria_info = db.obtener_bateria_id(id_bateria) or {}
+            curvas = db.obtener_curvas_por_bateria(id_bateria)
+            if curvas:
+                calc_bat = CalculadoraBaterias()
+                res_bat = calc_bat.calcular(
+                    kva=ups_data.get('Capacidad_kVA'),
+                    kw=ups_data.get('Capacidad_kW'),
+                    eficiencia=ups_data.get('Eficiencia_Modo_Bateria_pct'),
+                    v_dc=ups_data.get('Bateria_Vdc'),
+                    tiempo_min=float(datos['tiempo_respaldo'] or 0),
+                    curvas=curvas,
+                    bat_voltaje_nominal=bateria_info.get('voltaje_nominal', 12)
+                )
+                res.update(res_bat)
+        except Exception as e:
+            res['bat_error'] = str(e)
+
     # Pasamos datos visuales extra
     res['modelo_nombre'] = datos.get('modelo_nombre')
     es_publicado = datos.get('es_publicado') == 'True'
     
     pdf = ReportePDF()
-    pdf_bytes = pdf.generar_cuerpo(datos, res, bateria=bateria_info, es_publicado=es_publicado)
+    pdf_bytes = pdf.generar_cuerpo(datos, res, ups=ups_data, bateria=bateria_info, es_publicado=es_publicado)
     
     response = make_response(bytes(pdf_bytes))
     response.headers['Content-Type'] = 'application/pdf'

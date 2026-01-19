@@ -9,10 +9,13 @@ def procesar_post_gestion(db, request, state):
     # Actualizar estado base desde el form
     if request.form.get('active_tab'): state['active_tab'] = request.form.get('active_tab')
     if request.form.get('unidad_curva'): state['unidad_curva'] = request.form.get('unidad_curva')
+    state['error_logs'] = None # Limpiar logs en cada POST
 
     # 1. Carga Masiva
     if request.files.get('archivo_csv'):
-        state['mensaje'] = _procesar_carga_masiva(db, request.files['archivo_csv'], request.form.get('tipo_carga'))
+        mensaje, logs = _procesar_carga_masiva(db, request.files['archivo_csv'], request.form.get('tipo_carga'))
+        state['mensaje'] = mensaje
+        state['error_logs'] = logs
         state['active_tab'] = 'carga'
         return
 
@@ -25,7 +28,7 @@ def procesar_post_gestion(db, request, state):
     if accion:
         if 'ups' in accion:
             _procesar_acciones_ups(db, request, state, accion)
-        elif 'bateria' in accion or accion in ['subir_curvas', 'cambiar_unidad_curva']:
+        elif 'bateria' in accion or accion in ['subir_curvas', 'guardar_curvas', 'cambiar_unidad_curva_W', 'cambiar_unidad_curva_A']:
             _procesar_acciones_bateria(db, request, state, accion)
 
 def _procesar_acciones_tipo(db, request, state, tipo):
@@ -48,6 +51,23 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         return True
     return False
 
+def guardar_imagen_ups(file):
+    """Guarda una imagen de UPS en la carpeta static/img/ups y retorna su nombre."""
+    if not file or file.filename == '': return None
+    
+    # Asegurar que el nombre de archivo es seguro
+    from werkzeug.utils import secure_filename
+    filename = secure_filename(file.filename)
+    
+    # Crear ruta de guardado
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    upload_dir = os.path.join(base_dir, 'static', 'img', 'ups')
+    if not os.path.exists(upload_dir): os.makedirs(upload_dir)
+    
+    filepath = os.path.join(upload_dir, filename)
+    file.save(filepath)
+    return filename # Guardar solo el nombre del archivo en la BD
+
 def _procesar_acciones_ups(db, request, state, accion):
     """Lógica de estado para UPS"""
     state['active_tab'] = 'ups'
@@ -60,14 +80,27 @@ def _procesar_acciones_ups(db, request, state, accion):
         state['ups_seleccionado'] = db.obtener_ups_id(id_ups)
         
     elif accion == 'guardar_ups':
-        id_ups = request.form.get('id')
+        datos_form = request.form.to_dict()
+        id_ups = datos_form.get('id')
+        
+        # --- Lógica de subida de imagen ---
+        file = request.files.get('imagen_ups')
+        if file:
+            nombre_archivo = guardar_imagen_ups(file)
+            if nombre_archivo:
+                datos_form['imagen_url'] = nombre_archivo
+
         exito = False
         if id_ups:
-            exito = db.actualizar_ups(id_ups, request.form)
+            exito = db.actualizar_ups(id_ups, datos_form)
             state['mensaje'] = "✅ Equipo actualizado correctamente." if exito else "❌ Error al actualizar."
+            if exito: # Recargar datos si la actualización fue exitosa
+                state['ups_seleccionado'] = db.obtener_ups_id(id_ups)
         else:
-            exito = db.insertar_ups_manual(request.form)
+            exito = db.insertar_ups_manual(datos_form)
             state['mensaje'] = "✅ Nuevo equipo agregado." if exito else "❌ Error al agregar."
+            if exito: # Limpiar para permitir agregar otro
+                 state['agregando_ups'] = False
             
     elif accion == 'cancelar_edicion_ups':
         state['ups_seleccionado'] = None
@@ -76,29 +109,28 @@ def _procesar_acciones_ups(db, request, state, accion):
 def _procesar_acciones_bateria(db, request, state, accion):
     """Lógica de estado para Baterías"""
     state['active_tab'] = 'baterias'
+    id_bat = request.form.get('id') or request.form.get('id_bateria')
+
+    # --- Acciones que cambian la unidad de la curva y recargan ---
+    if accion.startswith('cambiar_unidad_curva'):
+        state['unidad_curva'] = 'A' if accion.endswith('_A') else 'W'
     
-    if accion == 'iniciar_agregar_bateria':
+    # --- Acción para guardar curvas editadas desde la tabla ---
+    elif accion == 'guardar_curvas':
+        if id_bat:
+            res = db.actualizar_curvas_desde_form(id_bat, request.form)
+            state['mensaje'] = f"✅ Curvas guardadas: {res.get('insertados', 0)} puntos actualizados." if res.get('status') == 'ok' else f"❌ Error: {res.get('msg')}"
+            state['error_logs'] = res.get('logs')
+
+    # --- Acción para iniciar la adición de una nueva batería ---
+    elif accion == 'iniciar_agregar_bateria':
         state['agregando_bateria'] = True
         
-    elif accion == 'editar_bateria':
-        id_bat = request.form.get('id_bateria')
-        state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
-        if state['bateria_seleccionada']:
-            state['pivot_data'] = db.obtener_curvas_pivot(state['bateria_seleccionada']['id'], unidad=state['unidad_curva'])
-            
-    elif accion == 'cambiar_unidad_curva':
-        id_bat = request.form.get('id')
-        state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
-        if state['bateria_seleccionada']:
-            state['pivot_data'] = db.obtener_curvas_pivot(state['bateria_seleccionada']['id'], unidad=state['unidad_curva'])
-            
+    # --- Acción para guardar el modelo de batería (la ficha técnica) ---
     elif accion == 'guardar_bateria':
-        id_bat = request.form.get('id')
         if id_bat:
             if db.actualizar_bateria(id_bat, request.form):
                 state['mensaje'] = "✅ Batería actualizada."
-                state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
-                state['pivot_data'] = db.obtener_curvas_pivot(id_bat, unidad=state['unidad_curva'])
             else:
                 state['mensaje'] = "❌ Error al actualizar."
         else:
@@ -107,21 +139,33 @@ def _procesar_acciones_bateria(db, request, state, accion):
             else:
                 state['mensaje'] = "❌ Error al agregar."
                 
+    # --- Acción para subir un nuevo archivo CSV de curvas ---
     elif accion == 'subir_curvas':
-        id_bat = request.form.get('id')
         file = request.files.get('archivo_csv')
-        filepath = guardar_archivo_temporal(file)
-        
-        if filepath:
-            res = db.cargar_curvas_por_id_csv(id_bat, filepath)
-            state['mensaje'] = f"✅ Curvas: {res.get('insertados',0)} registros." if res['status'] == 'ok' else f"❌ Error: {res.get('msg')}"
-            
-            state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
-            state['pivot_data'] = db.obtener_curvas_pivot(id_bat, unidad=state['unidad_curva'])
-            
+        if id_bat and file and file.filename:
+            filepath = guardar_archivo_temporal(file)
+            if filepath:
+                res = db.cargar_curvas_por_id_csv(id_bat, filepath)
+                state['mensaje'] = f"✅ Archivo procesado. {res.get('insertados', 0)} registros insertados." if res['status'] == 'ok' else f"❌ Error: {res.get('msg')}"
+                state['error_logs'] = res.get('logs')
+        else:
+            state['mensaje'] = "⚠️ No se seleccionó un archivo CSV para subir."
+
+    # --- Cancelar edición/adición ---
     elif accion == 'cancelar_edicion_bateria':
         state['bateria_seleccionada'] = None
         state['agregando_bateria'] = False
+        return # Evitar recarga de datos innecesaria
+
+    # --- Recargar siempre los datos de la batería y las curvas al final ---
+    if id_bat and not state.get('agregando_bateria'):
+        state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
+        if state['bateria_seleccionada']:
+            state['pivot_data'] = db.obtener_curvas_pivot(id_bat, unidad=state['unidad_curva'])
+    elif not id_bat and accion not in ['iniciar_agregar_bateria', 'guardar_bateria']:
+        # Si no hay ID y no estamos agregando, es probable que la acción sea de la lista (ej. eliminar)
+        # y no necesitamos hacer nada más aquí.
+        pass
 
 def guardar_archivo_temporal(file):
     """Guarda un archivo subido en la carpeta uploads y retorna su ruta"""
@@ -228,13 +272,34 @@ def procesar_calculo_ups(db, form):
 
 def _procesar_carga_masiva(db, file, tipo_carga):
     filepath = guardar_archivo_temporal(file)
-    if filepath:
-        if tipo_carga == 'ups': db.cargar_ups_desde_csv(filepath)
-        elif tipo_carga == 'clientes': db.cargar_clientes_desde_csv(filepath)
-        elif tipo_carga == 'baterias_modelos': db.cargar_baterias_modelos_desde_csv(filepath)
-        elif tipo_carga == 'baterias_curvas': db.cargar_curvas_baterias_masiva(filepath)
-        return "✅ Carga masiva procesada."
-    return "⚠️ Error en archivo."
+    if not filepath:
+        return "⚠️ Error en archivo. No se pudo guardar.", None
+
+    res = {}
+    if tipo_carga == 'ups': 
+        res = db.cargar_ups_desde_csv(filepath)
+    elif tipo_carga == 'clientes': 
+        res = db.cargar_clientes_desde_csv(filepath)
+    elif tipo_carga == 'baterias_modelos': 
+        res = db.cargar_baterias_modelos_desde_csv(filepath)
+    elif tipo_carga == 'baterias_curvas': 
+        res = db.cargar_curvas_baterias_masiva(filepath)
+    else:
+        return "⚠️ Tipo de carga masiva no reconocido.", None
+
+    # Formatear mensaje de respuesta
+    insertados = res.get('insertados', 0)
+    errores = res.get('errores', 0)
+    
+    if res.get('status') == 'ok':
+        if errores > 0:
+            mensaje = f"🟡 Carga parcial: {insertados} registros insertados, {errores} filas con errores. Revise los detalles."
+        else:
+            mensaje = f"✅ Carga masiva procesada: {insertados} registros insertados."
+    else:
+        mensaje = f"❌ Error en carga masiva: {res.get('msg', 'Error desconocido.')}"
+
+    return mensaje, res.get('logs')
 
 def obtener_datos_plantilla(tipo):
     """Retorna headers y filas de ejemplo para las plantillas CSV"""

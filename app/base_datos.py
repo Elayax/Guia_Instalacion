@@ -90,6 +90,12 @@ class GestorDB:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_nombre ON ups_specs(Nombre_del_Producto);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cap_kva ON ups_specs(Capacidad_kVA);")
 
+        # Add imagen_url column to ups_specs if it doesn't exist
+        cursor.execute("PRAGMA table_info(ups_specs)")
+        columns = [row['name'] for row in cursor.fetchall()]
+        if 'imagen_url' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_url TEXT")
+
         # 3. TABLA PROYECTOS
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS proyectos_publicados (
@@ -304,9 +310,16 @@ class GestorDB:
     def insertar_ups_manual(self, datos_dict):
         conn = self._conectar()
         try:
-            columnas = ', '.join(datos_dict.keys())
-            placeholders = ', '.join(['?'] * len(datos_dict))
-            valores = list(datos_dict.values())
+            # Filtrar para evitar que 'accion' u otros campos no deseados se inserten
+            cursor = conn.execute("PRAGMA table_info(ups_specs)")
+            columnas_validas = {row['name'] for row in cursor.fetchall() if row['name'] != 'id'}
+            datos_limpios = {k: v for k, v in datos_dict.items() if k in columnas_validas}
+
+            if not datos_limpios: return False
+
+            columnas = ', '.join(datos_limpios.keys())
+            placeholders = ', '.join(['?'] * len(datos_limpios))
+            valores = list(datos_limpios.values())
             
             sql = f"INSERT INTO ups_specs ({columnas}) VALUES ({placeholders})"
             conn.execute(sql, valores)
@@ -506,6 +519,7 @@ class GestorDB:
         conn.close()
 
     def cargar_curvas_baterias_masiva(self, ruta_csv):
+        """Carga curvas para múltiples baterías desde un CSV, reportando errores detallados."""
         if not os.path.exists(ruta_csv):
             return {'status': 'error', 'msg': 'Archivo CSV no encontrado', 'logs': []}
 
@@ -513,41 +527,84 @@ class GestorDB:
         insertados = 0
         errores = 0
         logs = []
+        modelos_a_limpiar = set()
 
         try:
+            # --- PRIMERA PASADA: Validar y encontrar modelos a limpiar ---
             with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
-                lector = csv.DictReader(f)
-                cols_fv = [c for c in lector.fieldnames if c.upper().startswith('FV_')]
-                
-                if not cols_fv:
-                     return {'status': 'error', 'msg': 'No se encontraron columnas de voltaje (FV_x.xx)', 'logs': []}
-
-                for i, fila in enumerate(lector, start=1):
-                    modelo = fila.get('Modelo')
-                    unidad = fila.get('Unidad', 'W').strip().upper() # Default W si no se especifica
-                    if unidad not in ['W', 'A']: unidad = 'W'
-
-                    if not modelo:
-                        logs.append(f"Fila {i}: Falta columna 'Modelo'")
-                        errores += 1
-                        continue
+                try:
+                    lector_validacion = csv.DictReader(f)
+                    if not lector_validacion.fieldnames:
+                        return {'status': 'error', 'msg': 'El archivo CSV está vacío o no tiene cabecera.', 'logs':[]}
                     
+                    headers = [h.strip() for h in lector_validacion.fieldnames if h]
+                    if 'Modelo' not in headers: logs.append("La cabecera debe contener la columna 'Modelo'.")
+                    if 'Tiempo_Min' not in headers: logs.append("La cabecera debe contener la columna 'Tiempo_Min'.")
+                    cols_fv = [h for h in headers if h.upper().startswith('FV_')]
+                    if not cols_fv: logs.append("Debe haber al menos una columna de voltaje (ej. 'FV_1.60').")
+                    
+                    if logs:
+                        return {'status': 'error', 'msg': 'Error de formato en la cabecera.', 'logs': logs, 'insertados': 0, 'errores': 1}
+
+                    for i, fila in enumerate(lector_validacion, start=2):
+                        modelo = fila.get('Modelo', '').strip()
+                        if not modelo:
+                            logs.append(f"Fila {i}: Falta el 'Modelo' de la batería.")
+                            errores += 1
+                            continue
+                        
+                        row_bat = conn.execute("SELECT id FROM baterias_modelos WHERE modelo = ?", (modelo,)).fetchone()
+                        if not row_bat:
+                            logs.append(f"Fila {i}: Modelo '{modelo}' no existe. Agréguelo primero.")
+                            errores += 1
+                            continue
+                        
+                        modelos_a_limpiar.add(row_bat['id'])
+
+                except Exception as e:
+                    return {'status': 'error', 'msg': f'Error de formato en CSV: {e}', 'logs': [], 'insertados': 0, 'errores': 1}
+
+            if errores > 0:
+                 return {'status': 'error', 'msg': 'Se encontraron errores de validación.', 'logs': logs, 'insertados': 0, 'errores': errores}
+
+
+            # --- LIMPIEZA ---
+            if modelos_a_limpiar:
+                # Usamos placeholders para seguridad
+                placeholders = ','.join('?' for _ in modelos_a_limpiar)
+                conn.execute(f"DELETE FROM baterias_curvas_descarga WHERE bateria_id IN ({placeholders})", list(modelos_a_limpiar))
+
+
+            # --- SEGUNDA PASADA: Inserción de datos ---
+            with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
+                lector_insercion = csv.DictReader(f)
+                cols_fv = [h.strip() for h in lector_insercion.fieldnames if h and h.strip().upper().startswith('FV_')]
+
+                for i, fila in enumerate(lector_insercion, start=2):
+                    modelo = fila.get('Modelo', '').strip()
                     row_bat = conn.execute("SELECT id FROM baterias_modelos WHERE modelo = ?", (modelo,)).fetchone()
-                    if not row_bat:
-                        logs.append(f"Fila {i}: Modelo '{modelo}' no existe en BD")
-                        errores += 1
-                        continue
-                    
+                    if not row_bat: continue # Ya se reportó el error en la primera pasada
+
                     bateria_id = row_bat['id']
                     
                     try:
+                        unidad = fila.get('Unidad', 'W').strip().upper()
+                        if unidad not in ['W', 'A']: unidad = 'W'
+
                         tiempo = int(fila.get('Tiempo_Min', 0))
-                        if tiempo <= 0: continue
+                        if tiempo <= 0:
+                            logs.append(f"Fila {i}: 'Tiempo_Min' debe ser un número positivo.")
+                            errores += 1
+                            continue
                         
+                        puntos_fila = 0
                         for col in cols_fv:
                             try:
                                 voltaje_corte = float(col.upper().replace('FV_', ''))
-                                valor = float(fila[col])
+                                valor_str = fila.get(col, '').strip()
+                                if not valor_str: continue
+
+                                valor = float(valor_str)
                                 
                                 conn.execute('''
                                     INSERT INTO baterias_curvas_descarga 
@@ -555,16 +612,25 @@ class GestorDB:
                                     VALUES (?, ?, ?, ?, ?)
                                 ''', (bateria_id, tiempo, voltaje_corte, valor, unidad))
                                 insertados += 1
-                            except ValueError:
-                                continue
-                    except ValueError as e:
-                        logs.append(f"Fila {i}: Error de datos - {e}")
-                        errores += 1
+                                puntos_fila += 1
+                            except (ValueError, TypeError):
+                                logs.append(f"Fila {i}, Columna {col}: Valor '{fila.get(col)}' no es numérico.")
+                                errores += 1
+                        
+                        if puntos_fila == 0:
+                            logs.append(f"Fila {i}: No se encontraron valores numéricos en las columnas FV.")
+                            errores += 1
 
+                    except (ValueError, TypeError):
+                        logs.append(f"Fila {i}: 'Tiempo_Min' ('{fila.get('Tiempo_Min')}') no es un número válido.")
+                        errores += 1
+            
             conn.commit()
             return {'status': 'ok', 'insertados': insertados, 'errores': errores, 'logs': logs}
+
         except Exception as e:
-            return {'status': 'error', 'msg': str(e), 'logs': logs}
+            conn.rollback()
+            return {'status': 'error', 'msg': str(e), 'logs': logs, 'insertados': 0, 'errores': 1}
         finally:
             conn.close()
 
@@ -603,7 +669,7 @@ class GestorDB:
         return [dict(row) for row in res]
 
     def obtener_curvas_pivot(self, bateria_id, unidad='W'):
-        """Retorna las curvas organizadas como matriz para visualización: {headers: [1.60, 1.70...], data: [{tiempo: 5, 1.60: 100...}]}"""
+        """Retorna las curvas organizadas como matriz para visualización, con llaves string para ser compatible con JSON."""
         conn = self._conectar()
         rows = conn.execute("SELECT tiempo_minutos, voltaje_corte_fv, valor FROM baterias_curvas_descarga WHERE bateria_id = ? AND unidad = ? ORDER BY tiempo_minutos, voltaje_corte_fv", (bateria_id, unidad)).fetchall()
         conn.close()
@@ -614,54 +680,149 @@ class GestorDB:
         # 1. Obtener columnas dinámicas (Voltajes de corte)
         voltajes = sorted(list(set(r['voltaje_corte_fv'] for r in rows)))
         
-        # 2. Agrupar por tiempo
+        # 2. Agrupar por tiempo, usando strings como llaves para los voltajes
         datos_por_tiempo = {}
         for r in rows:
             t = r['tiempo_minutos']
             if t not in datos_por_tiempo:
                 datos_por_tiempo[t] = {'tiempo': t}
-            datos_por_tiempo[t][r['voltaje_corte_fv']] = r['valor']
+            # ¡IMPORTANTE! Usar el string del voltaje como llave
+            datos_por_tiempo[t][str(r['voltaje_corte_fv'])] = r['valor']
 
         # 3. Convertir a lista ordenada por tiempo
         data_list = sorted(datos_por_tiempo.values(), key=lambda x: x['tiempo'])
         
-        return {'headers': voltajes, 'data': data_list}
+        return {'headers': [str(v) for v in voltajes], 'data': data_list}
 
     def cargar_curvas_por_id_csv(self, bateria_id, ruta_csv):
-        """Carga curvas para una batería específica, limpiando las anteriores."""
+        """Carga curvas para una batería específica, limpiando las anteriores y reportando errores."""
         if not os.path.exists(ruta_csv):
-            return {'status': 'error', 'msg': 'Archivo no encontrado'}
-        
+            return {'status': 'error', 'msg': 'Archivo no encontrado', 'logs': []}
+
         conn = self._conectar()
         insertados = 0
+        logs = []
         try:
-            # Limpiar curvas anteriores de esta batería para evitar duplicados
             conn.execute("DELETE FROM baterias_curvas_descarga WHERE bateria_id = ?", (bateria_id,))
             
             with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
-                lector = csv.DictReader(f)
-                cols_fv = [c for c in lector.fieldnames if c.upper().startswith('FV_')]
-                
-                for fila in lector:
+                try:
+                    lector = csv.DictReader(f)
+                    # Verificar que las columnas existan
+                    if not lector.fieldnames:
+                        return {'status': 'error', 'msg': 'El archivo CSV está vacío o no tiene cabecera.', 'logs': []}
+
+                    cols_fv = [c for c in lector.fieldnames if c and c.upper().strip().startswith('FV_')]
+                    
+                    if 'Tiempo_Min' not in lector.fieldnames:
+                        logs.append("La cabecera del CSV debe contener la columna 'Tiempo_Min'.")
+                    
+                    if not cols_fv:
+                        logs.append("El CSV debe contener al menos una columna de voltaje con el formato 'FV_x.xx' (ej. 'FV_1.60').")
+
+                    if logs:
+                        conn.rollback()
+                        return {'status': 'error', 'msg': 'Error de formato en la cabecera del CSV.', 'logs': logs}
+
+                    for i, fila in enumerate(lector, start=2): # i=2 porque la fila 1 es la cabecera
+                        try:
+                            tiempo_str = fila.get('Tiempo_Min', '0').strip()
+                            tiempo = int(tiempo_str)
+                            unidad = fila.get('Unidad', 'W').strip().upper()
+                            if unidad not in ['W', 'A']: unidad = 'W'
+                            if tiempo <= 0:
+                                logs.append(f"Fila {i}: El valor de 'Tiempo_Min' ({tiempo_str}) debe ser un número positivo.")
+                                continue
+                            
+                            puntos_insertados_fila = 0
+                            for col in cols_fv:
+                                try:
+                                    v_corte = float(col.upper().strip().replace('FV_', ''))
+                                    valor_str = fila.get(col, '').strip()
+                                    if not valor_str:
+                                        # No es un error, simplemente un valor faltante en la matriz
+                                        continue
+                                    
+                                    valor = float(valor_str)
+                                    conn.execute("INSERT INTO baterias_curvas_descarga (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad) VALUES (?, ?, ?, ?, ?)", (bateria_id, tiempo, v_corte, valor, unidad))
+                                    insertados += 1
+                                    puntos_insertados_fila += 1
+                                except (ValueError, TypeError):
+                                    logs.append(f"Fila {i}, Columna {col}: Valor '{fila.get(col, '')}' no es un número válido.")
+                                    continue
+                            
+                            if puntos_insertados_fila == 0:
+                                logs.append(f"Fila {i}: No se encontraron valores numéricos válidos en las columnas FV_*.")
+
+                        except (ValueError, TypeError):
+                            logs.append(f"Fila {i}: El valor de 'Tiempo_Min' ('{fila.get('Tiempo_Min')}') no es un número entero válido.")
+                            continue
+                except Exception as e:
+                    conn.rollback()
+                    return {'status': 'error', 'msg': f'Error general al leer el archivo CSV. Verifique que el formato sea correcto. Detalle: {e}', 'logs':[]}
+
+            if insertados > 0:
+                conn.commit()
+                return {'status': 'ok', 'insertados': insertados, 'logs': logs}
+            else:
+                conn.rollback() # No se insertó nada, revertir el DELETE inicial
+                if not logs: # Si no hay logs, el archivo estaba vacío
+                    logs.append("El archivo CSV no contenía filas de datos válidas para procesar.")
+                return {'status': 'error', 'msg': 'No se insertaron nuevos datos.', 'logs': logs}
+
+        except Exception as e:
+            conn.rollback()
+            return {'status': 'error', 'msg': str(e), 'logs': logs}
+        finally:
+            conn.close()
+
+    def actualizar_curvas_desde_form(self, bateria_id, form_data):
+        """
+        Actualiza las curvas de una batería para una unidad específica desde los datos de un formulario editable.
+        Los datos vienen en formato 'curva-<tiempo>-<voltaje>'.
+        """
+        conn = self._conectar()
+        insertados = 0
+        logs = []
+        
+        unidad = form_data.get('unidad_curva', 'W')
+
+        try:
+            # 1. Borrar las curvas existentes para esta batería y unidad
+            conn.execute("DELETE FROM baterias_curvas_descarga WHERE bateria_id = ? AND unidad = ?", (bateria_id, unidad))
+
+            # 2. Parsear y re-insertar los datos del formulario
+            puntos_a_insertar = []
+            for key, valor_str in form_data.items():
+                if key.startswith('curva-'):
+                    if not valor_str.strip():
+                        continue # Ignorar inputs vacíos
+
                     try:
-                        tiempo = int(fila.get('Tiempo_Min', 0))
-                        unidad = fila.get('Unidad', 'W').strip().upper()
-                        if unidad not in ['W', 'A']: unidad = 'W'
-                        if tiempo <= 0: continue
+                        parts = key.split('-')
+                        tiempo = int(parts[1])
+                        voltaje = float(parts[2])
+                        valor = float(valor_str)
                         
-                        for col in cols_fv:
-                            try:
-                                v_corte = float(col.upper().replace('FV_', ''))
-                                valor = float(fila[col])
-                                conn.execute("INSERT INTO baterias_curvas_descarga (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad) VALUES (?, ?, ?, ?, ?)", (bateria_id, tiempo, v_corte, valor, unidad))
-                                insertados += 1
-                            except ValueError: continue
-                    except ValueError: continue
+                        puntos_a_insertar.append((bateria_id, tiempo, voltaje, valor, unidad))
+                        
+                    except (ValueError, IndexError):
+                        logs.append(f"Dato inválido en el formulario: {key}={valor_str}")
+                        continue
+            
+            if puntos_a_insertar:
+                conn.executemany('''
+                    INSERT INTO baterias_curvas_descarga (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', puntos_a_insertar)
+                insertados = len(puntos_a_insertar)
             
             conn.commit()
-            return {'status': 'ok', 'insertados': insertados}
+            return {'status': 'ok', 'insertados': insertados, 'logs': logs}
+
         except Exception as e:
-            return {'status': 'error', 'msg': str(e)}
+            conn.rollback()
+            return {'status': 'error', 'msg': str(e), 'logs': logs}
         finally:
             conn.close()
 
