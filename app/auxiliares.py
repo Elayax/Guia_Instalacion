@@ -85,10 +85,23 @@ def _procesar_acciones_ups(db, request, state, accion):
         
         # --- Lógica de subida de imagen ---
         file = request.files.get('imagen_ups')
-        if file:
+        if file and file.filename:
             nombre_archivo = guardar_imagen_ups(file)
             if nombre_archivo:
                 datos_form['imagen_url'] = nombre_archivo
+
+        # --- Nuevas imagenes de reporte ---
+        file_instalacion = request.files.get('imagen_instalacion')
+        if file_instalacion and file_instalacion.filename:
+            nombre_archivo_inst = guardar_imagen_ups(file_instalacion)
+            if nombre_archivo_inst:
+                datos_form['imagen_instalacion_url'] = nombre_archivo_inst
+        
+        file_baterias = request.files.get('imagen_baterias')
+        if file_baterias and file_baterias.filename:
+            nombre_archivo_bat = guardar_imagen_ups(file_baterias)
+            if nombre_archivo_bat:
+                datos_form['imagen_baterias_url'] = nombre_archivo_bat
 
         exito = False
         if id_ups:

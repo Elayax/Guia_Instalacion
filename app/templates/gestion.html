@@ -472,7 +472,7 @@
 
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-9">
-                                        <label class="small" style="color: #ff8a80;">Imagen del Equipo</label>
+                                        <label class="small" style="color: #ff8a80;">Imagen del Equipo (Principal)</label>
                                         <input type="file" name="imagen_ups" class="form-control">
                                     </div>
                                     <div class="col-md-3">
@@ -480,6 +480,30 @@
                                             <img src="{{ url_for('static', filename='img/ups/' + ups_seleccionado.imagen_url) }}" class="img-fluid rounded" alt="Imagen actual">
                                         {% else %}
                                             <div class="border rounded bg-dark text-white-50 d-flex align-items-center justify-content-center h-100">Sin Imagen</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="control-title">6. Imagenes Adicionales para Reporte</div>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Imagen de Notas de Instalación</label>
+                                        <input type="file" name="imagen_instalacion" class="form-control">
+                                        {% if ups_seleccionado and ups_seleccionado.imagen_instalacion_url %}
+                                            <div class="mt-2 text-center">
+                                                <img src="{{ url_for('static', filename='img/ups/' + ups_seleccionado.imagen_instalacion_url) }}" class="img-fluid rounded" style="max-height: 100px;" alt="Imagen Notas Inst.">
+                                                <p class="small text-muted mb-0">{{ ups_seleccionado.imagen_instalacion_url }}</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Imagen de Conexión de Baterías</label>
+                                        <input type="file" name="imagen_baterias" class="form-control">
+                                        {% if ups_seleccionado and ups_seleccionado.imagen_baterias_url %}
+                                            <div class="mt-2 text-center">
+                                                <img src="{{ url_for('static', filename='img/ups/' + ups_seleccionado.imagen_baterias_url) }}" class="img-fluid rounded" style="max-height: 100px;" alt="Imagen Conexión Bat.">
+                                                <p class="small text-muted mb-0">{{ ups_seleccionado.imagen_baterias_url }}</p>
+                                            </div>
                                         {% endif %}
                                     </div>
                                 </div>

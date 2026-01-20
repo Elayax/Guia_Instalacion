@@ -90,11 +90,15 @@ class GestorDB:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_nombre ON ups_specs(Nombre_del_Producto);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cap_kva ON ups_specs(Capacidad_kVA);")
 
-        # Add imagen_url column to ups_specs if it doesn't exist
+        # Add image url columns to ups_specs if they don't exist
         cursor.execute("PRAGMA table_info(ups_specs)")
         columns = [row['name'] for row in cursor.fetchall()]
         if 'imagen_url' not in columns:
             cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_url TEXT")
+        if 'imagen_instalacion_url' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_instalacion_url TEXT")
+        if 'imagen_baterias_url' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_baterias_url TEXT")
 
         # 3. TABLA PROYECTOS
         cursor.execute('''
