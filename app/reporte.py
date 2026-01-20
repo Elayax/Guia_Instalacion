@@ -166,7 +166,6 @@ class ReportePDF(FPDF):
         self.rect(35, self.get_y() + 5, 140, 55, 'F')
         self.set_y(self.get_y() + 10)
         self._fila_portada("PROYECTO:", datos.get('nombre', 'S/D'))
-        self._fila_portada("UBICACION:", f"{datos.get('lat', '')}, {datos.get('lon', '')}")
         self._fila_portada("EQUIPO:", res.get('modelo_nombre', 'S/D'))
         self._fila_portada("CAPACIDAD:", f"{datos.get('kva', 'S/D')} kVA")
         self._fila_portada("FECHA:", datetime.now().strftime("%d/%m/%Y"))
@@ -185,8 +184,8 @@ class ReportePDF(FPDF):
         self.set_text_color(*COLOR_NEGRO)
         
         intro = (
-            "Con esta documentacion, LBS ofrece al usuario toda la informacion necesaria sobre el uso correcto del UPS. "
-            "Antes de instalar o manejar el UPS lea esta GUIA, recomendamos guarde para una futura consulta."
+            "Con esta documentacion, LBS le ofrece toda la informacion necesaria sobre la correcta instalacion del UPS."
+            "Antes de instalar o manejar el UPS lea esta GUIA, asi mismo recomendamos que lo guarde para una futura consulta."
         )
         self.multi_cell(0, 5, intro)
         self.ln(3)
@@ -204,7 +203,7 @@ class ReportePDF(FPDF):
             "Para levantar los armarios, usar una carretilla elevadora o cintas apropiadas.",
             "Comprobar la suficiente capacidad del suelo y del ascensor.",
             "Comprobar la integridad del equipo cuidadosamente.",
-            "Si observa algun danio, no instalar o arrancar el UPS y contactar con el Centro de Servicio mas cercano inmediatamente."
+            "Si observa algun daño, no instalar o arrancar el UPS y contactar con el Centro de Servicio mas cercano inmediatamente."
         ]
         self._imprimir_lista_bullets(normas)
         self.ln(4)
