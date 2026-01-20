@@ -306,14 +306,8 @@ class ReportePDF(FPDF):
                 
                 # Lista de servicios de mapas (intentar en orden)
                 map_urls = [
-                    # MapTiler (sin API key, servicio básico)
-                    f"https://api.maptiler.com/maps/streets/static/{lon},{lat},14/600x400.png?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
-                    
-                    # OpenStreetMap Static Map (más confiable)
-                    f"https://render.openstreetmap.org/cgi-bin/export?bbox={lon_float-0.01},{lat_float-0.01},{lon_float+0.01},{lat_float+0.01}&scale=10000&format=png",
-                    
-                    # Google Static Maps (requiere API, pero funciona sin ella en algunos casos)
-                    f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom=15&size=600x400&maptype=roadmap&markers=color:red%7C{lat},{lon}",
+                    # Usar un servicio de mapas estáticos más confiable y sin API Key
+                    f"https://static-map.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=14&size=600x400&maptype=mapnik&markers={lat},{lon},red-pushpin"
                 ]
                 
                 for idx, url_mapa in enumerate(map_urls):
