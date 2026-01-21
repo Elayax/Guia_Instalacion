@@ -427,8 +427,8 @@
                     <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
                 </div>
                 <div class="d-grid gap-2 mt-2">
-                    <button type="button" onclick="abrirModalVistaPrevia()" class="btn btn-dark">VISTA PREVIA</button>
-                    <button type="submit" name="accion" value="publicar" class="btn btn-primary">PUBLICAR</button>
+                    <button type="button" onclick="abrirModalVistaPrevia(false)" class="btn btn-dark">VISTA PREVIA</button>
+                    <button type="button" onclick="abrirModalVistaPrevia(true)" class="btn btn-primary">PUBLICAR</button>
                 </div>
             </div>
         </section>
@@ -627,13 +627,13 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-danger fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
+                    <h5 class="modal-title text-danger fw-bold" id="modalTituloPreview"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="/descargar-pdf" enctype="multipart/form-data" id="formVistaPrevia">
                     <input type="hidden" name="accion" value="preview">
                     <div class="modal-body">
-                        <p class="text-muted mb-3">Por favor, cargue las imágenes obligatorias para generar el reporte PDF:</p>
+                        <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes obligatorias para generar el reporte PDF:</p>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold text-danger"><i class="bi bi-diagram-3-fill me-2"></i>Diagrama Unifilar AC *</label>
@@ -659,7 +659,7 @@
                     </div>
                     <div class="modal-footer border-secondary">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitPreview"><i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa</button>
                     </div>
                 </form>
             </div>
@@ -670,8 +670,8 @@
     // --- 1. PDF ---
     function descargarPDF(){ const form = document.getElementById('pdfForm'); if(form) form.submit(); else alert("Primero debes realizar un cálculo."); }
 
-    // --- 1.1 Modal Vista Previa ---
-    function abrirModalVistaPrevia() {
+    // --- 1.1 Modal Vista Previa / Publicar ---
+    function abrirModalVistaPrevia(esPublicar = false) {
         // Validar formulario antes de abrir modal
         let errors = [];
 
@@ -685,9 +685,15 @@
             errors.push("Ingrese la Distancia (mts)");
         }
 
+        // Si es publicar, validar número de pedido
+        const pedidoInput = document.getElementById('input_pedido');
+        if(esPublicar && (!pedidoInput || !pedidoInput.value)) {
+            errors.push("Ingrese el Número de Pedido (OC-XXXX)");
+        }
+
         if(errors.length > 0){
             const msgContainer = document.getElementById('validationMsg');
-            msgContainer.innerHTML = "<strong>Faltan los siguientes datos para calcular:</strong><ul class='mt-2 mb-0 text-start'>" +
+            msgContainer.innerHTML = "<strong>Faltan los siguientes datos:</strong><ul class='mt-2 mb-0 text-start'>" +
                                      errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
 
             const modalEl = document.getElementById('validationModal');
@@ -703,6 +709,40 @@
         // IMPORTANTE: Limpiar campos clonados anteriores para evitar duplicados
         const existingClones = previewForm.querySelectorAll('input[type="hidden"]:not([name="accion"])');
         existingClones.forEach(input => input.remove());
+
+        // Cambiar el valor de accion según si es publicar o preview
+        const accionInput = previewForm.querySelector('input[name="accion"]');
+        if(accionInput) {
+            accionInput.value = esPublicar ? 'publicar' : 'preview';
+        }
+
+        // Actualizar título del modal
+        const modalTitle = document.getElementById('modalTituloPreview');
+        if(modalTitle) {
+            if(esPublicar) {
+                modalTitle.innerHTML = '<i class="bi bi-check-circle me-2"></i> PUBLICAR - Cargar Imágenes';
+                modalTitle.classList.remove('text-danger');
+                modalTitle.classList.add('text-success');
+            } else {
+                modalTitle.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes';
+                modalTitle.classList.remove('text-success');
+                modalTitle.classList.add('text-danger');
+            }
+        }
+
+        // Actualizar texto del botón submit
+        const submitBtn = document.getElementById('btnSubmitPreview');
+        if(submitBtn) {
+            if(esPublicar) {
+                submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>PUBLICAR PROYECTO';
+                submitBtn.classList.remove('btn-primary');
+                submitBtn.classList.add('btn-success');
+            } else {
+                submitBtn.innerHTML = '<i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa';
+                submitBtn.classList.remove('btn-success');
+                submitBtn.classList.add('btn-primary');
+            }
+        }
 
         // Copiar todos los campos hidden y visibles del formulario principal
         const mainInputs = mainForm.querySelectorAll('input[type="hidden"], input[type="text"], input[type="number"], select');

@@ -250,25 +250,53 @@ def descargar_pdf():
     if not ups_data:
         return "Error: UPS no encontrado.", 404
 
-    # Manejo de imágenes cargadas desde el modal (Vista Previa)
+    # Determinar si es publicar o preview
+    accion = datos.get('accion', 'preview')
+    es_publicar = (accion == 'publicar')
+    pedido = datos.get('pedido', 'temporal')
+
+    # Manejo de imágenes: TEMPORAL (preview) o PERMANENTE (publicar)
     imagenes_temp = {}
-    if 'imagen_unifilar_ac' in request.files:
-        file_unifilar = request.files['imagen_unifilar_ac']
-        if file_unifilar and file_unifilar.filename != '':
-            from app.auxiliares import guardar_archivo_temporal
-            imagenes_temp['unifilar_ac'] = guardar_archivo_temporal(file_unifilar)
 
-    if 'imagen_baterias_dc' in request.files:
-        file_baterias = request.files['imagen_baterias_dc']
-        if file_baterias and file_baterias.filename != '':
-            from app.auxiliares import guardar_archivo_temporal
-            imagenes_temp['baterias_dc'] = guardar_archivo_temporal(file_baterias)
+    if es_publicar:
+        # PUBLICAR: Guardar imágenes permanentemente
+        from app.auxiliares import guardar_imagen_proyecto
 
-    if 'imagen_layout_equipos' in request.files:
-        file_layout = request.files['imagen_layout_equipos']
-        if file_layout and file_layout.filename != '':
-            from app.auxiliares import guardar_archivo_temporal
-            imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file_layout)
+        if 'imagen_unifilar_ac' in request.files:
+            file_unifilar = request.files['imagen_unifilar_ac']
+            if file_unifilar and file_unifilar.filename != '':
+                nombre_archivo = guardar_imagen_proyecto(file_unifilar, pedido)
+                imagenes_temp['unifilar_ac'] = os.path.join(os.path.dirname(__file__), 'static', 'img', 'proyectos', pedido, nombre_archivo)
+
+        if 'imagen_baterias_dc' in request.files:
+            file_baterias = request.files['imagen_baterias_dc']
+            if file_baterias and file_baterias.filename != '':
+                nombre_archivo = guardar_imagen_proyecto(file_baterias, pedido)
+                imagenes_temp['baterias_dc'] = os.path.join(os.path.dirname(__file__), 'static', 'img', 'proyectos', pedido, nombre_archivo)
+
+        if 'imagen_layout_equipos' in request.files:
+            file_layout = request.files['imagen_layout_equipos']
+            if file_layout and file_layout.filename != '':
+                nombre_archivo = guardar_imagen_proyecto(file_layout, pedido)
+                imagenes_temp['layout_equipos'] = os.path.join(os.path.dirname(__file__), 'static', 'img', 'proyectos', pedido, nombre_archivo)
+    else:
+        # PREVIEW: Guardar imágenes temporalmente
+        from app.auxiliares import guardar_archivo_temporal
+
+        if 'imagen_unifilar_ac' in request.files:
+            file_unifilar = request.files['imagen_unifilar_ac']
+            if file_unifilar and file_unifilar.filename != '':
+                imagenes_temp['unifilar_ac'] = guardar_archivo_temporal(file_unifilar)
+
+        if 'imagen_baterias_dc' in request.files:
+            file_baterias = request.files['imagen_baterias_dc']
+            if file_baterias and file_baterias.filename != '':
+                imagenes_temp['baterias_dc'] = guardar_archivo_temporal(file_baterias)
+
+        if 'imagen_layout_equipos' in request.files:
+            file_layout = request.files['imagen_layout_equipos']
+            if file_layout and file_layout.filename != '':
+                imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file_layout)
 
     # Obtener tipo de ventilación si existe
     tipo_ventilacion_nombre = None
@@ -306,13 +334,27 @@ def descargar_pdf():
     # Pasamos datos visuales extra
     res['modelo_nombre'] = datos.get('modelo_nombre')
     res['tipo_ventilacion'] = tipo_ventilacion_nombre
-    es_publicado = datos.get('es_publicado') == 'True'
+
+    # Si es publicar, guardar en la base de datos
+    if es_publicar:
+        save_data = {
+            'pedido': pedido,
+            'cliente_nombre': datos.get('cliente_texto'),
+            'sucursal_nombre': datos.get('sucursal_texto'),
+            'fases': datos.get('fases')
+        }
+        if db.publicar_proyecto(res, save_data):
+            res['es_publicado'] = True
+        else:
+            # Si falla la publicación (pedido duplicado), aún generar el PDF pero como preview
+            es_publicar = False
 
     pdf = ReportePDF()
-    pdf_bytes = pdf.generar_cuerpo(datos, res, ups=ups_data, bateria=bateria_info, es_publicado=es_publicado, imagenes_temp=imagenes_temp)
+    pdf_bytes = pdf.generar_cuerpo(datos, res, ups=ups_data, bateria=bateria_info, es_publicado=es_publicar, imagenes_temp=imagenes_temp)
 
     response = make_response(bytes(pdf_bytes))
     response.headers['Content-Type'] = 'application/pdf'
-    nombre_seguro = str(datos.get("pedido", "reporte")).replace(" ", "_")
-    response.headers['Content-Disposition'] = f'attachment; filename=Memoria_{nombre_seguro}.pdf'
+    nombre_seguro = str(pedido).replace(" ", "_")
+    prefijo = "Publicado" if es_publicar else "Preview"
+    response.headers['Content-Disposition'] = f'attachment; filename={prefijo}_Memoria_{nombre_seguro}.pdf'
     return response

@@ -241,12 +241,35 @@ def _procesar_acciones_bateria(db, request, state, accion):
 def guardar_archivo_temporal(file):
     """Guarda un archivo subido en la carpeta uploads y retorna su ruta"""
     if not file or file.filename == '': return None
+    from werkzeug.utils import secure_filename
     base_dir = os.path.dirname(os.path.abspath(__file__))
     upload_dir = os.path.join(base_dir, 'static', 'uploads')
     if not os.path.exists(upload_dir): os.makedirs(upload_dir)
-    filepath = os.path.join(upload_dir, file.filename)
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(upload_dir, filename)
     file.save(filepath)
     return filepath
+
+def guardar_imagen_proyecto(file, pedido):
+    """Guarda una imagen permanente en la carpeta del proyecto"""
+    if not file or file.filename == '': return None
+    from werkzeug.utils import secure_filename
+    import time
+
+    # Crear nombre único con timestamp
+    filename = secure_filename(file.filename)
+    nombre_base, extension = os.path.splitext(filename)
+    timestamp = int(time.time())
+    filename_unico = f"{nombre_base}_{timestamp}{extension}"
+
+    # Crear carpeta del proyecto
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    proyecto_dir = os.path.join(base_dir, 'static', 'img', 'proyectos', pedido)
+    if not os.path.exists(proyecto_dir): os.makedirs(proyecto_dir)
+
+    filepath = os.path.join(proyecto_dir, filename_unico)
+    file.save(filepath)
+    return filename_unico  # Retorna solo el nombre del archivo
 
 def procesar_calculo_ups(db, form):
     """Maneja la lógica de cálculo y publicación del index"""
