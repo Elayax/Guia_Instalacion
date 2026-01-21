@@ -1,6 +1,8 @@
 import os
 from fpdf import FPDF
 from datetime import datetime
+from PIL import Image
+import tempfile
 
 # --- CONFIGURACIÓN DE COLORES ---
 COLOR_ROJO = (180, 20, 20)      
@@ -76,6 +78,55 @@ class ReportePDF(FPDF):
             return texto.encode('latin-1', 'replace').decode('latin-1')
         except:
             return texto
+
+    def _preparar_imagen(self, ruta_imagen, ancho_mm=190, alto_mm=None):
+        """
+        Redimensiona y optimiza una imagen para el PDF
+        - ruta_imagen: Path de la imagen original
+        - ancho_mm: Ancho deseado en mm para el PDF
+        - alto_mm: Alto deseado en mm (opcional, mantiene proporción si no se especifica)
+
+        Retorna: Path de la imagen procesada (temporal)
+        """
+        try:
+            # Abrir imagen original
+            img = Image.open(ruta_imagen)
+
+            # Convertir SVG o imágenes con canal alpha a RGB
+            if img.mode in ('RGBA', 'LA', 'P'):
+                # Crear fondo blanco
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if 'A' in img.mode else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            # Calcular tamaño objetivo en píxeles (300 DPI para calidad)
+            dpi = 300
+            ancho_px = int(ancho_mm * dpi / 25.4)
+
+            if alto_mm:
+                alto_px = int(alto_mm * dpi / 25.4)
+                # Redimensionar exacto (puede distorsionar)
+                img = img.resize((ancho_px, alto_px), Image.Resampling.LANCZOS)
+            else:
+                # Mantener proporción
+                ratio = img.height / img.width
+                alto_px = int(ancho_px * ratio)
+                img = img.resize((ancho_px, alto_px), Image.Resampling.LANCZOS)
+
+            # Guardar en archivo temporal
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+            img.save(temp_file.name, 'JPEG', quality=85, optimize=True)
+            temp_file.close()
+
+            return temp_file.name
+
+        except Exception as e:
+            print(f"Error preparando imagen {ruta_imagen}: {e}")
+            return ruta_imagen  # Retornar original si falla
 
     def generar_cuerpo(self, datos, res, es_publicado=False, ups=None, bateria=None, imagenes_temp=None):
 
@@ -159,11 +210,18 @@ class ReportePDF(FPDF):
         if ups and ups.get('imagen_url'):
             img_filename = os.path.basename(ups['imagen_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-            
+
             if os.path.exists(ruta_imagen):
                 try:
-                    self.image(ruta_imagen, x=65, y=40, w=80)
+                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=80)
+                    self.image(img_procesada, x=65, y=40, w=80)
                     draw_black_box = False
+                    # Limpiar archivo temporal
+                    if img_procesada != ruta_imagen:
+                        try:
+                            os.unlink(img_procesada)
+                        except:
+                            pass
                 except Exception:
                     pass
 
@@ -181,9 +239,18 @@ class ReportePDF(FPDF):
         self.set_fill_color(245, 245, 245)
         self.rect(35, self.get_y() + 5, 140, 55, 'F')
         self.set_y(self.get_y() + 10)
-        self._fila_portada("PROYECTO:", datos.get('nombre', 'S/D'))
-        self._fila_portada("EQUIPO:", res.get('modelo_nombre', 'S/D'))
-        self._fila_portada("CAPACIDAD:", f"{datos.get('kva', 'S/D')} kVA")
+
+        # DATOS CORREGIDOS - Usar los campos correctos del formulario
+        proyecto_nombre = datos.get('cliente_texto', datos.get('nombre', 'S/D'))
+        if datos.get('sucursal_texto'):
+            proyecto_nombre = f"{proyecto_nombre} - {datos.get('sucursal_texto')}"
+
+        equipo_nombre = ups.get('Nombre_del_Producto') if ups else res.get('modelo_nombre', 'S/D')
+        capacidad_valor = ups.get('Capacidad_kVA') if ups else datos.get('kva', 'S/D')
+
+        self._fila_portada("PROYECTO:", proyecto_nombre)
+        self._fila_portada("EQUIPO:", equipo_nombre)
+        self._fila_portada("CAPACIDAD:", f"{capacidad_valor} kVA")
         self._fila_portada("FECHA:", datetime.now().strftime("%d/%m/%Y"))
 
     def _fila_portada(self, label, value):
@@ -334,7 +401,13 @@ class ReportePDF(FPDF):
     # HOJA 3: INGENIERÍA
     # ==========================================================================
     def _hoja_3_ingenieria(self, datos, res):
-        self._titulo_seccion("3. ESPECIFICACIONES DE INSTALACION ELECTRICA")
+        # TÍTULO MANUAL CON PUNTO 3 EXPLÍCITO
+        self.set_font('Arial', 'B', 14)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 10, "3. ESPECIFICACIONES DE INSTALACION ELECTRICA", 0, 1, 'L')
+        self.set_draw_color(200, 200, 200)
+        self.line(10, self.get_y(), 200, self.get_y())
+        self.ln(4)
 
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
@@ -485,11 +558,18 @@ class ReportePDF(FPDF):
         if ups and ups.get('imagen_instalacion_url'):
             img_filename = os.path.basename(ups['imagen_instalacion_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-            
+
             if os.path.exists(ruta_imagen):
                 try:
-                    self.image(ruta_imagen, x=45, w=120) 
+                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=120)
+                    self.image(img_procesada, x=45, w=120)
                     draw_placeholder = False
+                    # Limpiar archivo temporal
+                    if img_procesada != ruta_imagen:
+                        try:
+                            os.unlink(img_procesada)
+                        except:
+                            pass
                 except Exception as e:
                     print(f"Error cargando imagen de instalacion: {e}")
         
@@ -532,10 +612,17 @@ class ReportePDF(FPDF):
 
         draw_placeholder_unifilar = True
         if self.imagenes_temp.get('unifilar_ac'):
-            # Usar imagen temporal cargada
+            # Usar imagen temporal cargada - REDIMENSIONADA
             try:
-                self.image(self.imagenes_temp['unifilar_ac'], x=10, w=190)
+                img_procesada = self._preparar_imagen(self.imagenes_temp['unifilar_ac'], ancho_mm=190)
+                self.image(img_procesada, x=10, w=190)
                 draw_placeholder_unifilar = False
+                # Limpiar archivo temporal
+                if img_procesada != self.imagenes_temp['unifilar_ac']:
+                    try:
+                        os.unlink(img_procesada)
+                    except:
+                        pass
             except Exception as e:
                 print(f"Error cargando imagen temporal unifilar AC: {e}")
 
@@ -567,22 +654,36 @@ class ReportePDF(FPDF):
 
         draw_placeholder = True
 
-        # Prioridad 1: Imagen temporal cargada
+        # Prioridad 1: Imagen temporal cargada - REDIMENSIONADA
         if self.imagenes_temp.get('baterias_dc'):
             try:
-                self.image(self.imagenes_temp['baterias_dc'], x=45, w=120)
+                img_procesada = self._preparar_imagen(self.imagenes_temp['baterias_dc'], ancho_mm=120)
+                self.image(img_procesada, x=45, w=120)
                 draw_placeholder = False
+                # Limpiar archivo temporal
+                if img_procesada != self.imagenes_temp['baterias_dc']:
+                    try:
+                        os.unlink(img_procesada)
+                    except:
+                        pass
             except Exception as e:
                 print(f"Error cargando imagen temporal baterías DC: {e}")
-        # Prioridad 2: Imagen desde BD del UPS
+        # Prioridad 2: Imagen desde BD del UPS - REDIMENSIONADA
         elif ups and ups.get('imagen_baterias_url'):
             img_filename = os.path.basename(ups['imagen_baterias_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
 
             if os.path.exists(ruta_imagen):
                 try:
-                    self.image(ruta_imagen, x=45, w=120)
+                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=120)
+                    self.image(img_procesada, x=45, w=120)
                     draw_placeholder = False
+                    # Limpiar archivo temporal
+                    if img_procesada != ruta_imagen:
+                        try:
+                            os.unlink(img_procesada)
+                        except:
+                            pass
                 except Exception as e:
                     print(f"Error cargando imagen de conexion de baterias: {e}")
 
@@ -627,22 +728,36 @@ class ReportePDF(FPDF):
 
         draw_placeholder = True
 
-        # Si el título es "DISPOSICION DE LOS EQUIPOS", usar imagen temporal si existe
+        # Si el título es "DISPOSICION DE LOS EQUIPOS", usar imagen temporal si existe - REDIMENSIONADA
         if "DISPOSICION" in titulo.upper() and self.imagenes_temp.get('layout_equipos'):
             try:
-                self.image(self.imagenes_temp['layout_equipos'], x=45, w=120)
+                img_procesada = self._preparar_imagen(self.imagenes_temp['layout_equipos'], ancho_mm=120)
+                self.image(img_procesada, x=45, w=120)
                 draw_placeholder = False
+                # Limpiar archivo temporal
+                if img_procesada != self.imagenes_temp['layout_equipos']:
+                    try:
+                        os.unlink(img_procesada)
+                    except:
+                        pass
             except Exception as e:
                 print(f"Error cargando imagen temporal layout: {e}")
-        # Si no hay imagen temporal, usar imagen desde BD
+        # Si no hay imagen temporal, usar imagen desde BD - REDIMENSIONADA
         elif imagen_url:
             img_filename = os.path.basename(imagen_url)
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
 
             if os.path.exists(ruta_imagen):
                 try:
-                    self.image(ruta_imagen, x=45, w=120)
+                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=120)
+                    self.image(img_procesada, x=45, w=120)
                     draw_placeholder = False
+                    # Limpiar archivo temporal
+                    if img_procesada != ruta_imagen:
+                        try:
+                            os.unlink(img_procesada)
+                        except:
+                            pass
                 except Exception as e:
                     print(f"Error cargando imagen de seccion '{titulo}': {e}")
 
