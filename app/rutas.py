@@ -67,14 +67,144 @@ def index():
     lista_clientes_unicos = db.obtener_clientes_unicos() # Solo nombres
     lista_ups = db.obtener_ups_todos()
     lista_baterias = db.obtener_baterias_modelos(solo_con_curvas=True)
-    
+
     resultado = None
     mensaje = None
-    
-    if request.method == 'POST':
-        resultado, mensaje = procesar_calculo_ups(db, request.form)
+    pdf_trigger = None  # Para activar descarga automática del PDF
 
-    return render_template('index.html', clientes=lista_clientes_unicos, ups=lista_ups, baterias=lista_baterias, res=resultado, msg=mensaje)
+    if request.method == 'POST':
+        # Verificar si es una solicitud para generar PDF
+        accion = request.form.get('accion')
+
+        if accion in ['preview', 'publicar']:
+            # GENERAR PDF + MOSTRAR RESULTADOS
+            resultado, mensaje = procesar_calculo_ups(db, request.form)
+
+            # Generar el PDF
+            datos = request.form.to_dict()
+
+            if datos.get('id_ups'):
+                ups_data = db.obtener_ups_id(datos['id_ups'])
+                if ups_data:
+                    es_publicar = (accion == 'publicar')
+                    pedido = datos.get('pedido', 'temporal')
+
+                    # Manejo de imágenes
+                    imagenes_temp = {}
+                    from app.auxiliares import guardar_archivo_temporal, guardar_imagen_proyecto
+
+                    if es_publicar:
+                        if 'imagen_unifilar_ac' in request.files:
+                            file = request.files['imagen_unifilar_ac']
+                            if file and file.filename:
+                                nombre = guardar_imagen_proyecto(file, pedido)
+                                imagenes_temp['unifilar_ac'] = os.path.join(os.path.dirname(__file__), 'static', 'img', 'proyectos', pedido, nombre)
+
+                        if 'imagen_baterias_dc' in request.files:
+                            file = request.files['imagen_baterias_dc']
+                            if file and file.filename:
+                                nombre = guardar_imagen_proyecto(file, pedido)
+                                imagenes_temp['baterias_dc'] = os.path.join(os.path.dirname(__file__), 'static', 'img', 'proyectos', pedido, nombre)
+
+                        if 'imagen_layout_equipos' in request.files:
+                            file = request.files['imagen_layout_equipos']
+                            if file and file.filename:
+                                nombre = guardar_imagen_proyecto(file, pedido)
+                                imagenes_temp['layout_equipos'] = os.path.join(os.path.dirname(__file__), 'static', 'img', 'proyectos', pedido, nombre)
+                    else:
+                        if 'imagen_unifilar_ac' in request.files:
+                            file = request.files['imagen_unifilar_ac']
+                            if file and file.filename:
+                                imagenes_temp['unifilar_ac'] = guardar_archivo_temporal(file)
+
+                        if 'imagen_baterias_dc' in request.files:
+                            file = request.files['imagen_baterias_dc']
+                            if file and file.filename:
+                                imagenes_temp['baterias_dc'] = guardar_archivo_temporal(file)
+
+                        if 'imagen_layout_equipos' in request.files:
+                            file = request.files['imagen_layout_equipos']
+                            if file and file.filename:
+                                imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file)
+
+                    # Obtener info adicional
+                    tipo_ventilacion_nombre = None
+                    if ups_data.get('tipo_ventilacion_id'):
+                        tipo_vent = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
+                        if tipo_vent:
+                            tipo_ventilacion_nombre = tipo_vent['nombre']
+
+                    # Agregar cálculos de batería si existen
+                    bateria_info = {}
+                    id_bateria = datos.get('id_bateria')
+                    if id_bateria and datos.get('tiempo_respaldo'):
+                        try:
+                            bateria_info = db.obtener_bateria_id(id_bateria) or {}
+                            curvas = db.obtener_curvas_por_bateria(id_bateria)
+                            if curvas:
+                                from app.calculos import CalculadoraBaterias
+                                calc_bat = CalculadoraBaterias()
+                                res_bat = calc_bat.calcular(
+                                    kva=ups_data.get('Capacidad_kVA'),
+                                    kw=ups_data.get('Capacidad_kW'),
+                                    eficiencia=ups_data.get('Eficiencia_Modo_Bateria_pct'),
+                                    v_dc=ups_data.get('Bateria_Vdc'),
+                                    tiempo_min=float(datos['tiempo_respaldo'] or 0),
+                                    curvas=curvas,
+                                    bat_voltaje_nominal=bateria_info.get('voltaje_nominal', 12)
+                                )
+                                resultado.update(res_bat)
+                        except Exception as e:
+                            resultado['bat_error'] = str(e)
+
+                    resultado['tipo_ventilacion'] = tipo_ventilacion_nombre
+
+                    # Si es publicar, guardar en BD
+                    if es_publicar:
+                        save_data = {
+                            'pedido': pedido,
+                            'cliente_nombre': datos.get('cliente_texto'),
+                            'sucursal_nombre': datos.get('sucursal_texto'),
+                            'fases': datos.get('fases')
+                        }
+                        if db.publicar_proyecto(resultado, save_data):
+                            resultado['es_publicado'] = True
+                            mensaje = "✅ Proyecto publicado correctamente"
+                        else:
+                            es_publicar = False
+                            mensaje = "⚠️ El pedido ya existe en la base de datos"
+
+                    # Generar PDF
+                    pdf = ReportePDF()
+                    pdf_bytes = pdf.generar_cuerpo(datos, resultado, ups=ups_data, bateria=bateria_info, es_publicado=es_publicar, imagenes_temp=imagenes_temp)
+
+                    # Guardar PDF temporalmente
+                    import tempfile
+                    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', dir=os.path.join(os.path.dirname(__file__), 'static', 'temp'))
+                    temp_pdf.write(bytes(pdf_bytes))
+                    temp_pdf.close()
+
+                    # Nombre para descarga
+                    nombre_seguro = str(pedido).replace(" ", "_")
+                    prefijo = "Publicado" if es_publicar else "Preview"
+                    pdf_filename = f'{prefijo}_Memoria_{nombre_seguro}.pdf'
+
+                    # Activar descarga automática
+                    pdf_trigger = {
+                        'path': f'/static/temp/{os.path.basename(temp_pdf.name)}',
+                        'filename': pdf_filename
+                    }
+        else:
+            # Cálculo normal sin PDF
+            resultado, mensaje = procesar_calculo_ups(db, request.form)
+
+    return render_template('index.html',
+                         clientes=lista_clientes_unicos,
+                         ups=lista_ups,
+                         baterias=lista_baterias,
+                         res=resultado,
+                         msg=mensaje,
+                         pdf_trigger=pdf_trigger)
 
 @main.route('/descargar-plantilla/<tipo>')
 def descargar_plantilla(tipo):

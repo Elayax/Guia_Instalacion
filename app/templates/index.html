@@ -630,7 +630,7 @@
                     <h5 class="modal-title text-danger fw-bold" id="modalTituloPreview"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="/descargar-pdf" enctype="multipart/form-data" id="formVistaPrevia" onsubmit="cerrarModalDespuesDeSubmit()">
+                <form method="POST" action="/" enctype="multipart/form-data" id="formVistaPrevia">
                     <input type="hidden" name="accion" value="preview">
                     <div class="modal-body">
                         <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes obligatorias para generar el reporte PDF:</p>
@@ -1064,5 +1064,28 @@
         });
     }
     </script>
+
+    <!-- Auto-descarga del PDF si está disponible -->
+    {% if pdf_trigger %}
+    <script>
+        (function() {
+            console.log('PDF generado, iniciando descarga automática...');
+            const link = document.createElement('a');
+            link.href = '{{ pdf_trigger.path }}';
+            link.download = '{{ pdf_trigger.filename }}';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Scroll suave a los resultados
+            setTimeout(() => {
+                const resultsSection = document.querySelector('.tech-matrix');
+                if(resultsSection) {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 500);
+        })();
+    </script>
+    {% endif %}
 </body>
 </html>
