@@ -82,9 +82,8 @@ class ReportePDF(FPDF):
         # Almacenar imágenes temporales como atributo de la instancia
         self.imagenes_temp = imagenes_temp or {}
 
-        # Convertir todos los datos de texto a Latin-1
-        datos = {k: self._texto_utf8(v) if isinstance(v, str) else v for k, v in datos.items()}
-        res = {k: self._texto_utf8(v) if isinstance(v, str) else v for k, v in res.items()}
+        # NO convertir datos ni res, dejar los valores originales
+        # La conversión UTF-8 se hará solo cuando sea necesario en cell/multi_cell
 
         # Portada
         self.add_page()
@@ -335,7 +334,7 @@ class ReportePDF(FPDF):
     # HOJA 3: INGENIERÍA
     # ==========================================================================
     def _hoja_3_ingenieria(self, datos, res):
-        self._titulo_seccion("ESPECIFICACIONES DE INSTALACION ELECTRICA")
+        self._titulo_seccion("3. ESPECIFICACIONES DE INSTALACION ELECTRICA")
 
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
@@ -347,38 +346,49 @@ class ReportePDF(FPDF):
         self.multi_cell(0, 5, norma_txt)
         self.ln(5)
 
-        # TABLA 1: PROTECCIONES
+        # 3.1 PROTECCIONES
+        self.set_font('Arial', 'B', 10)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, "3.1 Protecciones Electricas", 0, 1)
+        self.set_text_color(*COLOR_NEGRO)
+        self.ln(2)
+
         self._dibujar_encabezado_tabla(["ELEMENTO / PARAMETRO", "ESPECIFICACION TECNICA", "DETALLE NOM"])
         self._dibujar_fila_tabla("Corriente de Disenio (+25%)", f"{res['i_diseno']} Amperes", f"Base: {res['i_nom']} A (In)", resaltar_col2=True)
         polos = datos.get('fases')
         self._dibujar_fila_tabla("Proteccion Principal (Breaker)", f"{res['breaker_sel']} Amperes", f"Termomagnetico {polos} Polos", resaltar_col2=True)
         self.ln(5)
 
-        # TABLA 2: CABLEADO
+        # 3.2 CABLEADO
+        self.set_font('Arial', 'B', 10)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, "3.2 Dimensionamiento de Conductores", 0, 1)
+        self.set_text_color(*COLOR_NEGRO)
+        self.ln(2)
+
         self._dibujar_encabezado_tabla(["CONDUCTOR", "CALIBRE SUGERIDO", "TIPO MATERIAL"])
         self._dibujar_fila_tabla("Fases (L1, L2, L3)", f"{res['fase_sel']} AWG/kcmil", "Cobre THHN/THWN-2", resaltar_col2=True)
         self._dibujar_fila_tabla("Neutro (N)", f"{res['fase_sel']} AWG/kcmil", "Cobre (No reducir)", resaltar_col2=True)
         self._dibujar_fila_tabla("Tierra Fisica (GND/PE)", f"{res['gnd_sel']} AWG", "Cobre Desnudo / Verde", resaltar_col2=True)
         self.ln(5)
 
-        # VALIDACIÓN
-        # ANÁLISIS DE INGENIERÍA
+        # 3.3 ANÁLISIS DE INGENIERÍA
         self.set_font('Arial', 'B', 10)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, "3.3 Analisis de Ingenieria y Validacion", 0, 1)
         self.set_text_color(*COLOR_NEGRO)
-        self.cell(0, 8, "ANÁLISIS DE INGENIERÍA:", 0, 1)
-        self.set_font('Arial', '', 9)
         self.ln(2)
-        
+
         # Análisis de Caída de Tensión
         dv_pct = res.get('dv_pct', 0)
         self.set_font('Arial', 'B', 9)
-        self.cell(0, 5, "  - Caida de Tension:", 0, 1)
+        self.cell(0, 5, "  A) Caida de Tension:", 0, 1)
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
 
-        # Texto con variable resaltada - MÉTODO CORREGIDO
-        texto_caida = f"El calculo arroja una caida de tension de {dv_pct}%."
-        self.multi_cell(0, 5, texto_caida)
+        # Texto con variable resaltada - ARREGLADO PARA NO IRSE A LA DERECHA
+        self.set_font('Arial', '', 9)
+        self.multi_cell(0, 5, f"El calculo arroja una caida de tension de {dv_pct}%.")
 
         self.set_x(self.l_margin + 5)
         if dv_pct <= 3.0:
@@ -396,11 +406,12 @@ class ReportePDF(FPDF):
         calibre = res.get('fase_sel', 'S/D')
 
         self.set_font('Arial', 'B', 9)
-        self.cell(0, 5, "  - Ampacidad del Conductor:", 0, 1)
+        self.cell(0, 5, "  B) Ampacidad del Conductor:", 0, 1)
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
 
-        # Texto con variables - MÉTODO CORREGIDO
+        # Texto con variables - ARREGLADO PARA NO IRSE A LA DERECHA
+        self.set_font('Arial', '', 9)
         texto_ampacidad = f"El conductor seleccionado (calibre {calibre} AWG) tiene una ampacidad real de {i_real} A, considerando factores de agrupamiento y temperatura."
         self.multi_cell(0, 5, texto_ampacidad)
 
@@ -498,9 +509,26 @@ class ReportePDF(FPDF):
     def _hoja_4_diagrama(self, ups=None):
         self._titulo_seccion("DIAGRAMA DE CONEXION SUGERIDO")
 
+        # DESCRIPCIÓN GENERAL
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        descripcion = (
+            "Los diagramas siguientes muestran la configuracion electrica recomendada para la instalacion del sistema UPS, "
+            "incluyendo el diagrama unifilar de corriente alterna (AC) y el esquema de conexion del banco de baterias (DC)."
+        )
+        self.multi_cell(0, 5, descripcion)
+        self.ln(5)
+
         # Main Diagram - Unifilar AC (usar imagen temporal si está disponible)
         self.set_font('Arial', 'B', 10)
-        self.cell(0, 8, "Diagrama Unifilar AC:", 0, 1)
+        self.cell(0, 8, "4.1 Diagrama Unifilar AC:", 0, 1)
+
+        # Descripción del diagrama unifilar
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_GRIS)
+        self.multi_cell(0, 4, "Representa la arquitectura electrica de alimentacion AC del UPS, mostrando protecciones, conductores y conexiones principales.")
+        self.ln(3)
+        self.set_text_color(*COLOR_NEGRO)
 
         draw_placeholder_unifilar = True
         if self.imagenes_temp.get('unifilar_ac'):
@@ -525,9 +553,15 @@ class ReportePDF(FPDF):
         # Battery Connection Diagram (usar imagen temporal si está disponible)
         self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', 'B', 10)
-        self.cell(0, 8, "Diagrama de Conexión de Baterías DC:", 0, 1)
+        self.cell(0, 8, "4.2 Diagrama de Conexion de Baterias DC:", 0, 1)
 
+        # Descripción del diagrama de baterías
         self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_GRIS)
+        self.multi_cell(0, 4, "Muestra la configuracion del banco de baterias en serie/paralelo, incluyendo el interruptor de proteccion DC y las conexiones al UPS.")
+        self.ln(3)
+
+        self.set_text_color(*COLOR_NEGRO)
         self.multi_cell(0, 5, "En el siguiente diagrama se muestra la manera recomendada de conexion de baterias en serie asi como la conexion del interruptor de DC.")
         self.ln(3)
 
@@ -564,6 +598,32 @@ class ReportePDF(FPDF):
 
     def _seccion_fotografia(self, titulo, imagen_url=None):
         self._titulo_seccion(titulo)
+
+        # AGREGAR DESCRIPCIÓN SEGÚN EL TIPO DE IMAGEN
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_GRIS)
+
+        if "DISPOSICION" in titulo.upper():
+            descripcion = (
+                "La siguiente imagen muestra la distribucion fisica recomendada de los equipos en el sitio de instalacion, "
+                "incluyendo el UPS, banco de baterias, y espacios de ventilacion requeridos."
+            )
+        elif "CONEXION" in titulo.upper() and "BATERIA" in titulo.upper():
+            descripcion = (
+                "Fotografia de referencia que ilustra la conexion fisica del banco de baterias al sistema UPS, "
+                "mostrando terminales, cableado DC y polaridad correcta."
+            )
+        elif "VENTILACION" in titulo.upper():
+            descripcion = (
+                "Imagen de referencia del sistema de ventilacion recomendado para mantener la temperatura operativa "
+                "del equipo dentro de los parametros especificados por el fabricante."
+            )
+        else:
+            descripcion = "Imagen de referencia para la instalacion del sistema."
+
+        self.multi_cell(0, 4, descripcion)
+        self.ln(5)
+        self.set_text_color(*COLOR_NEGRO)
 
         draw_placeholder = True
 
