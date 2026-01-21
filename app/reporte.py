@@ -1,6 +1,4 @@
 import os
-import tempfile
-import urllib.request
 from fpdf import FPDF
 from datetime import datetime
 
@@ -115,18 +113,15 @@ class ReportePDF(FPDF):
         if not es_publicado: self._marca_agua_preview()
         self._hoja_4_diagrama(ups)
 
-        # Fotografias Adicionales
+        # Sección de Tipo de Ventilación
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
-        self._seccion_fotografia("VISTA GENERAL DEL SISTEMA", ups.get('imagen_general_url'))
+        self._seccion_tipo_ventilacion(res.get('tipo_ventilacion'))
 
+        # Sección de Disposición de los Equipos
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
-        self._seccion_fotografia("PLANO DE UBICACION DEL EQUIPO", ups.get('imagen_plano_url'))
-
-        self.add_page()
-        if not es_publicado: self._marca_agua_preview()
-        self._seccion_fotografia("VENTILACION Y AREA DE TRABAJO", ups.get('imagen_ventilacion_url'))
+        self._seccion_fotografia("DISPOSICION DE LOS EQUIPOS", ups.get('imagen_layout_url'))
 
         return self.output()
 
@@ -278,106 +273,8 @@ class ReportePDF(FPDF):
         self.cell(90, 6, f"Configuracion:       {datos.get('fases')} Fases + N + Tierra", 0, 1)
         self.set_xy(col2, y_inicio + 9)
         self.cell(90, 6, f"Longitud Circuito:   {datos.get('longitud')} metros", 0, 1)
-        self.set_xy(col2, y_inicio + 15)
-        self.cell(90, 6, f"Ubicacion:           {datos.get('lat')}, {datos.get('lon')}", 0, 1)
-        
-        self.set_y(y_inicio + 35)
 
-        self._subtitulo_rojo("CROQUIS DE UBICACION")
-        
-        y_before = self.get_y()
-        if y_before > 180:
-            self.add_page()
-            y_before = self.get_y()
-
-        map_generated = False
-        
-        if datos.get('lat') and datos.get('lon'):
-            try:
-                lat = str(datos['lat']).strip()
-                lon = str(datos['lon']).strip()
-                
-                # Validar coordenadas
-                lat_float = float(lat)
-                lon_float = float(lon)
-                
-                print(f"Intentando generar mapa para: {lat}, {lon}")
-                
-                # Lista de servicios de mapas (intentar en orden)
-                map_urls = [
-                    # Usar un servicio de mapas estáticos más confiable y sin API Key
-                    f"https://static-map.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=14&size=600x400&maptype=mapnik&markers={lat},{lon},red-pushpin"
-                ]
-                
-                for idx, url_mapa in enumerate(map_urls):
-                    try:
-                        print(f"Intentando servicio {idx + 1}...")
-                        
-                        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
-                            map_filename = tmp_file.name
-                        
-                        # Headers más completos
-                        req = urllib.request.Request(url_mapa)
-                        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-                        req.add_header('Accept', 'image/png,image/*;q=0.8,*/*;q=0.5')
-                        req.add_header('Accept-Language', 'es-MX,es;q=0.9,en;q=0.8')
-                        
-                        # Descargar con timeout
-                        with urllib.request.urlopen(req, timeout=10) as response:
-                            with open(map_filename, 'wb') as out_file:
-                                out_file.write(response.read())
-                        
-                        # Verificar que se descargó correctamente
-                        if os.path.exists(map_filename) and os.path.getsize(map_filename) > 1000:  # Al menos 1KB
-                            print(f"Mapa descargado exitosamente con servicio {idx + 1}")
-                            self.image(map_filename, x=20, y=y_before, w=170, h=100)
-                            self.set_y(y_before + 105)
-                            map_generated = True
-                            
-                            try:
-                                os.remove(map_filename)
-                            except:
-                                pass
-                            
-                            break  # Salir del loop si fue exitoso
-                        else:
-                            print(f"Archivo muy pequeño o vacío con servicio {idx + 1}")
-                            try:
-                                os.remove(map_filename)
-                            except:
-                                pass
-                            
-                    except Exception as e:
-                        print(f"Error con servicio {idx + 1}: {e}")
-                        try:
-                            if 'map_filename' in locals():
-                                os.remove(map_filename)
-                        except:
-                            pass
-                        continue
-                        
-            except Exception as e:
-                print(f"Error general al generar mapa: {e}")
-                import traceback
-                traceback.print_exc()
-        
-        # Si no se generó, mostrar placeholder
-        if not map_generated:
-            print("No se pudo generar el mapa, mostrando placeholder")
-            self.set_fill_color(40, 40, 40)
-            self.rect(x=20, y=y_before, w=170, h=100, style='F')
-            
-            # Agregar coordenadas en el placeholder
-            self.set_y(y_before + 45)
-            self.set_font('Arial', 'B', 11)
-            self.set_text_color(200, 200, 200)
-            self.cell(0, 5, f"COORDENADAS: {datos.get('lat')}, {datos.get('lon')}", 0, 1, 'C')
-            
-            self.set_y(y_before + 105)
-            self.set_font('Arial', 'I', 9)
-            self.set_text_color(*COLOR_GRIS_CLARO)
-            self.cell(0, 5, "(No fue posible generar el croquis de la ubicacion)", 0, 1, 'C')
-            self.set_text_color(*COLOR_NEGRO)
+        self.set_y(y_inicio + 30)
         
         
           # ==========================================================================
@@ -581,15 +478,15 @@ class ReportePDF(FPDF):
 
     def _seccion_fotografia(self, titulo, imagen_url=None):
         self._titulo_seccion(titulo)
-        
+
         draw_placeholder = True
         if imagen_url:
             img_filename = os.path.basename(imagen_url)
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-            
+
             if os.path.exists(ruta_imagen):
                 try:
-                    self.image(ruta_imagen, x=45, w=120) 
+                    self.image(ruta_imagen, x=45, w=120)
                     draw_placeholder = False
                 except Exception as e:
                     print(f"Error cargando imagen de seccion '{titulo}': {e}")
@@ -602,6 +499,42 @@ class ReportePDF(FPDF):
             self.set_font('Arial', 'B', 12)
             self.set_text_color(150, 150, 150)
             self.cell(120, 10, f"[ FOTOGRAFIA: {titulo.upper()} ]", 0, 0, 'C')
+            self.set_text_color(*COLOR_NEGRO)
+
+    def _seccion_tipo_ventilacion(self, tipo_ventilacion=None):
+        self._titulo_seccion("TIPO DE VENTILACION DEL SISTEMA")
+
+        self.set_font('Arial', '', 10)
+        self.set_text_color(*COLOR_NEGRO)
+
+        if tipo_ventilacion:
+            self.ln(5)
+            self.set_fill_color(*COLOR_FONDO)
+            y_pos = self.get_y()
+            self.rect(40, y_pos, 130, 30, 'F')
+
+            self.set_xy(50, y_pos + 8)
+            self.set_font('Arial', 'B', 11)
+            self.set_text_color(*COLOR_ROJO)
+            self.cell(0, 6, "Sistema de Ventilacion:", 0, 1)
+
+            self.set_xy(50, y_pos + 16)
+            self.set_font('Arial', '', 12)
+            self.set_text_color(*COLOR_NEGRO)
+            self.cell(0, 6, tipo_ventilacion, 0, 1)
+
+            self.set_y(y_pos + 35)
+            self.ln(10)
+
+            self.multi_cell(0, 5,
+                "El sistema de ventilacion del equipo es fundamental para mantener las condiciones "
+                "optimas de operacion. Asegurese de que el area circundante al equipo permita el "
+                "flujo de aire adecuado y cumpla con las especificaciones del fabricante.")
+        else:
+            self.ln(5)
+            self.set_text_color(*COLOR_GRIS_CLARO)
+            self.set_font('Arial', 'I', 10)
+            self.multi_cell(0, 5, "No se ha especificado el tipo de ventilacion para este equipo.")
             self.set_text_color(*COLOR_NEGRO)
 
     def _marca_agua_preview(self):

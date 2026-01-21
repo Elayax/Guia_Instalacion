@@ -32,7 +32,7 @@ def procesar_post_gestion(db, request, state):
             _procesar_acciones_bateria(db, request, state, accion)
 
 def _procesar_acciones_tipo(db, request, state, tipo):
-    """Maneja add_cliente, del_cliente, del_ups, del_bateria"""
+    """Maneja add_cliente, del_cliente, del_ups, del_bateria, add_tipo_vent, del_tipo_vent"""
     if tipo == 'add_cliente':
         db.agregar_cliente(request.form)
         state['active_tab'] = 'clientes'
@@ -48,6 +48,16 @@ def _procesar_acciones_tipo(db, request, state, tipo):
     elif tipo == 'del_bateria':
         db.eliminar_bateria(request.form.get('id'))
         state['active_tab'] = 'baterias'
+        return True
+    elif tipo == 'add_tipo_vent':
+        success = db.agregar_tipo_ventilacion(request.form)
+        state['active_tab'] = 'ventilacion'
+        state['mensaje'] = 'Tipo de ventilación agregado correctamente' if success else 'Error al agregar tipo de ventilación'
+        return True
+    elif tipo == 'del_tipo_vent':
+        success = db.eliminar_tipo_ventilacion(request.form.get('id'))
+        state['active_tab'] = 'ventilacion'
+        state['mensaje'] = 'Tipo de ventilación eliminado' if success else 'Error al eliminar (puede estar en uso)'
         return True
     return False
 
@@ -82,7 +92,26 @@ def _procesar_acciones_ups(db, request, state, accion):
     elif accion == 'guardar_ups':
         datos_form = request.form.to_dict()
         id_ups = datos_form.get('id')
-        
+
+        # VALIDACIÓN 1: Número de modelo no vacío
+        numero_modelo = datos_form.get('Nombre_del_Producto', '').strip()
+        if not numero_modelo:
+            state['mensaje'] = "❌ ERROR: El número de modelo es obligatorio. Por favor ingrese un nombre de producto."
+            if id_ups:
+                state['ups_seleccionado'] = db.obtener_ups_id(id_ups)
+            else:
+                state['agregando_ups'] = True
+            return
+
+        # VALIDACIÓN 2: Número de modelo no duplicado
+        if db.verificar_modelo_ups_existe(numero_modelo, excluir_id=id_ups):
+            state['mensaje'] = f"❌ ERROR: Ya existe un equipo con el modelo '{numero_modelo}'. Por favor use un nombre diferente."
+            if id_ups:
+                state['ups_seleccionado'] = db.obtener_ups_id(id_ups)
+            else:
+                state['agregando_ups'] = True
+            return
+
         # --- Lógica de subida de imagen ---
         file = request.files.get('imagen_ups')
         if file and file.filename:

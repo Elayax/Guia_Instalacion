@@ -29,7 +29,16 @@ class GestorDB:
                 link_maps TEXT,
                 lat TEXT,
                 lon TEXT,
-                UNIQUE(cliente, sucursal) 
+                UNIQUE(cliente, sucursal)
+            )
+        ''')
+
+        # 1.5 TABLA TIPOS DE VENTILACION (NUEVO CATÁLOGO)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tipos_ventilacion (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT UNIQUE NOT NULL,
+                descripcion TEXT
             )
         ''')
 
@@ -99,6 +108,14 @@ class GestorDB:
             cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_instalacion_url TEXT")
         if 'imagen_baterias_url' not in columns:
             cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_baterias_url TEXT")
+        if 'tipo_ventilacion_id' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN tipo_ventilacion_id INTEGER REFERENCES tipos_ventilacion(id)")
+        if 'imagen_diagrama_ac_url' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_diagrama_ac_url TEXT")
+        if 'imagen_diagrama_dc_url' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_diagrama_dc_url TEXT")
+        if 'imagen_layout_url' not in columns:
+            cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_layout_url TEXT")
 
         # 3. TABLA PROYECTOS
         cursor.execute('''
@@ -168,6 +185,17 @@ class GestorDB:
         
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_curva_descarga ON baterias_curvas_descarga(bateria_id, unidad, tiempo_minutos, voltaje_corte_fv);")
 
+        # CARGA DE DATOS DE EJEMPLO PARA TIPOS DE VENTILACIÓN
+        check_vent = cursor.execute("SELECT count(*) FROM tipos_ventilacion").fetchone()[0]
+        if check_vent == 0:
+            datos_ventilacion = [
+                ("Aire Forzado", "Ventilación mediante ventiladores que impulsan el aire a través del equipo"),
+                ("Convección Natural", "Ventilación pasiva mediante circulación natural del aire"),
+                ("Flujo Cruzado", "Entrada y salida de aire en lados opuestos del equipo"),
+                ("Flujo Frontal", "Entrada y salida de aire en la parte frontal del equipo")
+            ]
+            cursor.executemany("INSERT INTO tipos_ventilacion (nombre, descripcion) VALUES (?, ?)", datos_ventilacion)
+
         # CARGA DE DATOS DE EJEMPLO (SI LA TABLA ESTÁ VACÍA)
         check = cursor.execute("SELECT count(*) FROM baterias_modelos").fetchone()[0]
         if check == 0:
@@ -216,24 +244,12 @@ class GestorDB:
                         cliente = fila[0].strip()
                         sucursal = fila[1].strip()
                         direccion = fila[2].strip()
-                        link = fila[3].strip()
-                        raw_coords = fila[4].strip() # Viene como "24.77, -107.45"
-
-                        # Lógica para separar Latitud y Longitud
-                        lat, lon = "", ""
-                        if "," in raw_coords:
-                            partes = raw_coords.split(',')
-                            lat = partes[0].strip()
-                            lon = partes[1].strip()
-                        else:
-                            # Si viene sin coma, asumimos que es todo latitud o error
-                            lat = raw_coords
 
                         # Insertamos usando INSERT OR IGNORE para no duplicar si ya existe
                         conn.execute('''
-                            INSERT OR IGNORE INTO clientes (cliente, sucursal, direccion, link_maps, lat, lon)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        ''', (cliente, sucursal, direccion, link, lat, lon))
+                            INSERT OR IGNORE INTO clientes (cliente, sucursal, direccion)
+                            VALUES (?, ?, ?)
+                        ''', (cliente, sucursal, direccion))
                         
                         filas_insertadas += 1
                         # logs.append(f"✅ Insertado: {cliente} - {sucursal}") # Opcional: mucho ruido
@@ -366,9 +382,9 @@ class GestorDB:
         conn = self._conectar()
         try:
             conn.execute('''
-                INSERT INTO clientes (cliente, sucursal, direccion, link_maps, lat, lon)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (datos['cliente'], datos['sucursal'], datos['direccion'], datos.get('maps'), datos['lat'], datos['lon']))
+                INSERT INTO clientes (cliente, sucursal, direccion)
+                VALUES (?, ?, ?)
+            ''', (datos['cliente'], datos['sucursal'], datos['direccion']))
             conn.commit()
         except Exception as e:
             print(f"Error agregando cliente: {e}")
@@ -836,12 +852,64 @@ class GestorDB:
             tablas_validas = ['clientes', 'ups_specs', 'baterias_modelos', 'baterias_curvas_descarga', 'proyectos_publicados']
             if tabla not in tablas_validas:
                 return [], []
-            
+
             cursor = conn.execute(f"SELECT * FROM {tabla}")
             filas = cursor.fetchall()
             headers = [d[0] for d in cursor.description]
             return headers, filas
         except Exception:
             return [], []
+        finally:
+            conn.close()
+
+    # --- GESTIÓN DE TIPOS DE VENTILACIÓN (NUEVO) ---
+    def obtener_tipos_ventilacion(self):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM tipos_ventilacion ORDER BY nombre").fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
+    def agregar_tipo_ventilacion(self, datos):
+        conn = self._conectar()
+        try:
+            conn.execute("INSERT INTO tipos_ventilacion (nombre, descripcion) VALUES (?, ?)",
+                        (datos['nombre'], datos.get('descripcion', '')))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error agregando tipo de ventilación: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def eliminar_tipo_ventilacion(self, id_tipo):
+        conn = self._conectar()
+        try:
+            conn.execute("DELETE FROM tipos_ventilacion WHERE id = ?", (id_tipo,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error eliminando tipo de ventilación: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def obtener_tipo_ventilacion_id(self, id_tipo):
+        conn = self._conectar()
+        row = conn.execute("SELECT * FROM tipos_ventilacion WHERE id = ?", (id_tipo,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def verificar_modelo_ups_existe(self, nombre_modelo, excluir_id=None):
+        """Verifica si existe un UPS con el nombre de modelo dado (excluyendo opcionalmente un ID)"""
+        conn = self._conectar()
+        try:
+            if excluir_id:
+                row = conn.execute("SELECT id FROM ups_specs WHERE Nombre_del_Producto = ? AND id != ?",
+                                  (nombre_modelo, excluir_id)).fetchone()
+            else:
+                row = conn.execute("SELECT id FROM ups_specs WHERE Nombre_del_Producto = ?",
+                                  (nombre_modelo,)).fetchone()
+            return row is not None
         finally:
             conn.close()

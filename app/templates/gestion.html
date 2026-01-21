@@ -269,6 +269,7 @@
                     <button class="nav-link {% if active_tab == 'ups' %}active{% endif %}" id="v-pills-ups-tab" data-bs-toggle="pill" data-bs-target="#v-pills-ups" type="button" role="tab"><i class="fas fa-server"></i> GESTIÓN UPS</button>
                     <button class="nav-link {% if active_tab == 'baterias' %}active{% endif %}" id="v-pills-batteries-tab" data-bs-toggle="pill" data-bs-target="#v-pills-batteries" type="button" role="tab"><i class="fas fa-car-battery"></i> BATERÍAS</button>
                     <button class="nav-link {% if active_tab == 'clientes' %}active{% endif %}" id="v-pills-clients-tab" data-bs-toggle="pill" data-bs-target="#v-pills-clients" type="button" role="tab"><i class="fas fa-users"></i> CLIENTES</button>
+                    <button class="nav-link {% if active_tab == 'ventilacion' %}active{% endif %}" id="v-pills-ventilacion-tab" data-bs-toggle="pill" data-bs-target="#v-pills-ventilacion" type="button" role="tab"><i class="fas fa-wind"></i> VENTILACIÓN</button>
                     <button class="nav-link {% if active_tab == 'history' %}active{% endif %}" id="v-pills-history-tab" data-bs-toggle="pill" data-bs-target="#v-pills-history" type="button" role="tab"><i class="fas fa-history"></i> HISTORIAL</button>
                     <button class="nav-link {% if active_tab == 'carga' %}active{% endif %}" id="v-pills-carga-tab" data-bs-toggle="pill" data-bs-target="#v-pills-carga" type="button" role="tab"><i class="fas fa-cloud-upload-alt"></i> CARGA MASIVA</button>
                 </div>
@@ -505,6 +506,22 @@
                                                 <p class="small text-muted mb-0">{{ ups_seleccionado.imagen_baterias_url }}</p>
                                             </div>
                                         {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- TIPO DE VENTILACIÓN -->
+                                <div class="control-title">9. Tipo de Ventilación</div>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Tipo de Ventilación</label>
+                                        <select name="tipo_ventilacion_id" class="form-select">
+                                            <option value="">-- Seleccionar Tipo --</option>
+                                            {% for tv in tipos_ventilacion %}
+                                            <option value="{{ tv.id }}" {% if ups_seleccionado and ups_seleccionado.tipo_ventilacion_id == tv.id %}selected{% endif %}>
+                                                {{ tv.nombre }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
 
@@ -839,6 +856,55 @@
                                                 <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar cliente?');">
                                                     <input type="hidden" name="tipo" value="del_cliente">
                                                     <input type="hidden" name="id" value="{{ c.id }}">
+                                                    <button class="btn btn-danger btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA 3.5: TIPOS DE VENTILACIÓN -->
+                    <div class="tab-pane fade {% if active_tab == 'ventilacion' %}show active{% endif %}" id="v-pills-ventilacion" role="tabpanel">
+                        <div class="tech-matrix">
+                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-wind me-2"></i> TIPOS DE VENTILACIÓN</div>
+                            </div>
+                            <form method="POST" class="row g-2 mb-3 p-2 border rounded" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
+                                <input type="hidden" name="tipo" value="add_tipo_vent">
+                                <div class="col-4">
+                                    <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Nombre (ej: Aire Forzado)" required>
+                                </div>
+                                <div class="col-6">
+                                    <input type="text" name="descripcion" class="form-control form-control-sm" placeholder="Descripción (opcional)">
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-sm btn-success w-100"><i class="fas fa-plus"></i> Agregar</button>
+                                </div>
+                            </form>
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre</th>
+                                            <th>Descripción</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tv in tipos_ventilacion %}
+                                        <tr>
+                                            <td>{{ tv.id }}</td>
+                                            <td><strong>{{ tv.nombre }}</strong></td>
+                                            <td><small>{{ tv.descripcion or '-' }}</small></td>
+                                            <td class="text-center">
+                                                <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este tipo de ventilación?');">
+                                                    <input type="hidden" name="tipo" value="del_tipo_vent">
+                                                    <input type="hidden" name="id" value="{{ tv.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>
                                                 </form>
                                             </td>

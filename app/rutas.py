@@ -55,6 +55,12 @@ def get_bateria_curvas(id_bat):
     curvas = db.obtener_curvas_por_bateria(id_bat)
     return json.dumps(curvas)
 
+# --- API: TIPOS DE VENTILACION ---
+@main.route('/api/tipos-ventilacion')
+def get_tipos_ventilacion():
+    tipos = db.obtener_tipos_ventilacion()
+    return json.dumps(tipos)
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
     # 1. Cargar listas iniciales
@@ -215,11 +221,12 @@ def gestion():
     if request.method == 'POST':
         procesar_post_gestion(db, request, state)
     
-    return render_template('gestion.html', 
-                           clientes=db.obtener_clientes(), 
-                           ups=db.obtener_ups_todos(), 
-                           proyectos=db.obtener_proyectos(), 
+    return render_template('gestion.html',
+                           clientes=db.obtener_clientes(),
+                           ups=db.obtener_ups_todos(),
+                           proyectos=db.obtener_proyectos(),
                            baterias=db.obtener_baterias_modelos(),
+                           tipos_ventilacion=db.obtener_tipos_ventilacion(),
                            msg=state['mensaje'],
                            error_logs=state['error_logs'],
                            ups_seleccionado=state['ups_seleccionado'],
@@ -241,6 +248,13 @@ def descargar_pdf():
     ups_data = db.obtener_ups_id(datos['id_ups'])
     if not ups_data:
         return "Error: UPS no encontrado.", 404
+
+    # Obtener tipo de ventilación si existe
+    tipo_ventilacion_nombre = None
+    if ups_data.get('tipo_ventilacion_id'):
+        tipo_vent = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
+        if tipo_vent:
+            tipo_ventilacion_nombre = tipo_vent['nombre']
 
     # Recalculamos para el PDF
     calc = CalculadoraUPS()
@@ -270,8 +284,9 @@ def descargar_pdf():
 
     # Pasamos datos visuales extra
     res['modelo_nombre'] = datos.get('modelo_nombre')
+    res['tipo_ventilacion'] = tipo_ventilacion_nombre
     es_publicado = datos.get('es_publicado') == 'True'
-    
+
     pdf = ReportePDF()
     pdf_bytes = pdf.generar_cuerpo(datos, res, ups=ups_data, bateria=bateria_info, es_publicado=es_publicado)
     
