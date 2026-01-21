@@ -38,7 +38,8 @@ class GestorDB:
             CREATE TABLE IF NOT EXISTS tipos_ventilacion (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT UNIQUE NOT NULL,
-                descripcion TEXT
+                descripcion TEXT,
+                imagen_url TEXT
             )
         ''')
 
@@ -869,11 +870,11 @@ class GestorDB:
         conn.close()
         return [dict(row) for row in res]
 
-    def agregar_tipo_ventilacion(self, datos):
+    def agregar_tipo_ventilacion(self, datos, imagen_url=None):
         conn = self._conectar()
         try:
-            conn.execute("INSERT INTO tipos_ventilacion (nombre, descripcion) VALUES (?, ?)",
-                        (datos['nombre'], datos.get('descripcion', '')))
+            conn.execute("INSERT INTO tipos_ventilacion (nombre, descripcion, imagen_url) VALUES (?, ?, ?)",
+                        (datos['nombre'], datos.get('descripcion', ''), imagen_url))
             conn.commit()
             return True
         except Exception as e:
@@ -899,6 +900,28 @@ class GestorDB:
         row = conn.execute("SELECT * FROM tipos_ventilacion WHERE id = ?", (id_tipo,)).fetchone()
         conn.close()
         return dict(row) if row else None
+
+    def actualizar_tipo_ventilacion(self, id_tipo, datos, imagen_url=None):
+        """Actualiza un tipo de ventilación existente"""
+        conn = self._conectar()
+        try:
+            if imagen_url:
+                conn.execute("""UPDATE tipos_ventilacion
+                               SET nombre = ?, descripcion = ?, imagen_url = ?
+                               WHERE id = ?""",
+                            (datos.get('nombre'), datos.get('descripcion', ''), imagen_url, id_tipo))
+            else:
+                conn.execute("""UPDATE tipos_ventilacion
+                               SET nombre = ?, descripcion = ?
+                               WHERE id = ?""",
+                            (datos.get('nombre'), datos.get('descripcion', ''), id_tipo))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando tipo de ventilación: {e}")
+            return False
+        finally:
+            conn.close()
 
     def verificar_modelo_ups_existe(self, nombre_modelo, excluir_id=None):
         """Verifica si existe un UPS con el nombre de modelo dado (excluyendo opcionalmente un ID)"""

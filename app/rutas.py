@@ -235,19 +235,40 @@ def gestion():
                            agregando_bateria=state['agregando_bateria'],
                            unidad_curva=state['unidad_curva'],
                            pivot_data=state['pivot_data'],
-                           active_tab=state['active_tab'])
+                           active_tab=state['active_tab'],
+                           tipo_vent_seleccionado=state.get('tipo_vent_seleccionado'))
 
 # --- GENERAR PDF ---
 @main.route('/descargar-pdf', methods=['POST'])
 def descargar_pdf():
     datos = request.form.to_dict()
-    
+
     if not datos.get('id_ups'):
         return "Error: ID de UPS no proporcionado.", 400
-    
+
     ups_data = db.obtener_ups_id(datos['id_ups'])
     if not ups_data:
         return "Error: UPS no encontrado.", 404
+
+    # Manejo de imágenes cargadas desde el modal (Vista Previa)
+    imagenes_temp = {}
+    if 'imagen_unifilar_ac' in request.files:
+        file_unifilar = request.files['imagen_unifilar_ac']
+        if file_unifilar and file_unifilar.filename != '':
+            from app.auxiliares import guardar_archivo_temporal
+            imagenes_temp['unifilar_ac'] = guardar_archivo_temporal(file_unifilar)
+
+    if 'imagen_baterias_dc' in request.files:
+        file_baterias = request.files['imagen_baterias_dc']
+        if file_baterias and file_baterias.filename != '':
+            from app.auxiliares import guardar_archivo_temporal
+            imagenes_temp['baterias_dc'] = guardar_archivo_temporal(file_baterias)
+
+    if 'imagen_layout_equipos' in request.files:
+        file_layout = request.files['imagen_layout_equipos']
+        if file_layout and file_layout.filename != '':
+            from app.auxiliares import guardar_archivo_temporal
+            imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file_layout)
 
     # Obtener tipo de ventilación si existe
     tipo_ventilacion_nombre = None
@@ -259,7 +280,7 @@ def descargar_pdf():
     # Recalculamos para el PDF
     calc = CalculadoraUPS()
     res = calc.calcular(datos)
-    
+
     # Añadir cálculo de baterías
     id_bateria = datos.get('id_bateria')
     bateria_info = {}
@@ -288,8 +309,8 @@ def descargar_pdf():
     es_publicado = datos.get('es_publicado') == 'True'
 
     pdf = ReportePDF()
-    pdf_bytes = pdf.generar_cuerpo(datos, res, ups=ups_data, bateria=bateria_info, es_publicado=es_publicado)
-    
+    pdf_bytes = pdf.generar_cuerpo(datos, res, ups=ups_data, bateria=bateria_info, es_publicado=es_publicado, imagenes_temp=imagenes_temp)
+
     response = make_response(bytes(pdf_bytes))
     response.headers['Content-Type'] = 'application/pdf'
     nombre_seguro = str(datos.get("pedido", "reporte")).replace(" ", "_")

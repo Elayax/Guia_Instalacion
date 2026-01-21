@@ -50,7 +50,15 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         state['active_tab'] = 'baterias'
         return True
     elif tipo == 'add_tipo_vent':
-        success = db.agregar_tipo_ventilacion(request.form)
+        # Manejar imagen si existe
+        imagen_url = None
+        if 'imagen_ventilacion' in request.files:
+            file = request.files['imagen_ventilacion']
+            if file and file.filename != '':
+                from app.auxiliares import guardar_imagen_ups
+                imagen_url = guardar_imagen_ups(file)  # Reutilizamos la función de guardar imágenes
+
+        success = db.agregar_tipo_ventilacion(request.form, imagen_url)
         state['active_tab'] = 'ventilacion'
         state['mensaje'] = 'Tipo de ventilación agregado correctamente' if success else 'Error al agregar tipo de ventilación'
         return True
@@ -58,6 +66,29 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         success = db.eliminar_tipo_ventilacion(request.form.get('id'))
         state['active_tab'] = 'ventilacion'
         state['mensaje'] = 'Tipo de ventilación eliminado' if success else 'Error al eliminar (puede estar en uso)'
+        return True
+    elif tipo == 'edit_tipo_vent':
+        id_tipo = request.form.get('id_tipo_vent')
+        state['tipo_vent_seleccionado'] = db.obtener_tipo_ventilacion_id(id_tipo)
+        state['active_tab'] = 'ventilacion'
+        return True
+    elif tipo == 'update_tipo_vent':
+        id_tipo = request.form.get('id')
+        # Manejar imagen si existe
+        imagen_url = None
+        if 'imagen_ventilacion' in request.files:
+            file = request.files['imagen_ventilacion']
+            if file and file.filename != '':
+                from app.auxiliares import guardar_imagen_ups
+                imagen_url = guardar_imagen_ups(file)
+
+        success = db.actualizar_tipo_ventilacion(id_tipo, request.form, imagen_url)
+        state['active_tab'] = 'ventilacion'
+        state['mensaje'] = 'Tipo de ventilación actualizado correctamente' if success else 'Error al actualizar'
+        return True
+    elif tipo == 'cancelar_edit_tipo_vent':
+        state['tipo_vent_seleccionado'] = None
+        state['active_tab'] = 'ventilacion'
         return True
     return False
 

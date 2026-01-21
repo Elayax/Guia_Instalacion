@@ -62,12 +62,15 @@ class ReportePDF(FPDF):
     # ==========================================================================
     # EL DIRECTOR DE ORQUESTA
     # ==========================================================================
-    def generar_cuerpo(self, datos, res, es_publicado=False, ups=None, bateria=None):
-        
+    def generar_cuerpo(self, datos, res, es_publicado=False, ups=None, bateria=None, imagenes_temp=None):
+
+        # Almacenar imágenes temporales como atributo de la instancia
+        self.imagenes_temp = imagenes_temp or {}
+
         # Portada
         self.add_page()
         self._hoja_portada(datos, res, ups)
-        
+
         # HOJA 1
         self.add_page()
         if not es_publicado:
@@ -77,22 +80,22 @@ class ReportePDF(FPDF):
             self.cell(0, 10, "VISTA PREVIA - BORRADOR", 0, 0, 'C')
             self.set_xy(10, 120)
             self.cell(0, 10, "NO VALIDO PARA INSTALACION", 0, 0, 'C')
-            
+
             # Restauramos color normal
             self.set_text_color(*COLOR_NEGRO)
-            self.set_y(40) 
+            self.set_y(40)
         self._hoja_1_seguridad_instalacion()
-        
+
         # HOJA 2
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
         self._hoja_2_datos_sitio(datos)
-        
+
         # HOJA 3
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
         self._hoja_3_ingenieria(datos, res)
-        
+
         # Baterias
         if res.get('baterias_total'):
             self.add_page()
@@ -166,8 +169,9 @@ class ReportePDF(FPDF):
         self._fila_portada("FECHA:", datetime.now().strftime("%d/%m/%Y"))
 
     def _fila_portada(self, label, value):
-        self.set_x(45); self.set_font('Arial', 'B', 11); self.cell(40, 10, label, 0, 0, 'L')
-        self.set_font('Arial', '', 11); self.multi_cell(90, 10, str(value), 0, 'L')
+        self.set_x(45); self.set_font('Arial', '', 11); self.set_text_color(*COLOR_NEGRO); self.cell(40, 10, label, 0, 0, 'L')
+        self.set_font('Arial', 'B', 11); self.set_text_color(*COLOR_ROJO); self.multi_cell(90, 10, str(value), 0, 'L')
+        self.set_text_color(*COLOR_NEGRO)
 
     # ==========================================================================
     # HOJA 1: NORMAS Y SEGURIDAD
@@ -259,20 +263,51 @@ class ReportePDF(FPDF):
         col2 = 110
         
         nombre_completo = str(datos.get('nombre', 'SIN NOMBRE')).upper()
-        
+
         # COLUMNA IZQUIERDA
         self.set_xy(col1, y_inicio + 3)
-        self.cell(90, 6, f"Proyecto / Cliente:  {nombre_completo}", 0, 1)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(50, 6, "Proyecto / Cliente:  ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, nombre_completo, 0, 1)
+
         self.set_xy(col1, y_inicio + 9)
-        self.cell(90, 6, f"Capacidad UPS:       {datos.get('kva')} kVA", 0, 1)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(50, 6, "Capacidad UPS:       ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, f"{datos.get('kva')} kVA", 0, 1)
+
         self.set_xy(col1, y_inicio + 15)
-        self.cell(90, 6, f"Voltaje Operacion:   {datos.get('voltaje')} VCA", 0, 1)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(50, 6, "Voltaje Operacion:   ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, f"{datos.get('voltaje')} VCA", 0, 1)
 
         # COLUMNA DERECHA
         self.set_xy(col2, y_inicio + 3)
-        self.cell(90, 6, f"Configuracion:       {datos.get('fases')} Fases + N + Tierra", 0, 1)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(48, 6, "Configuracion:       ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, f"{datos.get('fases')} Fases + N + Tierra", 0, 1)
+
         self.set_xy(col2, y_inicio + 9)
-        self.cell(90, 6, f"Longitud Circuito:   {datos.get('longitud')} metros", 0, 1)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(48, 6, "Longitud Circuito:   ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, f"{datos.get('longitud')} metros", 0, 1)
+
+        # Restaurar fuente y color
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
 
         self.set_y(y_inicio + 30)
         
@@ -295,16 +330,16 @@ class ReportePDF(FPDF):
 
         # TABLA 1: PROTECCIONES
         self._dibujar_encabezado_tabla(["ELEMENTO / PARAMETRO", "ESPECIFICACION TECNICA", "DETALLE NOM"])
-        self._dibujar_fila_tabla("Corriente de Disenio (+25%)", f"{res['i_diseno']} Amperes", f"Base: {res['i_nom']} A (In)")
+        self._dibujar_fila_tabla("Corriente de Disenio (+25%)", f"{res['i_diseno']} Amperes", f"Base: {res['i_nom']} A (In)", resaltar_col2=True)
         polos = datos.get('fases')
-        self._dibujar_fila_tabla("Proteccion Principal (Breaker)", f"{res['breaker_sel']} Amperes", f"Termomagnetico {polos} Polos")
+        self._dibujar_fila_tabla("Proteccion Principal (Breaker)", f"{res['breaker_sel']} Amperes", f"Termomagnetico {polos} Polos", resaltar_col2=True)
         self.ln(5)
 
         # TABLA 2: CABLEADO
         self._dibujar_encabezado_tabla(["CONDUCTOR", "CALIBRE SUGERIDO", "TIPO MATERIAL"])
-        self._dibujar_fila_tabla("Fases (L1, L2, L3)", f"{res['fase_sel']} AWG/kcmil", "Cobre THHN/THWN-2")
-        self._dibujar_fila_tabla("Neutro (N)", f"{res['fase_sel']} AWG/kcmil", "Cobre (No reducir)")
-        self._dibujar_fila_tabla("Tierra Fisica (GND/PE)", f"{res['gnd_sel']} AWG", "Cobre Desnudo / Verde")
+        self._dibujar_fila_tabla("Fases (L1, L2, L3)", f"{res['fase_sel']} AWG/kcmil", "Cobre THHN/THWN-2", resaltar_col2=True)
+        self._dibujar_fila_tabla("Neutro (N)", f"{res['fase_sel']} AWG/kcmil", "Cobre (No reducir)", resaltar_col2=True)
+        self._dibujar_fila_tabla("Tierra Fisica (GND/PE)", f"{res['gnd_sel']} AWG", "Cobre Desnudo / Verde", resaltar_col2=True)
         self.ln(5)
 
         # VALIDACIÓN
@@ -321,7 +356,14 @@ class ReportePDF(FPDF):
         self.cell(0, 5, "  - Caida de Tension:", 0, 1)
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
-        self.multi_cell(0, 5, f"El calculo arroja una caida de tension de {dv_pct}%.")
+        # Texto con variable resaltada
+        self.cell(0, 5, "El calculo arroja una caida de tension de ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 5, f"{dv_pct}%", 0, 1)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+
         self.set_x(self.l_margin + 5)
         if dv_pct <= 3.0:
             self.set_text_color(*COLOR_VERDE)
@@ -335,18 +377,56 @@ class ReportePDF(FPDF):
         # Análisis de Ampacidad
         i_real = res.get('i_real_cable', 0)
         i_diseno = res.get('i_diseno', 0)
+        calibre = res.get('fase_sel', 'S/D')
+
         self.set_font('Arial', 'B', 9)
         self.cell(0, 5, "  - Ampacidad del Conductor:", 0, 1)
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
-        self.multi_cell(0, 5, f"El conductor seleccionado (calibre {res.get('fase_sel', 'S/D')} AWG) tiene una ampacidad real de {i_real} A, considerando factores de agrupamiento y temperatura.")
+
+        # Texto con variables resaltadas
+        self.cell(0, 5, "El conductor seleccionado (calibre ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(15, 5, f"{calibre}", 0, 0)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(0, 5, " AWG) tiene una ampacidad real de ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(12, 5, f"{i_real}", 0, 0)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(0, 5, " A, considerando factores", 0, 1)
+
+        self.set_x(self.l_margin + 5)
+        self.cell(0, 5, "de agrupamiento y temperatura.", 0, 1)
+
         self.set_x(self.l_margin + 5)
         if i_real > i_diseno:
+            self.set_text_color(*COLOR_NEGRO)
+            self.cell(0, 5, "Esta capacidad es SUFICIENTE para la corriente de disenio de ", 0, 0)
+            self.set_font('Arial', 'B', 9)
             self.set_text_color(*COLOR_VERDE)
-            self.multi_cell(0, 5, f"Esta capacidad es SUFICIENTE para la corriente de disenio de {i_diseno} A, garantizando una operacion segura y sin sobrecalentamiento del cableado.")
+            self.cell(12, 5, f"{i_diseno}", 0, 0)
+            self.set_font('Arial', '', 9)
+            self.set_text_color(*COLOR_NEGRO)
+            self.cell(0, 5, " A,", 0, 1)
+            self.set_x(self.l_margin + 5)
+            self.multi_cell(0, 5, "garantizando una operacion segura y sin sobrecalentamiento del cableado.")
         else:
             self.set_text_color(*COLOR_ALERTA)
-            self.multi_cell(0, 5, f"ALERTA: La capacidad del conductor ({i_real} A) es MENOR a la corriente de disenio ({i_diseno} A). Se requiere un conductor de mayor calibre para cumplir con la norma y evitar fallas criticas.")
+            self.cell(0, 5, f"ALERTA: La capacidad del conductor (", 0, 0)
+            self.set_font('Arial', 'B', 9)
+            self.cell(12, 5, f"{i_real}", 0, 0)
+            self.set_font('Arial', '', 9)
+            self.cell(0, 5, f" A) es MENOR a la corriente de disenio (", 0, 0)
+            self.set_font('Arial', 'B', 9)
+            self.cell(12, 5, f"{i_diseno}", 0, 0)
+            self.set_font('Arial', '', 9)
+            self.cell(0, 5, " A).", 0, 1)
+            self.set_x(self.l_margin + 5)
+            self.multi_cell(0, 5, "Se requiere un conductor de mayor calibre para cumplir con la norma y evitar fallas criticas.")
         self.set_text_color(*COLOR_NEGRO)
         self.ln(3)
 
@@ -374,15 +454,15 @@ class ReportePDF(FPDF):
         self.ln(5)
         self._subtitulo_rojo("BATERIA SELECCIONADA")
         self._dibujar_encabezado_tabla(["MODELO / FABRICANTE", "VOLTAJE NOMINAL", "CAPACIDAD"])
-        self._dibujar_fila_tabla(f"{bateria.get('modelo', 'S/D')} / {bateria.get('fabricante', 'S/D')}", f"{bateria.get('voltaje_nominal', 'S/D')} V", f"{bateria.get('capacidad_ah', 'S/D')} Ah")
+        self._dibujar_fila_tabla(f"{bateria.get('modelo', 'S/D')} / {bateria.get('fabricante', 'S/D')}", f"{bateria.get('voltaje_nominal', 'S/D')} V", f"{bateria.get('capacidad_ah', 'S/D')} Ah", resaltar_col2=True)
 
         self.ln(5)
 
         self._subtitulo_rojo("CONFIGURACION CALCULADA")
         self._dibujar_encabezado_tabla(["PARAMETRO", "VALOR", "DESCRIPCION"])
-        self._dibujar_fila_tabla("Tiempo de Respaldo Calculado", f"{res.get('autonomia_calculada_min', 'S/D')} min", f"Objetivo: {res.get('autonomia_deseada_min', 'S/D')} min")
-        self._dibujar_fila_tabla("Total de Baterias", f"{res.get('baterias_total', 'S/D')} pzas", f"{res.get('numero_strings', 'S/D')} arreglo(s) en paralelo")
-        self._dibujar_fila_tabla("Baterias por Arreglo", f"{res.get('baterias_por_string', 'S/D')} pzas", "En serie para alcanzar el voltaje DC del UPS")
+        self._dibujar_fila_tabla("Tiempo de Respaldo Calculado", f"{res.get('autonomia_calculada_min', 'S/D')} min", f"Objetivo: {res.get('autonomia_deseada_min', 'S/D')} min", resaltar_col2=True)
+        self._dibujar_fila_tabla("Total de Baterias", f"{res.get('baterias_total', 'S/D')} pzas", f"{res.get('numero_strings', 'S/D')} arreglo(s) en paralelo", resaltar_col2=True)
+        self._dibujar_fila_tabla("Baterias por Arreglo", f"{res.get('baterias_por_string', 'S/D')} pzas", "En serie para alcanzar el voltaje DC del UPS", resaltar_col2=True)
 
         self.ln(5)
 
@@ -431,41 +511,61 @@ class ReportePDF(FPDF):
     # ==========================================================================
     def _hoja_4_diagrama(self, ups=None):
         self._titulo_seccion("DIAGRAMA DE CONEXION SUGERIDO")
-        
-        # Main Diagram Placeholder
+
+        # Main Diagram - Unifilar AC (usar imagen temporal si está disponible)
         self.set_font('Arial', 'B', 10)
         self.cell(0, 8, "Diagrama Unifilar AC:", 0, 1)
-        self.set_fill_color(230, 230, 230)
-        y = self.get_y()
-        self.rect(10, y, 190, 80, 'F')
-        self.set_xy(10, y + 35)
-        self.set_font('Arial', 'B', 12)
-        self.set_text_color(150, 150, 150) 
-        self.cell(190, 10, "[ ESPACIO PARA DIAGRAMA UNIFILAR AC ]", 0, 0, 'C')
-        self.set_y(y + 85)
+
+        draw_placeholder_unifilar = True
+        if self.imagenes_temp.get('unifilar_ac'):
+            # Usar imagen temporal cargada
+            try:
+                self.image(self.imagenes_temp['unifilar_ac'], x=10, w=190)
+                draw_placeholder_unifilar = False
+            except Exception as e:
+                print(f"Error cargando imagen temporal unifilar AC: {e}")
+
+        if draw_placeholder_unifilar:
+            self.set_fill_color(230, 230, 230)
+            y = self.get_y()
+            self.rect(10, y, 190, 80, 'F')
+            self.set_xy(10, y + 35)
+            self.set_font('Arial', 'B', 12)
+            self.set_text_color(150, 150, 150)
+            self.cell(190, 10, "[ ESPACIO PARA DIAGRAMA UNIFILAR AC ]", 0, 0, 'C')
+            self.set_y(y + 85)
         self.ln(5)
 
-        # Battery Connection Diagram
+        # Battery Connection Diagram (usar imagen temporal si está disponible)
         self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', 'B', 10)
         self.cell(0, 8, "Diagrama de Conexión de Baterías DC:", 0, 1)
-        
+
         self.set_font('Arial', '', 9)
         self.multi_cell(0, 5, "En el siguiente diagrama se muestra la manera recomendada de conexion de baterias en serie asi como la conexion del interruptor de DC.")
         self.ln(3)
 
         draw_placeholder = True
-        if ups and ups.get('imagen_baterias_url'):
+
+        # Prioridad 1: Imagen temporal cargada
+        if self.imagenes_temp.get('baterias_dc'):
+            try:
+                self.image(self.imagenes_temp['baterias_dc'], x=45, w=120)
+                draw_placeholder = False
+            except Exception as e:
+                print(f"Error cargando imagen temporal baterías DC: {e}")
+        # Prioridad 2: Imagen desde BD del UPS
+        elif ups and ups.get('imagen_baterias_url'):
             img_filename = os.path.basename(ups['imagen_baterias_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-            
+
             if os.path.exists(ruta_imagen):
                 try:
-                    self.image(ruta_imagen, x=45, w=120) 
+                    self.image(ruta_imagen, x=45, w=120)
                     draw_placeholder = False
                 except Exception as e:
                     print(f"Error cargando imagen de conexion de baterias: {e}")
-        
+
         if draw_placeholder:
             y = self.get_y()
             self.set_fill_color(230, 230, 230)
@@ -480,7 +580,16 @@ class ReportePDF(FPDF):
         self._titulo_seccion(titulo)
 
         draw_placeholder = True
-        if imagen_url:
+
+        # Si el título es "DISPOSICION DE LOS EQUIPOS", usar imagen temporal si existe
+        if "DISPOSICION" in titulo.upper() and self.imagenes_temp.get('layout_equipos'):
+            try:
+                self.image(self.imagenes_temp['layout_equipos'], x=45, w=120)
+                draw_placeholder = False
+            except Exception as e:
+                print(f"Error cargando imagen temporal layout: {e}")
+        # Si no hay imagen temporal, usar imagen desde BD
+        elif imagen_url:
             img_filename = os.path.basename(imagen_url)
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
 
@@ -519,8 +628,8 @@ class ReportePDF(FPDF):
             self.cell(0, 6, "Sistema de Ventilacion:", 0, 1)
 
             self.set_xy(50, y_pos + 16)
-            self.set_font('Arial', '', 12)
-            self.set_text_color(*COLOR_NEGRO)
+            self.set_font('Arial', 'B', 13)
+            self.set_text_color(*COLOR_ROJO)
             self.cell(0, 6, tipo_ventilacion, 0, 1)
 
             self.set_y(y_pos + 35)
@@ -585,12 +694,22 @@ class ReportePDF(FPDF):
         self.cell(65, 7, columnas[1], 0, 0, 'C', True)
         self.cell(65, 7, columnas[2], 0, 1, 'C', True)
 
-    def _dibujar_fila_tabla(self, c1, c2, c3):
+    def _dibujar_fila_tabla(self, c1, c2, c3, resaltar_col2=False):
         self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 9)
-        self.set_draw_color(220, 220, 220) 
+        self.set_draw_color(220, 220, 220)
         self.cell(60, 7, c1, 1, 0, 'L')
-        self.set_font('Arial', 'B', 9) 
+
+        # Aplicar negrita y color rojo si se solicita resaltar
+        if resaltar_col2:
+            self.set_font('Arial', 'B', 10)
+            self.set_text_color(*COLOR_ROJO)
+        else:
+            self.set_font('Arial', 'B', 9)
+            self.set_text_color(*COLOR_NEGRO)
+
         self.cell(65, 7, c2, 1, 0, 'C')
-        self.set_font('Arial', '', 8) 
+
+        self.set_font('Arial', '', 8)
+        self.set_text_color(*COLOR_NEGRO)
         self.cell(65, 7, c3, 1, 1, 'C')

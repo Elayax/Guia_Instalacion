@@ -427,7 +427,7 @@
                     <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
                 </div>
                 <div class="d-grid gap-2 mt-2">
-                    <button type="submit" name="accion" value="preview" class="btn btn-dark">VISTA PREVIA</button>
+                    <button type="button" onclick="abrirModalVistaPrevia()" class="btn btn-dark">VISTA PREVIA</button>
                     <button type="submit" name="accion" value="publicar" class="btn btn-primary">PUBLICAR</button>
                 </div>
             </div>
@@ -622,9 +622,97 @@
         </div>
     </div>
 
+    <!-- MODAL VISTA PREVIA CON CARGA DE IMAGENES -->
+    <div class="modal fade" id="vistaPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-danger fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data" id="formVistaPrevia">
+                    <input type="hidden" name="accion" value="preview">
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Por favor, cargue las imágenes obligatorias para generar el reporte PDF:</p>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-danger"><i class="bi bi-diagram-3-fill me-2"></i>Diagrama Unifilar AC *</label>
+                            <input type="file" name="imagen_unifilar_ac" class="form-control" accept="image/*" required>
+                            <small class="text-muted">Formato: PNG, JPG, PDF. Máximo 5MB</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-danger"><i class="bi bi-battery-charging me-2"></i>Diagrama de Baterías DC *</label>
+                            <input type="file" name="imagen_baterias_dc" class="form-control" accept="image/*" required>
+                            <small class="text-muted">Formato: PNG, JPG, PDF. Máximo 5MB</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-danger"><i class="bi bi-grid-3x3 me-2"></i>Disposición de Equipos *</label>
+                            <input type="file" name="imagen_layout_equipos" class="form-control" accept="image/*" required>
+                            <small class="text-muted">Formato: PNG, JPG, PDF. Máximo 5MB</small>
+                        </div>
+
+                        <div class="alert alert-warning border-0 mt-3" style="background: rgba(255, 193, 7, 0.1);">
+                            <i class="bi bi-info-circle me-2"></i><strong>Nota:</strong> Estas imágenes serán incluidas en el PDF de vista previa. Para la versión publicada, deberá volver a cargarlas.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
     // --- 1. PDF ---
     function descargarPDF(){ const form = document.getElementById('pdfForm'); if(form) form.submit(); else alert("Primero debes realizar un cálculo."); }
+
+    // --- 1.1 Modal Vista Previa ---
+    function abrirModalVistaPrevia() {
+        // Validar formulario antes de abrir modal
+        let errors = [];
+
+        const ups = document.getElementById('sel_ups');
+        if(ups && !ups.value) {
+            errors.push("Seleccione un Modelo de UPS");
+        }
+
+        const longInput = document.querySelector('input[name="longitud"]');
+        if(longInput && !longInput.value) {
+            errors.push("Ingrese la Distancia (mts)");
+        }
+
+        if(errors.length > 0){
+            const msgContainer = document.getElementById('validationMsg');
+            msgContainer.innerHTML = "<strong>Faltan los siguientes datos para calcular:</strong><ul class='mt-2 mb-0 text-start'>" +
+                                     errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+
+            const modalEl = document.getElementById('validationModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            return;
+        }
+
+        // Si todo está bien, copiar campos del formulario principal al formulario del modal
+        const mainForm = document.getElementById('mainForm');
+        const previewForm = document.getElementById('formVistaPrevia');
+
+        // Copiar todos los campos hidden y visibles del formulario principal
+        const mainInputs = mainForm.querySelectorAll('input[type="hidden"], input[type="text"], input[type="number"], select');
+        mainInputs.forEach(input => {
+            const clonedInput = document.createElement('input');
+            clonedInput.type = 'hidden';
+            clonedInput.name = input.name;
+            clonedInput.value = input.value;
+            previewForm.appendChild(clonedInput);
+        });
+
+        // Abrir modal
+        new bootstrap.Modal(document.getElementById('vistaPreviewModal')).show();
+    }
 
     // --- 2. Cargar sucursales por cliente ---
     const selCliente = document.getElementById('sel_cliente');
