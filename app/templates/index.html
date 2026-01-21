@@ -666,47 +666,70 @@
         </div>
     </div>
 
+    <!-- ✅ Bootstrap 5 JavaScript - DEBE CARGARSE PRIMERO -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
     // --- 1. PDF ---
     function descargarPDF(){ const form = document.getElementById('pdfForm'); if(form) form.submit(); else alert("Primero debes realizar un cálculo."); }
 
     // --- 1.1 Modal Vista Previa / Publicar ---
     function abrirModalVistaPrevia(esPublicar = false) {
-        // Validar formulario antes de abrir modal
+        console.log('=== INICIANDO abrirModalVistaPrevia ===');
+        console.log('esPublicar:', esPublicar);
+
+        // VALIDACIÓN SIMPLE - Solo verificar campos críticos
         let errors = [];
 
         const ups = document.getElementById('sel_ups');
-        if(ups && !ups.value) {
-            errors.push("Seleccione un Modelo de UPS");
-        }
+        console.log('UPS element:', ups);
+        console.log('UPS value:', ups ? ups.value : 'NO ENCONTRADO');
 
-        const longInput = document.querySelector('input[name="longitud"]');
-        if(longInput && (!longInput.value || longInput.value == '0')) {
-            errors.push("Ingrese la Distancia (mts)");
+        if(!ups || !ups.value) {
+            errors.push("Seleccione un Modelo de UPS");
         }
 
         // Si es publicar, validar número de pedido
         const pedidoInput = document.getElementById('input_pedido');
+        console.log('Pedido element:', pedidoInput);
+        console.log('Pedido value:', pedidoInput ? pedidoInput.value : 'NO ENCONTRADO');
+
         if(esPublicar && (!pedidoInput || !pedidoInput.value)) {
             errors.push("Ingrese el Número de Pedido (OC-XXXX)");
         }
 
+        console.log('Errores encontrados:', errors);
+
         if(errors.length > 0){
             const msgContainer = document.getElementById('validationMsg');
-            msgContainer.innerHTML = "<strong>Faltan los siguientes datos:</strong><ul class='mt-2 mb-0 text-start'>" +
-                                     errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+            if(msgContainer) {
+                msgContainer.innerHTML = "<strong>Faltan los siguientes datos:</strong><ul class='mt-2 mb-0 text-start'>" +
+                                         errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+            }
 
             const modalEl = document.getElementById('validationModal');
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
+            if(modalEl) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
             return;
         }
 
-        // Si todo está bien, copiar campos del formulario principal al formulario del modal
+        console.log('=== VALIDACIÓN PASADA - ABRIENDO MODAL ===');
+
+        // Obtener formularios
         const mainForm = document.getElementById('mainForm');
         const previewForm = document.getElementById('formVistaPrevia');
 
-        // IMPORTANTE: Limpiar campos clonados anteriores para evitar duplicados
+        console.log('mainForm:', mainForm);
+        console.log('previewForm:', previewForm);
+
+        if(!mainForm || !previewForm) {
+            alert('ERROR: No se encontraron los formularios. mainForm: ' + !!mainForm + ', previewForm: ' + !!previewForm);
+            return;
+        }
+
+        // Limpiar campos clonados anteriores
         const existingClones = previewForm.querySelectorAll('input[type="hidden"]:not([name="accion"])');
         existingClones.forEach(input => input.remove());
 
@@ -714,6 +737,7 @@
         const accionInput = previewForm.querySelector('input[name="accion"]');
         if(accionInput) {
             accionInput.value = esPublicar ? 'publicar' : 'preview';
+            console.log('Acción configurada:', accionInput.value);
         }
 
         // Actualizar título del modal
@@ -744,25 +768,59 @@
             }
         }
 
-        // Copiar todos los campos hidden y visibles del formulario principal
-        const mainInputs = mainForm.querySelectorAll('input[type="hidden"], input[type="text"], input[type="number"], select');
+        // Copiar todos los campos del formulario principal
+        const mainInputs = mainForm.querySelectorAll('input, select, textarea');
+        console.log('Total de inputs encontrados:', mainInputs.length);
+
+        let copiedCount = 0;
         mainInputs.forEach(input => {
-            if(input.name && input.value) { // Solo copiar si tiene nombre y valor
+            if(input.name && input.value) {
                 const clonedInput = document.createElement('input');
                 clonedInput.type = 'hidden';
                 clonedInput.name = input.name;
                 clonedInput.value = input.value;
                 previewForm.appendChild(clonedInput);
+                copiedCount++;
             }
         });
+        console.log('Campos copiados:', copiedCount);
 
-        // Abrir modal
+        // ABRIR MODAL - CON MÚLTIPLES INTENTOS
+        console.log('=== INTENTANDO ABRIR MODAL ===');
         const modalElement = document.getElementById('vistaPreviewModal');
-        if(modalElement) {
+        console.log('Modal element:', modalElement);
+
+        if(!modalElement) {
+            alert('ERROR CRÍTICO: Modal no encontrado en el DOM. ID: vistaPreviewModal');
+            return;
+        }
+
+        try {
+            // Intento 1: Bootstrap 5 estándar
             const modal = new bootstrap.Modal(modalElement);
+            console.log('Modal instance creada:', modal);
             modal.show();
-        } else {
-            alert('Error: Modal no encontrado. Refresque la página.');
+            console.log('Modal.show() ejecutado');
+        } catch(error) {
+            console.error('Error al abrir modal:', error);
+            alert('ERROR al abrir modal: ' + error.message);
+
+            // Intento 2: Fallback manual
+            try {
+                modalElement.classList.add('show');
+                modalElement.style.display = 'block';
+                document.body.classList.add('modal-open');
+
+                // Crear backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+
+                console.log('Modal abierto manualmente (fallback)');
+            } catch(error2) {
+                console.error('Error en fallback:', error2);
+                alert('ERROR TOTAL: No se pudo abrir el modal de ninguna forma.');
+            }
         }
     }
 
@@ -977,8 +1035,5 @@
         });
     }
     </script>
-
-    <!-- Bootstrap 5 JavaScript (REQUERIDO para modales) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
