@@ -43,6 +43,13 @@ class GestorDB:
             )
         ''')
 
+        # MIGRACIÓN: Agregar columna imagen_url si no existe
+        try:
+            cursor.execute("SELECT imagen_url FROM tipos_ventilacion LIMIT 1")
+        except:
+            cursor.execute("ALTER TABLE tipos_ventilacion ADD COLUMN imagen_url TEXT")
+            conn.commit()
+
         # 2. TABLA UPS_SPECS (NUEVO ESQUEMA)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS ups_specs (
@@ -873,12 +880,20 @@ class GestorDB:
     def agregar_tipo_ventilacion(self, datos, imagen_url=None):
         conn = self._conectar()
         try:
+            print(f"➕ Agregando tipo de ventilación a BD")
+            print(f"   Nombre: {datos.get('nombre')}")
+            print(f"   Descripción: {datos.get('descripcion', '')}")
+            print(f"   Imagen URL: {imagen_url}")
+
             conn.execute("INSERT INTO tipos_ventilacion (nombre, descripcion, imagen_url) VALUES (?, ?, ?)",
                         (datos['nombre'], datos.get('descripcion', ''), imagen_url))
             conn.commit()
+            print(f"✅ Tipo de ventilación agregado a BD exitosamente")
             return True
         except Exception as e:
-            print(f"Error agregando tipo de ventilación: {e}")
+            print(f"❌ Error agregando tipo de ventilación: {e}")
+            import traceback
+            traceback.print_exc()
             return False
         finally:
             conn.close()
@@ -905,20 +920,29 @@ class GestorDB:
         """Actualiza un tipo de ventilación existente"""
         conn = self._conectar()
         try:
+            print(f"🔄 Actualizando tipo ventilación ID: {id_tipo}")
+            print(f"   Nombre: {datos.get('nombre')}")
+            print(f"   Descripción: {datos.get('descripcion', '')}")
+            print(f"   Imagen URL: {imagen_url}")
+
             if imagen_url:
                 conn.execute("""UPDATE tipos_ventilacion
                                SET nombre = ?, descripcion = ?, imagen_url = ?
                                WHERE id = ?""",
                             (datos.get('nombre'), datos.get('descripcion', ''), imagen_url, id_tipo))
             else:
+                # Solo actualizar nombre y descripción, mantener imagen_url actual
                 conn.execute("""UPDATE tipos_ventilacion
                                SET nombre = ?, descripcion = ?
                                WHERE id = ?""",
                             (datos.get('nombre'), datos.get('descripcion', ''), id_tipo))
             conn.commit()
+            print(f"✅ Tipo de ventilación actualizado exitosamente")
             return True
         except Exception as e:
-            print(f"Error actualizando tipo de ventilación: {e}")
+            print(f"❌ Error actualizando tipo de ventilación: {e}")
+            import traceback
+            traceback.print_exc()
             return False
         finally:
             conn.close()

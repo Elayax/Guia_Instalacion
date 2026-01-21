@@ -50,16 +50,32 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         state['active_tab'] = 'baterias'
         return True
     elif tipo == 'add_tipo_vent':
+        print(f"➕ Agregando nuevo tipo de ventilación")
+
         # Manejar imagen si existe
         imagen_url = None
         if 'imagen_ventilacion' in request.files:
             file = request.files['imagen_ventilacion']
+            print(f"📁 Archivo recibido: {file.filename if file else 'None'}")
             if file and file.filename != '':
-                imagen_url = guardar_imagen_ups(file)  # Reutilizamos la función de guardar imágenes
+                print(f"💾 Intentando guardar imagen...")
+                imagen_url = guardar_imagen_ups(file)
+                if imagen_url:
+                    print(f"✅ Imagen guardada como: {imagen_url}")
+                else:
+                    print(f"❌ Error: guardar_imagen_ups retornó None")
 
         success = db.agregar_tipo_ventilacion(request.form, imagen_url)
         state['active_tab'] = 'ventilacion'
-        state['mensaje'] = 'Tipo de ventilación agregado correctamente' if success else 'Error al agregar tipo de ventilación'
+
+        if success:
+            if imagen_url:
+                state['mensaje'] = '✅ Tipo de ventilación agregado con imagen correctamente'
+            else:
+                state['mensaje'] = '✅ Tipo de ventilación agregado (sin imagen)'
+        else:
+            state['mensaje'] = '❌ Error al agregar. Puede que el nombre ya exista. Revise la consola del servidor.'
+
         return True
     elif tipo == 'del_tipo_vent':
         success = db.eliminar_tipo_ventilacion(request.form.get('id'))
@@ -73,16 +89,34 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         return True
     elif tipo == 'update_tipo_vent':
         id_tipo = request.form.get('id')
+        print(f"🔄 Procesando actualización de tipo ventilación ID: {id_tipo}")
+
         # Manejar imagen si existe
         imagen_url = None
         if 'imagen_ventilacion' in request.files:
             file = request.files['imagen_ventilacion']
+            print(f"📁 Archivo recibido: {file.filename if file else 'None'}")
             if file and file.filename != '':
+                print(f"💾 Intentando guardar imagen...")
                 imagen_url = guardar_imagen_ups(file)
+                if imagen_url:
+                    print(f"✅ Imagen guardada como: {imagen_url}")
+                else:
+                    print(f"❌ Error: guardar_imagen_ups retornó None")
+        else:
+            print(f"ℹ️ No se envió archivo de imagen")
 
         success = db.actualizar_tipo_ventilacion(id_tipo, request.form, imagen_url)
         state['active_tab'] = 'ventilacion'
-        state['mensaje'] = 'Tipo de ventilación actualizado correctamente' if success else 'Error al actualizar'
+
+        if success:
+            if imagen_url:
+                state['mensaje'] = '✅ Tipo de ventilación e imagen actualizados correctamente'
+            else:
+                state['mensaje'] = '✅ Tipo de ventilación actualizado (sin cambio de imagen)'
+        else:
+            state['mensaje'] = '❌ Error al actualizar. Revise la consola del servidor para más detalles.'
+
         return True
     elif tipo == 'cancelar_edit_tipo_vent':
         state['tipo_vent_seleccionado'] = None
@@ -93,19 +127,32 @@ def _procesar_acciones_tipo(db, request, state, tipo):
 def guardar_imagen_ups(file):
     """Guarda una imagen de UPS en la carpeta static/img/ups y retorna su nombre."""
     if not file or file.filename == '': return None
-    
-    # Asegurar que el nombre de archivo es seguro
-    from werkzeug.utils import secure_filename
-    filename = secure_filename(file.filename)
-    
-    # Crear ruta de guardado
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    upload_dir = os.path.join(base_dir, 'static', 'img', 'ups')
-    if not os.path.exists(upload_dir): os.makedirs(upload_dir)
-    
-    filepath = os.path.join(upload_dir, filename)
-    file.save(filepath)
-    return filename # Guardar solo el nombre del archivo en la BD
+
+    try:
+        # Asegurar que el nombre de archivo es seguro
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(file.filename)
+
+        # Si el nombre quedó vacío después de secure_filename, usar timestamp
+        if not filename:
+            import time
+            ext = '.png'  # extensión por defecto
+            if '.' in file.filename:
+                ext = '.' + file.filename.rsplit('.', 1)[1].lower()
+            filename = f'imagen_{int(time.time())}{ext}'
+
+        # Crear ruta de guardado
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        upload_dir = os.path.join(base_dir, 'static', 'img', 'ups')
+        if not os.path.exists(upload_dir): os.makedirs(upload_dir)
+
+        filepath = os.path.join(upload_dir, filename)
+        file.save(filepath)
+        print(f"✅ Imagen guardada exitosamente: {filename}")
+        return filename # Guardar solo el nombre del archivo en la BD
+    except Exception as e:
+        print(f"❌ Error guardando imagen: {e}")
+        return None
 
 def _procesar_acciones_ups(db, request, state, accion):
     """Lógica de estado para UPS"""
