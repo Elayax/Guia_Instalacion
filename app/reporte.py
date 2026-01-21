@@ -14,10 +14,15 @@ COLOR_VERDE = (0, 100, 0)
 class ReportePDF(FPDF):
     """
     Generador Modular de Reportes.
+    Soporte UTF-8 para caracteres especiales (ñ, á, é, í, ó, ú)
     """
     def __init__(self, orientation='P', unit='mm', format='A4'):
         super().__init__(orientation=orientation, unit=unit, format=format, font_cache_dir=None)
         self.section_counter = 1
+
+        # AGREGAR SOPORTE UTF-8 PARA Ñ Y ACENTOS
+        # FPDF soporta Latin-1 (ISO-8859-1) que incluye caracteres españoles
+        # Solo necesitamos asegurarnos de usar la codificación correcta
 
     def header(self):
         # 1. LOGO
@@ -62,10 +67,24 @@ class ReportePDF(FPDF):
     # ==========================================================================
     # EL DIRECTOR DE ORQUESTA
     # ==========================================================================
+    def _texto_utf8(self, texto):
+        """Convierte texto UTF-8 a Latin-1 (ISO-8859-1) para FPDF con soporte para ñ y acentos"""
+        if not texto:
+            return ""
+        try:
+            # FPDF usa Latin-1 que soporta caracteres españoles
+            return texto.encode('latin-1', 'replace').decode('latin-1')
+        except:
+            return texto
+
     def generar_cuerpo(self, datos, res, es_publicado=False, ups=None, bateria=None, imagenes_temp=None):
 
         # Almacenar imágenes temporales como atributo de la instancia
         self.imagenes_temp = imagenes_temp or {}
+
+        # Convertir todos los datos de texto a Latin-1
+        datos = {k: self._texto_utf8(v) if isinstance(v, str) else v for k, v in datos.items()}
+        res = {k: self._texto_utf8(v) if isinstance(v, str) else v for k, v in res.items()}
 
         # Portada
         self.add_page()
@@ -356,13 +375,10 @@ class ReportePDF(FPDF):
         self.cell(0, 5, "  - Caida de Tension:", 0, 1)
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
-        # Texto con variable resaltada
-        self.cell(0, 5, "El calculo arroja una caida de tension de ", 0, 0)
-        self.set_font('Arial', 'B', 9)
-        self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 5, f"{dv_pct}%", 0, 1)
-        self.set_font('Arial', '', 9)
-        self.set_text_color(*COLOR_NEGRO)
+
+        # Texto con variable resaltada - MÉTODO CORREGIDO
+        texto_caida = f"El calculo arroja una caida de tension de {dv_pct}%."
+        self.multi_cell(0, 5, texto_caida)
 
         self.set_x(self.l_margin + 5)
         if dv_pct <= 3.0:
@@ -384,49 +400,19 @@ class ReportePDF(FPDF):
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
 
-        # Texto con variables resaltadas
-        self.cell(0, 5, "El conductor seleccionado (calibre ", 0, 0)
-        self.set_font('Arial', 'B', 9)
-        self.set_text_color(*COLOR_ROJO)
-        self.cell(15, 5, f"{calibre}", 0, 0)
-        self.set_font('Arial', '', 9)
-        self.set_text_color(*COLOR_NEGRO)
-        self.cell(0, 5, " AWG) tiene una ampacidad real de ", 0, 0)
-        self.set_font('Arial', 'B', 9)
-        self.set_text_color(*COLOR_ROJO)
-        self.cell(12, 5, f"{i_real}", 0, 0)
-        self.set_font('Arial', '', 9)
-        self.set_text_color(*COLOR_NEGRO)
-        self.cell(0, 5, " A, considerando factores", 0, 1)
-
-        self.set_x(self.l_margin + 5)
-        self.cell(0, 5, "de agrupamiento y temperatura.", 0, 1)
+        # Texto con variables - MÉTODO CORREGIDO
+        texto_ampacidad = f"El conductor seleccionado (calibre {calibre} AWG) tiene una ampacidad real de {i_real} A, considerando factores de agrupamiento y temperatura."
+        self.multi_cell(0, 5, texto_ampacidad)
 
         self.set_x(self.l_margin + 5)
         if i_real > i_diseno:
-            self.set_text_color(*COLOR_NEGRO)
-            self.cell(0, 5, "Esta capacidad es SUFICIENTE para la corriente de disenio de ", 0, 0)
-            self.set_font('Arial', 'B', 9)
             self.set_text_color(*COLOR_VERDE)
-            self.cell(12, 5, f"{i_diseno}", 0, 0)
-            self.set_font('Arial', '', 9)
-            self.set_text_color(*COLOR_NEGRO)
-            self.cell(0, 5, " A,", 0, 1)
-            self.set_x(self.l_margin + 5)
-            self.multi_cell(0, 5, "garantizando una operacion segura y sin sobrecalentamiento del cableado.")
+            texto_suficiente = f"Esta capacidad es SUFICIENTE para la corriente de disenio de {i_diseno} A, garantizando una operacion segura y sin sobrecalentamiento del cableado."
+            self.multi_cell(0, 5, texto_suficiente)
         else:
             self.set_text_color(*COLOR_ALERTA)
-            self.cell(0, 5, f"ALERTA: La capacidad del conductor (", 0, 0)
-            self.set_font('Arial', 'B', 9)
-            self.cell(12, 5, f"{i_real}", 0, 0)
-            self.set_font('Arial', '', 9)
-            self.cell(0, 5, f" A) es MENOR a la corriente de disenio (", 0, 0)
-            self.set_font('Arial', 'B', 9)
-            self.cell(12, 5, f"{i_diseno}", 0, 0)
-            self.set_font('Arial', '', 9)
-            self.cell(0, 5, " A).", 0, 1)
-            self.set_x(self.l_margin + 5)
-            self.multi_cell(0, 5, "Se requiere un conductor de mayor calibre para cumplir con la norma y evitar fallas criticas.")
+            texto_alerta = f"ALERTA: La capacidad del conductor ({i_real} A) es MENOR a la corriente de disenio ({i_diseno} A). Se requiere un conductor de mayor calibre para cumplir con la norma y evitar fallas criticas."
+            self.multi_cell(0, 5, texto_alerta)
         self.set_text_color(*COLOR_NEGRO)
         self.ln(3)
 

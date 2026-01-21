@@ -630,7 +630,7 @@
                     <h5 class="modal-title text-danger fw-bold" id="modalTituloPreview"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="/descargar-pdf" enctype="multipart/form-data" id="formVistaPrevia">
+                <form method="POST" action="/descargar-pdf" enctype="multipart/form-data" id="formVistaPrevia" onsubmit="cerrarModalDespuesDeSubmit()">
                     <input type="hidden" name="accion" value="preview">
                     <div class="modal-body">
                         <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes obligatorias para generar el reporte PDF:</p>
@@ -672,6 +672,35 @@
     <script>
     // --- 1. PDF ---
     function descargarPDF(){ const form = document.getElementById('pdfForm'); if(form) form.submit(); else alert("Primero debes realizar un cálculo."); }
+
+    // --- 1.0 Cerrar Modal Después de Submit ---
+    function cerrarModalDespuesDeSubmit() {
+        console.log('Formulario enviado, cerrando modal en 500ms...');
+
+        // Cerrar el modal después de un breve delay
+        setTimeout(function() {
+            const modalElement = document.getElementById('vistaPreviewModal');
+            if(modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if(modal) {
+                    modal.hide();
+                    console.log('Modal cerrado exitosamente');
+                }
+            }
+
+            // Limpiar el backdrop manualmente si quedó
+            setTimeout(function() {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                console.log('Backdrop limpiado');
+            }, 300);
+        }, 500);
+
+        return true; // Permitir que el formulario se envíe
+    }
 
     // --- 1.1 Modal Vista Previa / Publicar ---
     function abrirModalVistaPrevia(esPublicar = false) {
