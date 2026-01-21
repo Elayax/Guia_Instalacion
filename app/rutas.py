@@ -178,9 +178,13 @@ def index():
                     pdf = ReportePDF()
                     pdf_bytes = pdf.generar_cuerpo(datos, resultado, ups=ups_data, bateria=bateria_info, es_publicado=es_publicar, imagenes_temp=imagenes_temp)
 
-                    # Guardar PDF temporalmente
+                    # Crear directorio temp si no existe
                     import tempfile
-                    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', dir=os.path.join(os.path.dirname(__file__), 'static', 'temp'))
+                    temp_dir = os.path.join(os.path.dirname(__file__), 'static', 'temp')
+                    os.makedirs(temp_dir, exist_ok=True)
+
+                    # Guardar PDF temporalmente
+                    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', dir=temp_dir)
                     temp_pdf.write(bytes(pdf_bytes))
                     temp_pdf.close()
 
