@@ -55,7 +55,6 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         if 'imagen_ventilacion' in request.files:
             file = request.files['imagen_ventilacion']
             if file and file.filename != '':
-                from app.auxiliares import guardar_imagen_ups
                 imagen_url = guardar_imagen_ups(file)  # Reutilizamos la función de guardar imágenes
 
         success = db.agregar_tipo_ventilacion(request.form, imagen_url)
@@ -79,7 +78,6 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         if 'imagen_ventilacion' in request.files:
             file = request.files['imagen_ventilacion']
             if file and file.filename != '':
-                from app.auxiliares import guardar_imagen_ups
                 imagen_url = guardar_imagen_ups(file)
 
         success = db.actualizar_tipo_ventilacion(id_tipo, request.form, imagen_url)

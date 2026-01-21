@@ -681,7 +681,7 @@
         }
 
         const longInput = document.querySelector('input[name="longitud"]');
-        if(longInput && !longInput.value) {
+        if(longInput && (!longInput.value || longInput.value == '0')) {
             errors.push("Ingrese la Distancia (mts)");
         }
 
@@ -700,18 +700,30 @@
         const mainForm = document.getElementById('mainForm');
         const previewForm = document.getElementById('formVistaPrevia');
 
+        // IMPORTANTE: Limpiar campos clonados anteriores para evitar duplicados
+        const existingClones = previewForm.querySelectorAll('input[type="hidden"]:not([name="accion"])');
+        existingClones.forEach(input => input.remove());
+
         // Copiar todos los campos hidden y visibles del formulario principal
         const mainInputs = mainForm.querySelectorAll('input[type="hidden"], input[type="text"], input[type="number"], select');
         mainInputs.forEach(input => {
-            const clonedInput = document.createElement('input');
-            clonedInput.type = 'hidden';
-            clonedInput.name = input.name;
-            clonedInput.value = input.value;
-            previewForm.appendChild(clonedInput);
+            if(input.name && input.value) { // Solo copiar si tiene nombre y valor
+                const clonedInput = document.createElement('input');
+                clonedInput.type = 'hidden';
+                clonedInput.name = input.name;
+                clonedInput.value = input.value;
+                previewForm.appendChild(clonedInput);
+            }
         });
 
         // Abrir modal
-        new bootstrap.Modal(document.getElementById('vistaPreviewModal')).show();
+        const modalElement = document.getElementById('vistaPreviewModal');
+        if(modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            alert('Error: Modal no encontrado. Refresque la página.');
+        }
     }
 
     // --- 2. Cargar sucursales por cliente ---
