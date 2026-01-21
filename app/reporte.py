@@ -155,14 +155,13 @@ class ReportePDF(FPDF):
             self.set_y(40)
         self._hoja_1_seguridad_instalacion()
 
-        # HOJA 2
+        # HOJA 2 Y 3 COMBINADAS
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
-        self._hoja_2_datos_sitio(datos)
+        self._hoja_2_datos_sitio(datos, ups)
 
-        # HOJA 3
-        self.add_page()
-        if not es_publicado: self._marca_agua_preview()
+        # Continuar con página 3 en la misma hoja (sin add_page)
+        self.ln(8)  # Espacio entre secciones
         self._hoja_3_ingenieria(datos, res)
 
         # Baterias
@@ -335,19 +334,26 @@ class ReportePDF(FPDF):
     # ==========================================================================
     # HOJA 2: DATOS DEL SITIO
     # ==========================================================================
-    def _hoja_2_datos_sitio(self, datos):
+    def _hoja_2_datos_sitio(self, datos, ups=None):
         self._titulo_seccion("DATOS DEL SITIO DE INSTALACION")
 
         self.set_fill_color(*COLOR_FONDO)
         self.set_font('Arial', '', 9)
-        
+
         y_inicio = self.get_y()
         self.rect(10, y_inicio, 190, 30, 'F')
-        
+
         col1 = 12
         col2 = 110
-        
-        nombre_completo = str(datos.get('nombre', 'SIN NOMBRE')).upper()
+
+        # USAR CAMPOS CORRECTOS DEL FORMULARIO (igual que portada)
+        proyecto_nombre = datos.get('cliente_texto', datos.get('nombre', 'SIN NOMBRE'))
+        if datos.get('sucursal_texto'):
+            proyecto_nombre = f"{proyecto_nombre} - {datos.get('sucursal_texto')}"
+        nombre_completo = str(proyecto_nombre).upper()
+
+        # Capacidad del UPS o de los datos del formulario
+        capacidad_valor = ups.get('Capacidad_kVA') if ups else datos.get('kva', 'S/D')
 
         # COLUMNA IZQUIERDA
         self.set_xy(col1, y_inicio + 3)
@@ -363,7 +369,7 @@ class ReportePDF(FPDF):
         self.cell(50, 6, "Capacidad UPS:       ", 0, 0)
         self.set_font('Arial', 'B', 9)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 6, f"{datos.get('kva')} kVA", 0, 1)
+        self.cell(0, 6, f"{capacidad_valor} kVA", 0, 1)
 
         self.set_xy(col1, y_inicio + 15)
         self.set_font('Arial', '', 9)
