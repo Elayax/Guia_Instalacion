@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, make_response, redirect, 
 from datetime import datetime
 from app.calculos import CalculadoraUPS, CalculadoraBaterias
 from app.reporte import ReportePDF
+from app.checklist import ChecklistPDF
 from app.base_datos import GestorDB
 from app.auxiliares import (
     obtener_datos_plantilla,
@@ -13,6 +14,7 @@ import json
 import os
 import csv
 import io
+import tempfile
 
 main = Blueprint('main', __name__)
 db = GestorDB() 
@@ -490,3 +492,103 @@ def descargar_pdf():
     prefijo = "Publicado" if es_publicar else "Preview"
     response.headers['Content-Disposition'] = f'attachment; filename={prefijo}_Memoria_{nombre_seguro}.pdf'
     return response
+# --- GENERACIÓN DE AVISO / CHECKLIST ---
+@main.route('/aviso', methods=['GET', 'POST'])
+def aviso():
+    proyectos = db.obtener_proyectos()
+    datos_proyecto = None
+    pdf_trigger = None
+
+    if request.method == 'POST':
+        accion = request.form.get('accion')
+
+        if accion == 'cargar':
+            # Cargar datos del proyecto seleccionado
+            pedido = request.form.get('pedido')
+            if pedido:
+                datos_proyecto = db.obtener_proyecto_por_pedido(pedido)
+                # También obtener datos del UPS si existe
+                if datos_proyecto:
+                    # Buscar datos adicionales del cálculo si existen
+                    try:
+                        # Aquí podrías buscar el UPS asociado si lo guardaste
+                        pass
+                    except:
+                        pass
+
+        elif accion in ['preview', 'publicar']:
+            # Generar PDF del checklist
+            datos = request.form.to_dict()
+            pedido = datos.get('pedido_seleccionado')
+
+            if pedido:
+                # Obtener datos del proyecto
+                proyecto = db.obtener_proyecto_por_pedido(pedido)
+
+                if proyecto:
+                    # Preparar datos para el checklist
+                    datos_checklist = {
+                        'cliente_nombre': proyecto.get('cliente_nombre', ''),
+                        'sucursal_nombre': proyecto.get('sucursal_nombre', ''),
+                        'pedido': proyecto.get('pedido', ''),
+                        'area_frente': datos.get('area_frente', ''),
+                        'nombre_jefe': datos.get('nombre_jefe', ''),
+                        'modelo_ups': '',  # Se puede obtener de la BD si se guardó
+                        'capacidad': '',
+                        'observaciones_conexion': datos.get('observaciones_conexion', ''),
+                        'comentarios': datos.get('comentarios', ''),
+                        'contacto_nombre': datos.get('contacto_nombre', ''),
+                        'contacto_cargo': datos.get('contacto_cargo', ''),
+                        'contacto_telefono': datos.get('contacto_telefono', ''),
+                        'contacto_email': datos.get('contacto_email', ''),
+                        'direccion_instalacion': datos.get('direccion_instalacion', ''),
+                    }
+
+                    # Manejo de imágenes
+                    imagenes = {}
+                    if 'imagen_sitio_1' in request.files:
+                        file = request.files['imagen_sitio_1']
+                        if file and file.filename:
+                            imagenes['sitio_1'] = guardar_archivo_temporal(file)
+
+                    if 'imagen_sitio_2' in request.files:
+                        file = request.files['imagen_sitio_2']
+                        if file and file.filename:
+                            imagenes['sitio_2'] = guardar_archivo_temporal(file)
+
+                    if 'imagen_sitio_3' in request.files:
+                        file = request.files['imagen_sitio_3']
+                        if file and file.filename:
+                            imagenes['sitio_3'] = guardar_archivo_temporal(file)
+
+                    # Generar PDF
+                    checklist = ChecklistPDF()
+                    pdf_bytes = checklist.generar_checklist(datos_checklist, imagenes)
+
+                    # Crear directorio temp si no existe
+                    temp_dir = os.path.join(os.path.dirname(__file__), 'static', 'temp')
+                    os.makedirs(temp_dir, exist_ok=True)
+
+                    # Guardar PDF temporalmente
+                    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', dir=temp_dir)
+                    temp_pdf.write(bytes(pdf_bytes))
+                    temp_pdf.close()
+
+                    # Nombre para descarga
+                    nombre_seguro = str(pedido).replace(" ", "_")
+                    prefijo = "Publicado" if accion == 'publicar' else "Preview"
+                    pdf_filename = f'{prefijo}_Checklist_{nombre_seguro}.pdf'
+
+                    # Activar descarga automática
+                    pdf_trigger = {
+                        'path': f'/static/temp/{os.path.basename(temp_pdf.name)}',
+                        'filename': pdf_filename
+                    }
+
+                    # Cargar datos del proyecto para mostrar el formulario
+                    datos_proyecto = proyecto
+
+    return render_template('aviso.html',
+                         proyectos=proyectos,
+                         datos_proyecto=datos_proyecto,
+                         pdf_trigger=pdf_trigger)

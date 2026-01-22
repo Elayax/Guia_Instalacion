@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generación de Aviso - Checklist UPS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --accent-red: #ff453a;
+            --accent-red-dim: #cf2e26;
+            --text-main: #f5f5f7;
+            --text-sec: #a1a1a6;
+            --bg-body: #1c1c1e;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(60, 20, 20, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Header Glass */
+        .app-header {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            gap: 2px;
+        }
+
+        .nav-link {
+            color: var(--text-sec) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 0.4rem 1.2rem;
+            border-radius: 20px;
+            text-decoration: none;
+        }
+        .nav-link:hover {
+            color: var(--text-main) !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link.active {
+            color: var(--text-main) !important;
+            background: rgba(60, 60, 60, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .container-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .glass-card {
+            background: rgba(30, 30, 30, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .form-label {
+            color: var(--text-sec);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 0.75rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-red);
+            color: var(--text-main);
+            box-shadow: 0 0 0 0.25rem rgba(255, 69, 58, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--accent-red);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-red-dim);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 69, 58, 0.4);
+        }
+
+        .btn-dark {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .btn-dark:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-main);
+        }
+
+        .section-title {
+            color: var(--accent-red);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-display {
+            background: rgba(255, 69, 58, 0.1);
+            border-left: 3px solid var(--accent-red);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .info-label {
+            color: var(--text-sec);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <h1 class="m-0 fw-bold" style="font-size: 1.5rem; color: var(--text-main);">
+            <i class="bi bi-clipboard-check me-2" style="color: var(--accent-red);"></i>
+            Generación de Aviso
+        </h1>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Calculadora</a>
+            <a href="/gestion" class="nav-link">Gestión DB</a>
+            <a href="/aviso" class="nav-link active">Generación Aviso</a>
+        </nav>
+    </header>
+
+    <div class="container-main">
+        <form method="POST" id="mainForm">
+            <!-- Selección de Pedido -->
+            <div class="glass-card">
+                <div class="section-title">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Seleccionar Proyecto
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Número de Pedido / Contrato</label>
+                        <select class="form-select" name="pedido" id="sel_pedido" required>
+                            <option value="">-- Seleccione un pedido --</option>
+                            {% for proyecto in proyectos %}
+                            <option value="{{ proyecto.pedido }}">{{ proyecto.pedido }} - {{ proyecto.cliente_nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" name="accion" value="cargar" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>Cargar Datos del Proyecto
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if datos_proyecto %}
+            <!-- Datos del Proyecto Cargados -->
+            <div class="glass-card">
+                <div class="section-title">
+                    <i class="bi bi-info-circle"></i>
+                    Datos del Proyecto
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="info-display">
+                            <div class="info-label">Cliente</div>
+                            <div class="info-value">{{ datos_proyecto.cliente_nombre }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-display">
+                            <div class="info-label">Sucursal</div>
+                            <div class="info-value">{{ datos_proyecto.sucursal_nombre or 'N/A' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-display">
+                            <div class="info-label">Pedido</div>
+                            <div class="info-value">{{ datos_proyecto.pedido }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos Adicionales del Checklist -->
+            <div class="glass-card">
+                <div class="section-title">
+                    <i class="bi bi-pencil-square"></i>
+                    Información Adicional del Checklist
+                </div>
+
+                <input type="hidden" name="pedido_seleccionado" value="{{ datos_proyecto.pedido }}">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Área / Frente</label>
+                        <input type="text" class="form-control" name="area_frente" value="{{ request.form.get('area_frente', '') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre de Jefe de Área / Frente</label>
+                        <input type="text" class="form-control" name="nombre_jefe" value="{{ request.form.get('nombre_jefe', '') }}">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label">Observaciones para Conexión entre Banco de Baterías y UPS</label>
+                        <textarea class="form-control" name="observaciones_conexion" rows="3">{{ request.form.get('observaciones_conexion', '') }}</textarea>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label">Comentarios Generales</label>
+                        <textarea class="form-control" name="comentarios" rows="3">{{ request.form.get('comentarios', '') }}</textarea>
+                    </div>
+
+                    <!-- Información de Contacto en Sitio -->
+                    <div class="col-12 mt-4">
+                        <h6 class="text-white-50 mb-3">Datos de Contacto en Sitio</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" name="contacto_nombre" value="{{ request.form.get('contacto_nombre', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Cargo</label>
+                        <input type="text" class="form-control" name="contacto_cargo" value="{{ request.form.get('contacto_cargo', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" name="contacto_telefono" value="{{ request.form.get('contacto_telefono', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="contacto_email" value="{{ request.form.get('contacto_email', '') }}">
+                    </div>
+
+                    <!-- Dirección de Instalación -->
+                    <div class="col-12 mt-3">
+                        <label class="form-label">Dirección Donde Está el Equipo Instalado</label>
+                        <textarea class="form-control" name="direccion_instalacion" rows="2">{{ request.form.get('direccion_instalacion', '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="glass-card">
+                <div class="d-flex gap-3 justify-content-end">
+                    <button type="button" onclick="abrirModalVistaPrevia(false)" class="btn btn-dark">
+                        <i class="bi bi-eye me-2"></i>VISTA PREVIA
+                    </button>
+                    <button type="button" onclick="abrirModalVistaPrevia(true)" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>PUBLICAR
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Modal para Cargar Imágenes -->
+    <div class="modal fade" id="vistaPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-danger fw-bold" id="modalTituloPreview">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Vista Previa - Cargar Imágenes
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/aviso" enctype="multipart/form-data" id="formVistaPrevia">
+                    <input type="hidden" name="accion" value="preview">
+                    <div class="modal-body">
+                        <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes para el checklist (opcional):</p>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="bi bi-image me-2"></i>Imagen 1 del Sitio</label>
+                            <input type="file" name="imagen_sitio_1" class="form-control" accept="image/*">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="bi bi-image me-2"></i>Imagen 2 del Sitio</label>
+                            <input type="file" name="imagen_sitio_2" class="form-control" accept="image/*">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold"><i class="bi bi-image me-2"></i>Imagen 3 del Sitio</label>
+                            <input type="file" name="imagen_sitio_3" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitPreview">
+                            <i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function abrirModalVistaPrevia(esPublicar = false) {
+            const mainForm = document.getElementById('mainForm');
+            const previewForm = document.getElementById('formVistaPrevia');
+
+            if(!mainForm || !previewForm) {
+                alert('ERROR: No se encontraron los formularios');
+                return;
+            }
+
+            // Limpiar campos clonados anteriores
+            const existingClones = previewForm.querySelectorAll('input[type="hidden"]:not([name="accion"])');
+            existingClones.forEach(input => input.remove());
+
+            // Cambiar acción
+            const accionInput = previewForm.querySelector('input[name="accion"]');
+            if(accionInput) {
+                accionInput.value = esPublicar ? 'publicar' : 'preview';
+            }
+
+            // Actualizar título del modal
+            const modalTitle = document.getElementById('modalTituloPreview');
+            if(modalTitle) {
+                if(esPublicar) {
+                    modalTitle.innerHTML = '<i class="bi bi-check-circle me-2"></i> PUBLICAR - Cargar Imágenes';
+                    modalTitle.classList.remove('text-danger');
+                    modalTitle.classList.add('text-success');
+                } else {
+                    modalTitle.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes';
+                    modalTitle.classList.remove('text-success');
+                    modalTitle.classList.add('text-danger');
+                }
+            }
+
+            // Clonar todos los campos del formulario principal
+            const formData = new FormData(mainForm);
+            for(let [key, value] of formData.entries()) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = key;
+                hiddenInput.value = value;
+                previewForm.appendChild(hiddenInput);
+            }
+
+            // Abrir modal
+            const modalEl = document.getElementById('vistaPreviewModal');
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    </script>
+
+    <!-- Auto-descarga del PDF si está disponible -->
+    {% if pdf_trigger %}
+    <script>
+        (function() {
+            console.log('PDF generado, iniciando descarga automática...');
+            const link = document.createElement('a');
+            link.href = '{{ pdf_trigger.path }}';
+            link.download = '{{ pdf_trigger.filename }}';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        })();
+    </script>
+    {% endif %}
+</body>
+</html>
