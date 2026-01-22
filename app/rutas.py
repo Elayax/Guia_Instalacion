@@ -128,11 +128,9 @@ def index():
                                 imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file)
 
                     # Obtener info adicional
-                    tipo_ventilacion_nombre = None
+                    tipo_ventilacion_data = None
                     if ups_data.get('tipo_ventilacion_id'):
-                        tipo_vent = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
-                        if tipo_vent:
-                            tipo_ventilacion_nombre = tipo_vent['nombre']
+                        tipo_ventilacion_data = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
 
                     # Agregar cálculos de batería si existen
                     bateria_info = {}
@@ -157,7 +155,8 @@ def index():
                         except Exception as e:
                             resultado['bat_error'] = str(e)
 
-                    resultado['tipo_ventilacion'] = tipo_ventilacion_nombre
+                    resultado['tipo_ventilacion'] = tipo_ventilacion_data.get('nombre') if tipo_ventilacion_data else None
+                    resultado['tipo_ventilacion_data'] = tipo_ventilacion_data
 
                     # Si es publicar, guardar en BD
                     if es_publicar:
@@ -433,11 +432,9 @@ def descargar_pdf():
                 imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file_layout)
 
     # Obtener tipo de ventilación si existe
-    tipo_ventilacion_nombre = None
+    tipo_ventilacion_data = None
     if ups_data.get('tipo_ventilacion_id'):
-        tipo_vent = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
-        if tipo_vent:
-            tipo_ventilacion_nombre = tipo_vent['nombre']
+        tipo_ventilacion_data = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
 
     # Recalculamos para el PDF
     calc = CalculadoraUPS()
@@ -467,7 +464,8 @@ def descargar_pdf():
 
     # Pasamos datos visuales extra
     res['modelo_nombre'] = datos.get('modelo_nombre')
-    res['tipo_ventilacion'] = tipo_ventilacion_nombre
+    res['tipo_ventilacion'] = tipo_ventilacion_data.get('nombre') if tipo_ventilacion_data else None
+    res['tipo_ventilacion_data'] = tipo_ventilacion_data
 
     # Si es publicar, guardar en la base de datos
     if es_publicar:

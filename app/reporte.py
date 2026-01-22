@@ -187,7 +187,7 @@ class ReportePDF(FPDF):
         # Sección de Tipo de Ventilación
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
-        self._seccion_tipo_ventilacion(res.get('tipo_ventilacion'))
+        self._seccion_tipo_ventilacion(res.get('tipo_ventilacion'), res.get('tipo_ventilacion_data'))
 
         # Sección de Disposición de los Equipos
         self.add_page()
@@ -643,6 +643,11 @@ class ReportePDF(FPDF):
             self.set_y(y + 85)
         self.ln(5)
 
+        # NUEVA PÁGINA PARA DIAGRAMA DE BATERÍAS DC
+        self.add_page()
+        if not self.imagenes_temp.get('es_publicado', True):
+            self._marca_agua_preview()
+
         # Battery Connection Diagram (usar imagen temporal si está disponible)
         self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', 'B', 10)
@@ -777,22 +782,32 @@ class ReportePDF(FPDF):
             self.cell(120, 10, f"[ FOTOGRAFIA: {titulo.upper()} ]", 0, 0, 'C')
             self.set_text_color(*COLOR_NEGRO)
 
-    def _seccion_tipo_ventilacion(self, tipo_ventilacion=None):
+    def _seccion_tipo_ventilacion(self, tipo_ventilacion=None, tipo_ventilacion_data=None):
         self._titulo_seccion("TIPO DE VENTILACION DEL SISTEMA")
 
-        self.set_font('Arial', '', 10)
+        self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
 
         if tipo_ventilacion:
+            # INTRODUCCIÓN CON TEXTO NEGRO
+            intro_texto = (
+                "El sistema de ventilacion es un componente critico para garantizar el funcionamiento "
+                "optimo y la vida util del equipo UPS. Una ventilacion adecuada previene el sobrecalentamiento, "
+                "reduce el desgaste de componentes internos y asegura que el equipo opere dentro de los "
+                "parametros especificados por el fabricante."
+            )
+            self.multi_cell(0, 5, intro_texto)
             self.ln(5)
+
+            # RECUADRO CON TIPO DE VENTILACIÓN
             self.set_fill_color(*COLOR_FONDO)
             y_pos = self.get_y()
             self.rect(40, y_pos, 130, 30, 'F')
 
             self.set_xy(50, y_pos + 8)
-            self.set_font('Arial', 'B', 11)
-            self.set_text_color(*COLOR_ROJO)
-            self.cell(0, 6, "Sistema de Ventilacion:", 0, 1)
+            self.set_font('Arial', 'B', 10)
+            self.set_text_color(*COLOR_NEGRO)
+            self.cell(0, 6, "Sistema de Ventilacion Especificado:", 0, 1)
 
             self.set_xy(50, y_pos + 16)
             self.set_font('Arial', 'B', 13)
@@ -800,12 +815,62 @@ class ReportePDF(FPDF):
             self.cell(0, 6, tipo_ventilacion, 0, 1)
 
             self.set_y(y_pos + 35)
-            self.ln(10)
+            self.ln(8)
 
-            self.multi_cell(0, 5,
-                "El sistema de ventilacion del equipo es fundamental para mantener las condiciones "
-                "optimas de operacion. Asegurese de que el area circundante al equipo permita el "
-                "flujo de aire adecuado y cumpla con las especificaciones del fabricante.")
+            # DESCRIPCIÓN DEL TIPO DE VENTILACIÓN (si existe)
+            if tipo_ventilacion_data and tipo_ventilacion_data.get('descripcion'):
+                self.set_font('Arial', '', 9)
+                self.set_text_color(*COLOR_NEGRO)
+                self.multi_cell(0, 5, tipo_ventilacion_data.get('descripcion'))
+                self.ln(3)
+
+            # IMAGEN DEL SISTEMA DE VENTILACIÓN
+            draw_placeholder = True
+            if tipo_ventilacion_data and tipo_ventilacion_data.get('imagen_url'):
+                img_filename = os.path.basename(tipo_ventilacion_data['imagen_url'])
+                ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
+
+                if os.path.exists(ruta_imagen):
+                    try:
+                        self.set_font('Arial', 'B', 10)
+                        self.set_text_color(*COLOR_NEGRO)
+                        self.cell(0, 6, "Diagrama de Referencia:", 0, 1)
+                        self.ln(3)
+
+                        img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=140)
+                        self.image(img_procesada, x=35, w=140)
+                        draw_placeholder = False
+                        # Limpiar archivo temporal
+                        if img_procesada != ruta_imagen:
+                            try:
+                                os.unlink(img_procesada)
+                            except:
+                                pass
+                    except Exception as e:
+                        print(f"Error cargando imagen de ventilacion: {e}")
+
+            if draw_placeholder:
+                self.ln(3)
+
+            # CONSIDERACIONES ADICIONALES
+            self.ln(5)
+            self.set_font('Arial', 'B', 9)
+            self.set_text_color(*COLOR_ROJO)
+            self.cell(0, 5, "Consideraciones Importantes:", 0, 1)
+            self.ln(2)
+
+            consideraciones = [
+                "Mantener las rejillas de ventilacion libres de obstrucciones en todo momento.",
+                "Respetar las distancias minimas especificadas (minimo 800mm frontal y posterior).",
+                "Verificar que la temperatura ambiente no exceda los 25 grados C para vida util optima de baterias.",
+                "Evitar la exposicion directa a fuentes de calor, luz solar o ambientes humedos.",
+                "Realizar inspecciones periodicas para asegurar el flujo de aire adecuado."
+            ]
+
+            self.set_font('Arial', '', 9)
+            self.set_text_color(*COLOR_NEGRO)
+            self._imprimir_lista_bullets(consideraciones)
+
         else:
             self.ln(5)
             self.set_text_color(*COLOR_GRIS_CLARO)
