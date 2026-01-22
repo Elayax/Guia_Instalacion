@@ -244,14 +244,19 @@ def calculadora():
                             'pedido': pedido,
                             'cliente_nombre': datos.get('cliente_texto'),
                             'sucursal_nombre': datos.get('sucursal_texto'),
-                            'fases': datos.get('fases')
+                            'fases': datos.get('fases'),
+                            'voltaje': datos.get('voltaje'),
+                            'longitud': datos.get('longitud'),
+                            'id_ups': datos.get('id_ups'),
+                            'id_bateria': datos.get('id_bateria'),
+                            'tiempo_respaldo': datos.get('tiempo_respaldo')
                         }
                         if db.publicar_proyecto(resultado, save_data):
                             resultado['es_publicado'] = True
                             mensaje = "✅ Proyecto publicado correctamente"
                         else:
                             es_publicar = False
-                            mensaje = "⚠️ El pedido ya existe en la base de datos"
+                            mensaje = "⚠️ El proyecto fue actualizado"
 
                     # Generar PDF
                     pdf = ReportePDF()
