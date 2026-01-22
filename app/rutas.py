@@ -63,8 +63,58 @@ def get_tipos_ventilacion():
     tipos = db.obtener_tipos_ventilacion()
     return json.dumps(tipos)
 
+# --- DASHBOARD PRINCIPAL ---
 @main.route('/', methods=['GET', 'POST'])
-def index():
+def dashboard():
+    if request.method == 'POST':
+        accion = request.form.get('accion')
+
+        if accion == 'crear_proyecto':
+            # Crear nuevo proyecto
+            pedido = request.form.get('pedido')
+            cliente_nombre = request.form.get('cliente_nombre')
+            sucursal_nombre = request.form.get('sucursal_nombre')
+
+            # Insertar proyecto en BD (simplificado, puedes mejorarlo)
+            try:
+                conn = db.conn
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO proyectos (pedido, cliente_nombre, sucursal_nombre, fecha_creacion)
+                    VALUES (?, ?, ?, datetime('now'))
+                ''', (pedido, cliente_nombre, sucursal_nombre))
+                conn.commit()
+                return redirect(url_for('main.calculadora', pedido=pedido))
+            except Exception as e:
+                print(f"Error al crear proyecto: {e}")
+
+    # Obtener datos para el dashboard
+    proyectos = db.obtener_proyectos()
+    clientes = db.obtener_clientes_unicos()
+    equipos_count = len(db.obtener_ups_todos())
+
+    # Contar PDFs generados (archivos en /static/temp y /static/img/proyectos)
+    pdfs_count = 0
+    temp_dir = os.path.join(os.path.dirname(__file__), 'static', 'temp')
+    if os.path.exists(temp_dir):
+        pdfs_count = len([f for f in os.listdir(temp_dir) if f.endswith('.pdf')])
+
+    # Contar proyectos publicados
+    publicados_count = len([p for p in proyectos if p.get('fecha_creacion')])
+
+    # Archivos recientes (simplificado)
+    archivos_recientes = []
+
+    return render_template('dashboard.html',
+                         proyectos=proyectos,
+                         clientes=clientes,
+                         equipos_count=equipos_count,
+                         pdfs_count=pdfs_count,
+                         publicados_count=publicados_count,
+                         archivos_recientes=archivos_recientes)
+
+@main.route('/calculadora', methods=['GET', 'POST'])
+def calculadora():
     # 1. Cargar listas iniciales
     lista_clientes_unicos = db.obtener_clientes_unicos() # Solo nombres
     lista_ups = db.obtener_ups_todos()
