@@ -304,25 +304,29 @@
 
         <!-- =================== CONTROLES SUPERIORES =================== -->
         <section class="top-controls">
-            <!-- CLIENTE -->
+            <!-- BÚSQUEDA DE PEDIDO -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-building me-2"></i> CLIENTE</div>
-                <label class="small text-muted">Empresa</label>
-                <select id="sel_cliente" class="form-select form-select-sm">
-                    <option value="">Seleccionar...</option>
-                    {% for c in clientes %}
-                    <option value="{{ c }}" {% if request.form.get('cliente_texto','')==c %}selected{% endif %}>{{ c }}</option>
-                    {% endfor %}
-                </select>
+                <div class="control-title"><i class="bi bi-search me-2"></i> BÚSQUEDA DE PEDIDO</div>
+                <label class="small text-muted fw-bold">No. Pedido / OC</label>
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="Ej: OC-2024-001" required>
+                    <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
+                </div>
 
-                <label class="small text-muted mt-2">Sucursal</label>
-                <select id="sel_sucursal" class="form-select form-select-sm" {% if not request.form.get('sucursal_texto') %}disabled{% endif %}>
-                    {% if request.form.get('sucursal_texto') %}
-                        <option value="">{{ request.form.get('sucursal_texto') }}</option>
-                    {% else %}
-                        <option value="">...</option>
-                    {% endif %}
-                </select>
+                <!-- Info del pedido cargado -->
+                <div id="pedido_info" style="display: none;">
+                    <div class="alert alert-success p-2 mb-2" style="font-size: 0.75rem;">
+                        <div><i class="bi bi-check-circle me-1"></i><strong>Pedido Encontrado</strong></div>
+                        <div class="mt-1">
+                            <small><i class="bi bi-building me-1"></i><span id="info_cliente">--</span></small><br>
+                            <small><i class="bi bi-geo-alt me-1"></i><span id="info_sucursal">--</span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="small text-muted mt-2">
+                    <i class="bi bi-info-circle me-1"></i>Busca el pedido para cargar los datos del cliente automáticamente.
+                </div>
             </div>
 
             <!-- DATOS DE PROYECTO -->
@@ -420,17 +424,16 @@
                 <input type="number" name="tiempo_respaldo" class="form-control form-control-sm" value="{{ request.form.get('tiempo_respaldo', '') }}" placeholder="Ej. 15">
             </div>
 
-            <!-- PEDIDO + ACCIONES -->
+            <!-- ACCIONES -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-clipboard-check me-2"></i> PEDIDO & ACCIONES</div>
-                <label class="small text-muted fw-bold text-primary">No. Pedido</label>
-                <div class="input-group input-group-sm">
-                    <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="OC-XXXX">
-                    <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
-                </div>
-                <div class="d-grid gap-2 mt-2">
-                    <button type="button" onclick="abrirModalVistaPrevia(false)" class="btn btn-dark">VISTA PREVIA</button>
-                    <button type="button" onclick="abrirModalVistaPrevia(true)" class="btn btn-primary">PUBLICAR</button>
+                <div class="control-title"><i class="bi bi-clipboard-check me-2"></i> ACCIONES</div>
+                <div class="d-grid gap-2">
+                    <button type="button" onclick="abrirModalVistaPrevia(false)" class="btn btn-dark btn-lg">
+                        <i class="bi bi-eye me-2"></i>VISTA PREVIA
+                    </button>
+                    <button type="button" onclick="abrirModalVistaPrevia(true)" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle me-2"></i>PUBLICAR
+                    </button>
                 </div>
             </div>
         </section>
@@ -855,50 +858,39 @@
         }
     }
 
-    // --- 2. Cargar sucursales por cliente ---
-    const selCliente = document.getElementById('sel_cliente');
-    const selSucursal = document.getElementById('sel_sucursal');
-    const prevCliente = "{{ request.form.get('cliente_texto', '') }}";
-    const prevSucursal = "{{ request.form.get('sucursal_texto', '') }}";
+    // --- 2. [ELIMINADO] Cargar sucursales por cliente ---
+    // Los datos de cliente y sucursal ahora se cargan automáticamente al buscar el pedido
 
-    function cargarSucursales(cliente, seleccionada=null){
-        if(!selSucursal) return;
-        selSucursal.innerHTML = '<option>Cargando...</option>';
-        selSucursal.disabled = true;
-        fetch(`/api/sucursales/${encodeURIComponent(cliente)}`)
-        .then(r=>r.json())
-        .then(data=>{
-            selSucursal.innerHTML = '<option value="">Seleccionar...</option>';
-            data.forEach(s=>{
-                const opt=document.createElement('option');
-                opt.value = s.id; opt.text = s.sucursal; opt.dataset.lat=s.lat; opt.dataset.lon=s.lon;
-                if(seleccionada && s.sucursal===seleccionada) opt.selected = true;
-                selSucursal.appendChild(opt);
-            });
-            selSucursal.disabled = false;
-        });
+    // --- 3. [ELIMINADO] Guardar datos ocultos cuando cambia sucursal ---
+    // Ahora los campos ocultos se llenan automáticamente desde la búsqueda de pedido
+
+    // NOTA: Los campos ocultos h_cliente y h_sucursal se llenan en la función buscarPedido()
+    const hCliente = document.getElementById('h_cliente');
+    const hSucursal = document.getElementById('h_sucursal');
+
+    // Si los campos ya tienen valores (página recargada), actualizar el recap y mostrar info
+    if(hCliente && hCliente.value){
+        const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
+        if(recapCliente) recapCliente.textContent = hCliente.value;
+
+        // Mostrar también en la card de info del pedido
+        if(infoCliente) infoCliente.textContent = hCliente.value;
+    }
+    if(hSucursal && hSucursal.value){
+        const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
+        if(recapSucursal) recapSucursal.textContent = hSucursal.value;
+
+        // Mostrar también en la card de info del pedido
+        if(infoSucursal) infoSucursal.textContent = hSucursal.value;
     }
 
-    if(selCliente){
-        selCliente.addEventListener('change', function(){ if(this.value) cargarSucursales(this.value); });
-        if(prevCliente){
-            for(let i=0;i<selCliente.options.length;i++){ if(selCliente.options[i].value===prevCliente) selCliente.selectedIndex=i; }
-            cargarSucursales(prevCliente, prevSucursal);
-        }
+    // Si ambos campos tienen valores, mostrar la card de información
+    if(hCliente && hCliente.value && hSucursal && hSucursal.value && pedidoInfo){
+        pedidoInfo.style.display = 'block';
     }
 
-    // --- 3. Guardar datos ocultos cuando cambia sucursal ---
-    if(selSucursal){
-        selSucursal.addEventListener('change', function(){
-            const opt=this.options[this.selectedIndex];
-            if(opt && opt.value){
-                document.getElementById('h_cliente').value = selCliente.value;
-                document.getElementById('h_sucursal').value = opt.text;
-                document.getElementById('h_lat').value = opt.dataset.lat || '';
-                document.getElementById('h_lon').value = opt.dataset.lon || '';
-            }
-        });
-    }
+    // --- 3b. Nota: lat/lon ahora se pueden obtener del pedido o desde la BD ---
+    // Los campos h_lat y h_lon se mantienen para compatibilidad con el backend
 
     // --- 4. Datos UPS + Ficha rápida ---
     const selUps = document.getElementById('sel_ups');
@@ -991,53 +983,69 @@
     // --- 5. Buscador pedido optimizado ---
     const btnBuscar = document.getElementById('btn_buscar');
     const inputPedido = document.getElementById('input_pedido');
+    const pedidoInfo = document.getElementById('pedido_info');
+    const infoCliente = document.getElementById('info_cliente');
+    const infoSucursal = document.getElementById('info_sucursal');
 
     if(btnBuscar){
         // Función de búsqueda
         const buscarPedido = function(){
             const ped = inputPedido.value.trim();
             if(!ped){
-                alert("Por favor ingresa un número de pedido");
+                alert("⚠️ Por favor ingresa un número de pedido");
                 return;
             }
 
             // Mostrar indicador de carga
             btnBuscar.disabled = true;
             btnBuscar.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            if(pedidoInfo) pedidoInfo.style.display = 'none';
 
             fetch(`/api/buscar-pedido/${encodeURIComponent(ped)}`)
                 .then(r => r.json())
                 .then(d => {
                     if(d.pedido){
                         // Pedido encontrado - cargar datos
-                        alert(`✅ Pedido encontrado: ${d.pedido}\nCliente: ${d.cliente_nombre || d.cliente_snap || 'N/A'}\nSucursal: ${d.sucursal_nombre || d.sucursal_snap || 'N/A'}`);
+                        const clienteNombre = d.cliente_nombre || d.cliente_snap || 'N/A';
+                        const sucursalNombre = d.sucursal_nombre || d.sucursal_snap || 'N/A';
 
-                        // Cargar cliente si existe
-                        const selCliente = document.getElementById('sel_cliente');
-                        if(selCliente && (d.cliente_nombre || d.cliente_snap)){
-                            const clienteNombre = d.cliente_nombre || d.cliente_snap;
-                            selCliente.value = clienteNombre;
+                        // Actualizar campos ocultos
+                        document.getElementById('h_cliente').value = clienteNombre;
+                        document.getElementById('h_sucursal').value = sucursalNombre;
 
-                            // Disparar evento change para cargar sucursales
-                            const event = new Event('change');
-                            selCliente.dispatchEvent(event);
+                        // Mostrar información del pedido
+                        if(infoCliente) infoCliente.textContent = clienteNombre;
+                        if(infoSucursal) infoSucursal.textContent = sucursalNombre;
+                        if(pedidoInfo) pedidoInfo.style.display = 'block';
 
-                            // Esperar un momento y luego seleccionar la sucursal
-                            setTimeout(() => {
-                                const selSucursal = document.getElementById('sel_sucursal');
-                                if(selSucursal && (d.sucursal_nombre || d.sucursal_snap)){
-                                    const sucursalNombre = d.sucursal_nombre || d.sucursal_snap;
-                                    selSucursal.value = sucursalNombre;
-                                }
-                            }, 500);
+                        // Actualizar recap
+                        const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
+                        const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
+                        if(recapCliente) recapCliente.textContent = clienteNombre;
+                        if(recapSucursal) recapSucursal.textContent = sucursalNombre;
+
+                        // Cargar UPS si existe modelo_id_real
+                        if(d.modelo_id_real){
+                            const selUps = document.getElementById('sel_ups');
+                            if(selUps){
+                                selUps.value = d.modelo_id_real;
+                                // Disparar evento change para cargar datos del UPS
+                                const event = new Event('change');
+                                selUps.dispatchEvent(event);
+                            }
                         }
+
+                        // Notificación de éxito
+                        alert(`✅ Pedido cargado correctamente\n\nCliente: ${clienteNombre}\nSucursal: ${sucursalNombre}`);
                     } else {
-                        alert("❌ Pedido no encontrado en la base de datos");
+                        alert("❌ Pedido no encontrado en la base de datos.\n\nAsegúrate de crear el pedido desde el Dashboard primero.");
+                        if(pedidoInfo) pedidoInfo.style.display = 'none';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert("❌ Error al buscar el pedido");
+                    if(pedidoInfo) pedidoInfo.style.display = 'none';
                 })
                 .finally(() => {
                     // Restaurar botón
@@ -1092,7 +1100,22 @@
         mainForm.addEventListener('submit', function(e){
             let errors = [];
             let firstField = null;
-            
+
+            // Validar pedido
+            const pedidoInput = document.getElementById('input_pedido');
+            if(pedidoInput && !pedidoInput.value.trim()) {
+                errors.push("Ingrese el Número de Pedido y búsquelo");
+                if(!firstField) firstField = pedidoInput;
+            }
+
+            // Validar que se hayan cargado los datos del cliente
+            const hCliente = document.getElementById('h_cliente');
+            const hSucursal = document.getElementById('h_sucursal');
+            if(!hCliente || !hCliente.value || !hSucursal || !hSucursal.value) {
+                errors.push("Busque el pedido para cargar los datos del cliente");
+                if(!firstField) firstField = pedidoInput;
+            }
+
             const ups = document.getElementById('sel_ups');
             if(ups && !ups.value) {
                 errors.push("Seleccione un Modelo de UPS");
