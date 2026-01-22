@@ -5,10 +5,15 @@ from PIL import Image
 import tempfile
 
 # Colores
-COLOR_AZUL_HEADER = (69, 115, 172)
-COLOR_AZUL_CLARO = (200, 220, 240)
-COLOR_NEGRO = (0, 0, 0)
-COLOR_GRIS = (128, 128, 128)
+
+COLOR_ROJO = (180, 20, 20)      
+COLOR_GRIS = (60, 60, 60)       
+COLOR_NEGRO = (40, 40, 40) 
+COLOR_GRIS_CLARO = (100, 100, 100) 
+COLOR_FONDO = (245, 245, 245)  
+COLOR_ALERTA = (200, 50, 50)
+COLOR_VERDE = (0, 100, 0) 
+
 
 class ChecklistPDF(FPDF):
     """Generador de Checklist de UPS"""
@@ -102,8 +107,9 @@ class ChecklistPDF(FPDF):
 
         # Fila de fecha
         self.set_font('Arial', 'B', 8)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.cell(10, 6, 'FECHA', 1, 0, 'C', True)
-        self.set_fill_color(*COLOR_AZUL_CLARO)
 
         fecha_actual = datetime.now()
         self.cell(10, 6, 'DIA', 1, 0, 'C', True)
@@ -116,6 +122,7 @@ class ChecklistPDF(FPDF):
         # Valores de fecha
         self.set_font('Arial', '', 8)
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.cell(10, 6, '', 1, 0, 'C')  # FECHA vacío
         self.cell(10, 6, str(fecha_actual.day), 1, 0, 'C')
         self.cell(10, 6, str(fecha_actual.month), 1, 0, 'C')
@@ -124,18 +131,21 @@ class ChecklistPDF(FPDF):
         self.cell(50, 6, datos.get('pedido', ''), 1, 1, 'C')
 
         # Área/Frente
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 8)
         self.cell(50, 6, 'AREA / FRENTE', 1, 0, 'C', True)
         self.cell(140, 6, 'DICIPLINA / CONCEPTO', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 8)
         self.cell(50, 6, datos.get('area_frente', ''), 1, 0, 'L')
         self.cell(140, 6, '', 1, 1, 'L')
 
         # Información del equipo
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 8)
         self.cell(50, 6, 'NOMBRE DE JEFE DE AREA / FRENTE', 1, 0, 'C', True)
         self.cell(50, 6, 'MODELO DE UPS', 1, 0, 'C', True)
@@ -143,6 +153,7 @@ class ChecklistPDF(FPDF):
         self.cell(50, 6, 'NUMERO DE SERIE', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 8)
         self.cell(50, 6, datos.get('nombre_jefe', ''), 1, 0, 'L')
         self.cell(50, 6, datos.get('modelo_ups', ''), 1, 0, 'L')
@@ -152,20 +163,21 @@ class ChecklistPDF(FPDF):
         self.ln(3)
 
         # Sección: Instalación Eléctrica
-        self.set_fill_color(*COLOR_AZUL_HEADER)
+        self.set_fill_color(*COLOR_ROJO)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 9)
         self.cell(190, 6, 'Instalacion Electrica', 1, 1, 'C', True)
 
         # Tabla de condiciones (simplificada)
-        self.set_fill_color(*COLOR_AZUL_CLARO)
-        self.set_text_color(0, 0, 0)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 7)
         self.cell(95, 6, 'Condiciones de Entrada', 1, 0, 'C', True)
         self.cell(95, 6, 'Condiciones de Salida', 1, 1, 'C', True)
 
         # Contenido simplificado de condiciones
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 7)
 
         items_entrada = [
@@ -189,11 +201,13 @@ class ChecklistPDF(FPDF):
         self.ln(2)
 
         # Observaciones
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 8)
         self.cell(190, 6, 'Observaciones para conexion entre banco de baterias y UPS:', 1, 1, 'L', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 7)
         obs_texto = datos.get('observaciones_conexion', '')
         self.multi_cell(190, 4, obs_texto if obs_texto else ' ')
@@ -201,7 +215,7 @@ class ChecklistPDF(FPDF):
         self.ln(2)
 
         # Sección de imágenes
-        self.set_fill_color(*COLOR_AZUL_HEADER)
+        self.set_fill_color(*COLOR_ROJO)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 9)
         self.cell(190, 6, 'IMAGENES', 1, 1, 'C', True)
@@ -219,8 +233,8 @@ class ChecklistPDF(FPDF):
         self.ln(3)
 
         # Sección de comentarios
-        self.set_text_color(0, 0, 0)
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_text_color(255, 255, 255)
+        self.set_fill_color(*COLOR_GRIS)
         self.set_font('Arial', 'B', 7)
         self.cell(38, 5, 'COMENTARIOS:', 1, 0, 'L', True)
         self.cell(38, 5, '1 SEGURIDAD', 1, 0, 'C', True)
@@ -229,19 +243,22 @@ class ChecklistPDF(FPDF):
         self.cell(38, 5, '4 GENERAL', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 7)
         comentarios = datos.get('comentarios', '')
         self.multi_cell(190, 4, comentarios if comentarios else ' ', 1)
 
         # Firmas
         self.ln(3)
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 8)
         self.cell(63, 6, 'LBS', 1, 0, 'C', True)
         self.cell(64, 6, '', 1, 0, 'C', True)
         self.cell(63, 6, 'CLIENTE', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.cell(63, 10, '', 1, 0, 'C')
         self.cell(64, 10, '', 1, 0, 'C')
         self.cell(63, 10, '', 1, 1, 'C')
@@ -256,13 +273,13 @@ class ChecklistPDF(FPDF):
         self.set_y(45)
 
         # Título
-        self.set_fill_color(*COLOR_AZUL_HEADER)
+        self.set_fill_color(*COLOR_ROJO)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 10)
         self.cell(190, 7, 'PUESTA EN MARCHA', 1, 1, 'C', True)
 
         # Texto de estimado cliente
-        self.set_text_color(0, 0, 0)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', 'B', 7)
         self.cell(190, 5, 'Estimado cliente:', 1, 1, 'L')
 
@@ -285,7 +302,7 @@ class ChecklistPDF(FPDF):
         self.ln(2)
 
         # Sección SITIO
-        self.set_fill_color(*COLOR_AZUL_HEADER)
+        self.set_fill_color(*COLOR_ROJO)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 9)
         self.cell(190, 6, 'SITIO', 1, 1, 'C', True)
@@ -300,7 +317,7 @@ class ChecklistPDF(FPDF):
             "6.- Limpieza de Area"
         ]
 
-        self.set_text_color(0, 0, 0)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 7)
         for item in items_sitio:
             self.multi_cell(190, 4, item, 1)
@@ -308,11 +325,13 @@ class ChecklistPDF(FPDF):
         self.ln(2)
 
         # Dirección
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 8)
         self.cell(190, 6, 'DIRECCION DONDE ESTA EL EQUIPO INSTALADO', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 8)
         direccion = datos.get('direccion_instalacion', '')
         self.multi_cell(190, 5, direccion if direccion else ' ', 1)
@@ -354,7 +373,7 @@ class ChecklistPDF(FPDF):
         self.ln(2)
 
         # Sección de imágenes del sitio
-        self.set_fill_color(*COLOR_AZUL_HEADER)
+        self.set_fill_color(*COLOR_ROJO)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 9)
         self.cell(190, 6, 'IMAGENES DEL SITIO DE INSTALACION', 1, 1, 'C', True)
@@ -371,14 +390,15 @@ class ChecklistPDF(FPDF):
         self.ln(3)
 
         # Firmas
-        self.set_text_color(0, 0, 0)
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_text_color(255, 255, 255)
+        self.set_fill_color(*COLOR_GRIS)
         self.set_font('Arial', 'B', 8)
         self.cell(63, 6, 'LBS', 1, 0, 'C', True)
         self.cell(64, 6, '', 1, 0, 'C', True)
         self.cell(63, 6, 'CLIENTE', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.cell(63, 10, '', 1, 0, 'C')
         self.cell(64, 10, '', 1, 0, 'C')
         self.cell(63, 10, '', 1, 1, 'C')
@@ -393,13 +413,13 @@ class ChecklistPDF(FPDF):
         self.set_y(45)
 
         # Título
-        self.set_fill_color(*COLOR_AZUL_HEADER)
+        self.set_fill_color(*COLOR_ROJO)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 9)
         self.cell(190, 6, 'CRITERIOS DE CUMPLIMIENTO PARA GARANTIAS DEL UPS', 1, 1, 'C', True)
 
         # Lista de criterios
-        self.set_text_color(0, 0, 0)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 6)
 
         criterios = [
@@ -418,7 +438,8 @@ class ChecklistPDF(FPDF):
         self.ln(5)
 
         # Texto de advertencia
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 7)
         texto_advertencia = (
             "EN CASO DE QUE LA INSTALACION NO CUMPLA CON LAS ESPECIFICACIONES TECNICAS MINIMAS ESTABLECIDAS EN LA GUIA "
@@ -430,6 +451,7 @@ class ChecklistPDF(FPDF):
 
         # Declaración de conformidad
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 7)
         self.cell(63, 5, 'NOMBRE:', 1, 0, 'L')
         self.cell(64, 5, '', 1, 0)
@@ -442,13 +464,15 @@ class ChecklistPDF(FPDF):
         self.ln(10)
 
         # Firmas finales
-        self.set_fill_color(*COLOR_AZUL_CLARO)
+        self.set_fill_color(*COLOR_GRIS)
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 8)
         self.cell(63, 6, 'LBS', 1, 0, 'C', True)
         self.cell(64, 6, '', 1, 0, 'C', True)
         self.cell(63, 6, 'CLIENTE', 1, 1, 'C', True)
 
         self.set_fill_color(255, 255, 255)
+        self.set_text_color(*COLOR_NEGRO)
         self.cell(63, 10, '', 1, 0, 'C')
         self.cell(64, 10, '', 1, 0, 'C')
         self.cell(63, 10, '', 1, 1, 'C')
