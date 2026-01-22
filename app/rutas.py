@@ -122,14 +122,21 @@ def dashboard():
                 conn = db._conectar()
                 cursor = conn.cursor()
                 cursor.execute('''
-                    INSERT INTO proyectos_publicados (pedido, cliente_snap, sucursal_snap, fecha_publicacion)
-                    VALUES (?, ?, ?, datetime('now'))
+                    INSERT INTO proyectos_publicados (pedido, cliente_snap, sucursal_snap)
+                    VALUES (?, ?, ?)
                 ''', (pedido, cliente_nombre, sucursal_nombre))
                 conn.commit()
                 conn.close()
-                return redirect(url_for('main.calculadora', pedido=pedido))
+
+                # Redirigir al aviso para que el usuario pueda generarlo primero
+                # Según el nuevo flujo: Datos Cliente → Generar Aviso → Después Cálculos
+                return redirect(url_for('main.aviso', pedido=pedido))
             except Exception as e:
                 print(f"Error al crear proyecto: {e}")
+                # Si hay error (ej: pedido duplicado), buscar el proyecto existente
+                pedido_data = db.obtener_proyecto_por_pedido(pedido)
+                if pedido_data:
+                    return redirect(url_for('main.dashboard') + f'?pedido_buscar={pedido}')
 
     return render_template('dashboard.html',
                          pedido=pedido_data,
@@ -573,6 +580,11 @@ def aviso():
     datos_proyecto = None
     pdf_trigger = None
 
+    # Si viene pedido por query string (desde dashboard), cargar automáticamente
+    pedido_query = request.args.get('pedido')
+    if pedido_query and request.method == 'GET':
+        datos_proyecto = db.obtener_proyecto_por_pedido(pedido_query)
+
     if request.method == 'POST':
         accion = request.form.get('accion')
 
@@ -600,15 +612,21 @@ def aviso():
                 proyecto = db.obtener_proyecto_por_pedido(pedido)
 
                 if proyecto:
+                    # Obtener datos del UPS si existen (opcional)
+                    modelo_ups = proyecto.get('modelo_snap', '')
+                    capacidad_ups = ''
+                    if proyecto.get('potencia_snap'):
+                        capacidad_ups = f"{proyecto.get('potencia_snap')} kVA"
+
                     # Preparar datos para el checklist
                     datos_checklist = {
-                        'cliente_nombre': proyecto.get('cliente_nombre', ''),
-                        'sucursal_nombre': proyecto.get('sucursal_nombre', ''),
+                        'cliente_nombre': proyecto.get('cliente_nombre', '') or proyecto.get('cliente_snap', ''),
+                        'sucursal_nombre': proyecto.get('sucursal_nombre', '') or proyecto.get('sucursal_snap', ''),
                         'pedido': proyecto.get('pedido', ''),
                         'area_frente': datos.get('area_frente', ''),
                         'nombre_jefe': datos.get('nombre_jefe', ''),
-                        'modelo_ups': '',  # Se puede obtener de la BD si se guardó
-                        'capacidad': '',
+                        'modelo_ups': modelo_ups,
+                        'capacidad': capacidad_ups,
                         'observaciones_conexion': datos.get('observaciones_conexion', ''),
                         'comentarios': datos.get('comentarios', ''),
                         'contacto_nombre': datos.get('contacto_nombre', ''),

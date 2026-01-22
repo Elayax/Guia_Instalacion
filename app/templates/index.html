@@ -988,20 +988,76 @@
         }
     }
 
-    // --- 5. Buscador pedido ---
+    // --- 5. Buscador pedido optimizado ---
     const btnBuscar = document.getElementById('btn_buscar');
+    const inputPedido = document.getElementById('input_pedido');
+
     if(btnBuscar){
-        btnBuscar.addEventListener('click', function(){
-            const ped = document.getElementById('input_pedido').value;
-            if(ped){
-                fetch(`/api/buscar-pedido/${ped}`).then(r=>r.json()).then(d=>{
-                    if(d.pedido){
-                        alert("Pedido Encontrado. Cargando datos...");
-                        document.getElementById('input_pedido').value = d.pedido;
-                    } else { alert("Pedido no encontrado."); }
-                });
+        // Función de búsqueda
+        const buscarPedido = function(){
+            const ped = inputPedido.value.trim();
+            if(!ped){
+                alert("Por favor ingresa un número de pedido");
+                return;
             }
-        });
+
+            // Mostrar indicador de carga
+            btnBuscar.disabled = true;
+            btnBuscar.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+            fetch(`/api/buscar-pedido/${encodeURIComponent(ped)}`)
+                .then(r => r.json())
+                .then(d => {
+                    if(d.pedido){
+                        // Pedido encontrado - cargar datos
+                        alert(`✅ Pedido encontrado: ${d.pedido}\nCliente: ${d.cliente_nombre || d.cliente_snap || 'N/A'}\nSucursal: ${d.sucursal_nombre || d.sucursal_snap || 'N/A'}`);
+
+                        // Cargar cliente si existe
+                        const selCliente = document.getElementById('sel_cliente');
+                        if(selCliente && (d.cliente_nombre || d.cliente_snap)){
+                            const clienteNombre = d.cliente_nombre || d.cliente_snap;
+                            selCliente.value = clienteNombre;
+
+                            // Disparar evento change para cargar sucursales
+                            const event = new Event('change');
+                            selCliente.dispatchEvent(event);
+
+                            // Esperar un momento y luego seleccionar la sucursal
+                            setTimeout(() => {
+                                const selSucursal = document.getElementById('sel_sucursal');
+                                if(selSucursal && (d.sucursal_nombre || d.sucursal_snap)){
+                                    const sucursalNombre = d.sucursal_nombre || d.sucursal_snap;
+                                    selSucursal.value = sucursalNombre;
+                                }
+                            }, 500);
+                        }
+                    } else {
+                        alert("❌ Pedido no encontrado en la base de datos");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("❌ Error al buscar el pedido");
+                })
+                .finally(() => {
+                    // Restaurar botón
+                    btnBuscar.disabled = false;
+                    btnBuscar.innerHTML = '<i class="bi bi-search"></i>';
+                });
+        };
+
+        // Click en botón
+        btnBuscar.addEventListener('click', buscarPedido);
+
+        // Enter en input
+        if(inputPedido){
+            inputPedido.addEventListener('keypress', function(e){
+                if(e.key === 'Enter'){
+                    e.preventDefault();
+                    buscarPedido();
+                }
+            });
+        }
     }
 
     // --- 6. Datos de batería para recap ---
