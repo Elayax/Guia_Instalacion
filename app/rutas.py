@@ -148,6 +148,9 @@ def calculadora():
     lista_ups = db.obtener_ups_todos()
     lista_baterias = db.obtener_baterias_modelos(solo_con_curvas=True)
 
+    # Preservar el pedido si existe en GET o POST para no perder el contexto
+    pedido_actual = request.args.get('pedido') or request.form.get('pedido')
+
     resultado = None
     mensaje = None
     pdf_trigger = None  # Para activar descarga automática del PDF
@@ -163,7 +166,7 @@ def calculadora():
             # Generar el PDF
             datos = request.form.to_dict()
 
-            if datos.get('id_ups'):
+            if resultado and datos.get('id_ups'):
                 ups_data = db.obtener_ups_id(datos['id_ups'])
                 if ups_data:
                     es_publicar = (accion == 'publicar')
@@ -292,6 +295,7 @@ def calculadora():
                          baterias=lista_baterias,
                          res=resultado,
                          msg=mensaje,
+                         pedido=pedido_actual,
                          pdf_trigger=pdf_trigger)
 
 @main.route('/descargar-plantilla/<tipo>')
