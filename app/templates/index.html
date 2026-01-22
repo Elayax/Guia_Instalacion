@@ -304,65 +304,22 @@
 
         <!-- =================== CONTROLES SUPERIORES =================== -->
         <section class="top-controls">
-            <!-- BÚSQUEDA DE PEDIDO -->
+            <!-- PEDIDO -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-search me-2"></i> BÚSQUEDA DE PEDIDO</div>
-                <label class="small text-muted fw-bold">No. Pedido / OC</label>
-                <div class="input-group input-group-sm mb-2">
-                    <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="Ej: OC-2024-001" required>
+                <div class="control-title"><i class="bi bi-search me-2"></i> PEDIDO</div>
+                <label class="small text-muted">No. Pedido</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="OC-2024-001" required>
                     <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
                 </div>
-
-                <!-- Info del pedido cargado -->
-                <div id="pedido_info" style="display: none;">
-                    <div class="alert alert-success p-2 mb-2" style="font-size: 0.75rem;">
-                        <div><i class="bi bi-check-circle me-1"></i><strong>Pedido Encontrado</strong></div>
-                        <div class="mt-1">
-                            <small><i class="bi bi-building me-1"></i><span id="info_cliente">--</span></small><br>
-                            <small><i class="bi bi-geo-alt me-1"></i><span id="info_sucursal">--</span></small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="small text-muted mt-2">
-                    <i class="bi bi-info-circle me-1"></i>Busca el pedido para cargar los datos del cliente automáticamente.
-                </div>
             </div>
 
-            <!-- DATOS DE PROYECTO -->
+            <!-- EQUIPO + CONFIGURACIÓN -->
             <div class="card-control">
-                <div class="control-title"><i class="bi bi-sliders me-2"></i> DATOS DE PROYECTO</div>
-                
-                <div class="mb-2">
-                    <label class="small text-muted">Voltaje Entrada</label>
-                    <select name="voltaje" id="sel_voltaje" class="form-select form-select-sm">
-                        <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220 V</option>
-                        <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208 V</option>
-                        <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480 V</option>
-                        <option value="127" {% if request.form.get('voltaje') == '127' %}selected{% endif %}>127 V</option>
-                    </select>
-                </div>
+                <div class="control-title"><i class="bi bi-box-seam me-2"></i> EQUIPO & CONFIGURACIÓN</div>
 
-                <div class="mb-2">
-                    <label class="small text-muted">Fases</label>
-                    <select name="fases" class="form-select form-select-sm">
-                        <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F + Neutro</option>
-                        <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F + Neutro</option>
-                        <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F + Neutro</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="small text-muted">Distancia (mts)</label>
-                    <input type="number" name="longitud" class="form-control form-control-sm" value="{{ request.form.get('longitud', '') }}" placeholder="0">
-                </div>
-            </div>
-
-            <!-- EQUIPO -->
-            <div class="card-control">
-                <div class="control-title"><i class="bi bi-box-seam me-2"></i> EQUIPO</div>
                 <label class="small text-muted">Modelo UPS</label>
-                <select name="id_ups" id="sel_ups" class="form-select form-select-sm" required>
+                <select name="id_ups" id="sel_ups" class="form-select form-select-sm mb-2" required>
                     <option value="">Seleccionar...</option>
                     {% for u in ups %}
                     <option value="{{ u.id }}" data-kva="{{ u.Capacidad_kVA }}" data-vin="{{ u.Voltaje_Entrada_1_V }}"
@@ -372,32 +329,37 @@
                     {% endfor %}
                 </select>
 
-                <div class="row g-2 mt-2">
-                    <div class="col-6">
-                        <label class="small text-muted">kVA</label>
-                        <input type="text" id="txt_kva" class="form-control form-control-sm" readonly value="{{ res.kva if res else '' }}">
-                    </div>
-                    <div class="col-6">
-                        <label class="small text-muted">Volts Out</label>
-                        <select id="sel_vout_ups" class="form-select form-select-sm" disabled>
-                            <option value="">--</option>
+                <div class="row g-2 mb-2">
+                    <div class="col-4">
+                        <label class="small text-muted">Voltaje</label>
+                        <select name="voltaje" id="sel_voltaje" class="form-select form-select-sm">
+                            <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220V</option>
+                            <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208V</option>
+                            <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480V</option>
+                            <option value="127" {% if request.form.get('voltaje') == '127' %}selected{% endif %}>127V</option>
                         </select>
                     </div>
-                </div>
-
-                <div id="ups_image_container" class="mt-2 border rounded" style="height: 100px; display: none; background-color: rgba(0,0,0,0.2);">
-                    <img id="ups_image" src="" alt="Imagen de UPS" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div class="col-4">
+                        <label class="small text-muted">Fases</label>
+                        <select name="fases" class="form-select form-select-sm">
+                            <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F</option>
+                            <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F</option>
+                            <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F</option>
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <label class="small text-muted">Dist.(m)</label>
+                        <input type="number" name="longitud" class="form-control form-control-sm" value="{{ request.form.get('longitud', '') }}" placeholder="0">
+                    </div>
                 </div>
 
                 <!-- FICHA UPS COMPACTA -->
                 <div id="ups_specs_container" class="specs-panel d-none">
                     <div class="text-center mb-2" style="color: var(--text-main); font-weight:700; font-size:0.75rem; letter-spacing:1px;">FICHA TÉCNICA</div>
-                    <div class="d-flex justify-content-between small"><span>Serie:</span><span id="sp_serie">--</span></div>
-                    <div class="d-flex justify-content-between small"><span>Potencia kW:</span><span id="sp_kw">--</span></div>
-                    <div class="d-flex justify-content-between small"><span>Eficiencia AC:</span><span id="sp_eff">--</span>%</div>
-                    <div class="d-flex justify-content-between small"><span>Baterías (VDC):</span><span id="sp_bat">--</span></div>
-                    <div class="d-flex justify-content-between small"><span>Dimensiones:</span><span id="sp_dim">--</span></div>
-                    <div class="d-flex justify-content-between small"><span>Peso:</span><span id="sp_peso">--</span> kg</div>
+                    <div class="d-flex justify-content-between small"><span>kVA:</span><span id="sp_kva">--</span></div>
+                    <div class="d-flex justify-content-between small"><span>kW:</span><span id="sp_kw">--</span></div>
+                    <div class="d-flex justify-content-between small"><span>Eficiencia:</span><span id="sp_eff">--</span>%</div>
+                    <div class="d-flex justify-content-between small"><span>VDC:</span><span id="sp_bat">--</span></div>
                 </div>
             </div>
 
@@ -868,25 +830,14 @@
     const hCliente = document.getElementById('h_cliente');
     const hSucursal = document.getElementById('h_sucursal');
 
-    // Si los campos ya tienen valores (página recargada), actualizar el recap y mostrar info
+    // Si los campos ya tienen valores (página recargada), actualizar el recapitulado
     if(hCliente && hCliente.value){
         const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
         if(recapCliente) recapCliente.textContent = hCliente.value;
-
-        // Mostrar también en la card de info del pedido
-        if(infoCliente) infoCliente.textContent = hCliente.value;
     }
     if(hSucursal && hSucursal.value){
         const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
         if(recapSucursal) recapSucursal.textContent = hSucursal.value;
-
-        // Mostrar también en la card de info del pedido
-        if(infoSucursal) infoSucursal.textContent = hSucursal.value;
-    }
-
-    // Si ambos campos tienen valores, mostrar la card de información
-    if(hCliente && hCliente.value && hSucursal && hSucursal.value && pedidoInfo){
-        pedidoInfo.style.display = 'block';
     }
 
     // --- 3b. Nota: lat/lon ahora se pueden obtener del pedido o desde la BD ---
@@ -898,94 +849,28 @@
         selUps.addEventListener('change', function(){
             const opt=this.options[this.selectedIndex];
             if(opt && opt.value){
-                document.getElementById('txt_kva').value = opt.dataset.kva || '';
-                
+                // Actualizar recapitulado con nombre y kVA del UPS
+                const recapUps = document.querySelector('.recap-grid .recap-item:nth-child(4) .recap-value');
+                if(recapUps) recapUps.textContent = `${opt.text} (${opt.dataset.kva || '--'} kVA)`;
+
                 fetch(`/api/ups/${opt.value}`).then(r=>r.json()).then(data=>{
-                    // Populate Volts Out Select
-                    const selVout = document.getElementById('sel_vout_ups');
-                    const selVoltajeProyecto = document.getElementById('sel_voltaje');
-                    
-                    if(selVout){
-                        selVout.innerHTML = '';
-                        const vouts = [];
-                        if(data.Voltaje_Salida_1_V) vouts.push(data.Voltaje_Salida_1_V);
-                        if(data.Voltaje_Salida_2_V) vouts.push(data.Voltaje_Salida_2_V);
-                        if(data.Voltaje_Salida_3_V) vouts.push(data.Voltaje_Salida_3_V);
-                        
-                        if(vouts.length > 0){
-                            vouts.forEach(v => {
-                                const option = document.createElement('option');
-                                option.value = v;
-                                option.text = v + ' V';
-                                selVout.appendChild(option);
-                            });
-                            selVout.disabled = false;
-                            selVout.value = vouts[0];
-                            // Sync with Project Voltage
-                            syncProjectVoltage(vouts[0]);
-                        } else {
-                            selVout.innerHTML = '<option value="">S/D</option>';
-                            selVout.disabled = true;
-                        }
-                    }
-
                     const upsCont = document.getElementById('ups_specs_container');
-                    
-                    const upsImgContainer = document.getElementById('ups_image_container');
-                    const upsImg = document.getElementById('ups_image');
-
-                    if(data.imagen_url) {
-                        upsImg.src = `/static/img/ups/${data.imagen_url}`;
-                        upsImgContainer.style.display = 'block';
-                    } else {
-                        upsImgContainer.style.display = 'none';
-                    }
-
                     if(upsCont) upsCont.classList.remove('d-none');
-                    document.getElementById('sp_serie') && (document.getElementById('sp_serie').textContent = data.Serie || '--');
+                    document.getElementById('sp_kva') && (document.getElementById('sp_kva').textContent = data.Capacidad_kVA || '--');
                     document.getElementById('sp_kw') && (document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--');
                     document.getElementById('sp_eff') && (document.getElementById('sp_eff').textContent = data.Eficiencia_Modo_AC_pct || '--');
                     document.getElementById('sp_bat') && (document.getElementById('sp_bat').textContent = data.Bateria_Vdc || '--');
-                    const dim = `${data.Dim_Alto_mm}x${data.Dim_Ancho_mm}x${data.Dim_Largo_mm}`;
-                    document.getElementById('sp_dim') && (document.getElementById('sp_dim').textContent = dim);
-                    document.getElementById('sp_peso') && (document.getElementById('sp_peso').textContent = data.Peso_Gabinete_kg || '--');
                 });
             }
         });
     }
 
-    // --- 4.1 Sync Volts Out -> Project Voltage ---
-    const selVout = document.getElementById('sel_vout_ups');
-    if(selVout){
-        selVout.addEventListener('change', function(){
-            syncProjectVoltage(this.value);
-        });
-    }
-
-    function syncProjectVoltage(val){
-        const selVoltajeProyecto = document.getElementById('sel_voltaje');
-        if(selVoltajeProyecto && val){
-            // Check if option exists, if not add it
-            let exists = false;
-            for(let i=0; i<selVoltajeProyecto.options.length; i++){
-                if(selVoltajeProyecto.options[i].value == val) exists = true;
-            }
-            if(!exists){
-                const newOpt = document.createElement('option');
-                newOpt.value = val;
-                newOpt.text = val + ' V';
-                selVoltajeProyecto.add(newOpt);
-            }
-            selVoltajeProyecto.value = val;
-        }
-    }
+    // --- 4.1 [ELIMINADO] Sync Volts Out -> Project Voltage ---
+    // Ya no es necesario porque el usuario selecciona manualmente el voltaje
 
     // --- 5. Buscador pedido optimizado ---
     const btnBuscar = document.getElementById('btn_buscar');
     const inputPedido = document.getElementById('input_pedido');
-    const pedidoInfo = document.getElementById('pedido_info');
-    const infoCliente = document.getElementById('info_cliente');
-    const infoSucursal = document.getElementById('info_sucursal');
 
     if(btnBuscar){
         // Función de búsqueda
@@ -999,7 +884,6 @@
             // Mostrar indicador de carga
             btnBuscar.disabled = true;
             btnBuscar.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-            if(pedidoInfo) pedidoInfo.style.display = 'none';
 
             fetch(`/api/buscar-pedido/${encodeURIComponent(ped)}`)
                 .then(r => r.json())
@@ -1013,16 +897,13 @@
                         document.getElementById('h_cliente').value = clienteNombre;
                         document.getElementById('h_sucursal').value = sucursalNombre;
 
-                        // Mostrar información del pedido
-                        if(infoCliente) infoCliente.textContent = clienteNombre;
-                        if(infoSucursal) infoSucursal.textContent = sucursalNombre;
-                        if(pedidoInfo) pedidoInfo.style.display = 'block';
-
-                        // Actualizar recap
+                        // Actualizar recapitulado
                         const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
                         const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
+                        const recapPedido = document.querySelector('.recap-grid .recap-item:nth-child(3) .recap-value');
                         if(recapCliente) recapCliente.textContent = clienteNombre;
                         if(recapSucursal) recapSucursal.textContent = sucursalNombre;
+                        if(recapPedido) recapPedido.textContent = ped;
 
                         // Cargar UPS si existe modelo_id_real
                         if(d.modelo_id_real){
@@ -1035,17 +916,15 @@
                             }
                         }
 
-                        // Notificación de éxito
-                        alert(`✅ Pedido cargado correctamente\n\nCliente: ${clienteNombre}\nSucursal: ${sucursalNombre}`);
+                        // Notificación de éxito - más simple
+                        alert(`✅ Pedido encontrado\n${clienteNombre} - ${sucursalNombre}\n\nAhora selecciona el equipo y batería.`);
                     } else {
-                        alert("❌ Pedido no encontrado en la base de datos.\n\nAsegúrate de crear el pedido desde el Dashboard primero.");
-                        if(pedidoInfo) pedidoInfo.style.display = 'none';
+                        alert("❌ Pedido no encontrado.\n\nCrea el pedido desde el Dashboard primero.");
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert("❌ Error al buscar el pedido");
-                    if(pedidoInfo) pedidoInfo.style.display = 'none';
                 })
                 .finally(() => {
                     // Restaurar botón
