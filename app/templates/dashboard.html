@@ -271,6 +271,29 @@
             border-radius: 15px;
             overflow: hidden;
         }
+
+        .info-display {
+            background: rgba(255, 69, 58, 0.1);
+            border-left: 3px solid var(--accent-red);
+            padding: 1rem;
+            border-radius: 8px;
+            height: 100%;
+        }
+
+        .info-label {
+            color: var(--text-sec);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -284,7 +307,6 @@
             <a href="{{ url_for('main.dashboard') }}" class="nav-link active"><i class="bi bi-speedometer2 me-1"></i> DASHBOARD</a>
             <a href="{{ url_for('main.calculadora') }}" class="nav-link">CALCULADORA</a>
             <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
-            <a href="{{ url_for('main.aviso') }}" class="nav-link">GENERACIÓN AVISO</a>
         </nav>
     </header>
 
@@ -329,25 +351,60 @@
                 Estado del Pedido: {{ pedido.pedido }}
             </div>
 
-            <!-- Información del Proyecto -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
-                        <div style="font-size: 0.75rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Cliente</div>
-                        <div style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">
-                            <i class="bi bi-building me-2"></i>{{ pedido.cliente_nombre or pedido.cliente_snap or 'N/A' }}
-                        </div>
+            <!-- Información del Proyecto - Cards Mejoradas -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="info-display">
+                        <div class="info-label"><i class="bi bi-building me-2"></i>Cliente</div>
+                        <div class="info-value">{{ pedido.cliente_nombre or pedido.cliente_snap or 'N/A' }}</div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
-                        <div style="font-size: 0.75rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Sucursal</div>
-                        <div style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">
-                            <i class="bi bi-geo-alt me-2"></i>{{ pedido.sucursal_nombre or pedido.sucursal_snap or 'N/A' }}
-                        </div>
+                <div class="col-md-4">
+                    <div class="info-display">
+                        <div class="info-label"><i class="bi bi-geo-alt me-2"></i>Sucursal</div>
+                        <div class="info-value">{{ pedido.sucursal_nombre or pedido.sucursal_snap or 'N/A' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-display">
+                        <div class="info-label"><i class="bi bi-file-earmark-text me-2"></i>Número de Pedido</div>
+                        <div class="info-value">{{ pedido.pedido }}</div>
                     </div>
                 </div>
             </div>
+
+            <!-- Información Técnica del Proyecto (si existe) -->
+            {% if estado.tiene_ups or estado.tiene_calculos %}
+            <div class="row g-3 mb-4">
+                {% if pedido.modelo_snap %}
+                <div class="col-md-4">
+                    <div class="info-display" style="border-left-color: #34c759;">
+                        <div class="info-label"><i class="bi bi-lightning-charge-fill me-2"></i>Modelo UPS</div>
+                        <div class="info-value">{{ pedido.modelo_snap }}</div>
+                        {% if pedido.potencia_snap %}
+                        <small style="color: var(--text-sec); font-size: 0.8rem;">{{ pedido.potencia_snap }} kVA</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if pedido.calibre_fases %}
+                <div class="col-md-4">
+                    <div class="info-display" style="border-left-color: #0a84ff;">
+                        <div class="info-label"><i class="bi bi-diagram-3 me-2"></i>Calibre Fases</div>
+                        <div class="info-value">{{ pedido.calibre_fases }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if pedido.calibre_tierra %}
+                <div class="col-md-4">
+                    <div class="info-display" style="border-left-color: #ff9f0a;">
+                        <div class="info-label"><i class="bi bi-plug me-2"></i>Calibre Tierra</div>
+                        <div class="info-value">{{ pedido.calibre_tierra }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
 
             <!-- Indicadores de Estado -->
             <div class="row g-3 mb-4">
@@ -387,23 +444,6 @@
                     </div>
                 </div>
 
-                <!-- Aviso Generado -->
-                <div class="col-md-4">
-                    <div class="stat-card" style="{% if estado.tiene_aviso %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
-                        <div class="stat-icon" style="{% if estado.tiene_aviso %}background: #34c759;{% endif %}">
-                            <i class="bi bi-file-earmark-check-fill"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_aviso %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
-                            <p style="margin-bottom: 5px;">Aviso / Checklist</p>
-                            {% if estado.tiene_aviso %}
-                            <small style="color: var(--text-sec); font-size: 0.75rem;">Checklist generado</small>
-                            {% else %}
-                            <small style="color: var(--text-sec); font-size: 0.75rem;">No generado</small>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Acciones Directas -->
@@ -412,25 +452,14 @@
                 Acciones para este Pedido
             </div>
             <div class="row g-3">
-                <div class="col-md-6">
-                    <a href="{{ url_for('main.calculadora', pedido=pedido.pedido) }}" class="btn btn-lg w-100"
+                <div class="col-12">
+                    <a href="{{ url_for('main.calculadora') }}?pedido={{ pedido.pedido }}" class="btn btn-lg w-100"
                        style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.2) 0%, rgba(255, 69, 58, 0.1) 100%);
                               border: 2px solid var(--accent-red); color: var(--text-main); font-weight: 600; padding: 1.5rem;">
-                        <i class="bi bi-calculator me-2" style="font-size: 1.5rem;"></i>
+                        <i class="bi bi-{% if estado.tiene_calculos %}arrow-repeat{% else %}play-circle{% endif %} me-2" style="font-size: 1.5rem;"></i>
                         <div>
-                            <div style="font-size: 1.1rem;">{% if estado.tiene_calculos %}Modificar{% else %}Iniciar{% endif %} Cálculos</div>
+                            <div style="font-size: 1.1rem;">{% if estado.tiene_calculos %}Reimprimir / Modificar Guía{% else %}Generar Guía{% endif %} de Instalación</div>
                             <small style="font-size: 0.75rem; opacity: 0.7;">Ir a Calculadora</small>
-                        </div>
-                    </a>
-                </div>
-                <div class="col-md-6">
-                    <a href="{{ url_for('main.aviso', pedido=pedido.pedido) }}" class="btn btn-lg w-100"
-                       style="background: linear-gradient(135deg, rgba(10, 132, 255, 0.2) 0%, rgba(10, 132, 255, 0.1) 100%);
-                              border: 2px solid #0a84ff; color: var(--text-main); font-weight: 600; padding: 1.5rem;">
-                        <i class="bi bi-clipboard-check me-2" style="font-size: 1.5rem;"></i>
-                        <div>
-                            <div style="font-size: 1.1rem;">{% if estado.tiene_aviso %}Modificar{% else %}Generar{% endif %} Aviso</div>
-                            <small style="font-size: 0.75rem; opacity: 0.7;">Ir a Checklist</small>
                         </div>
                     </a>
                 </div>
@@ -537,6 +566,18 @@
                 sucursalSelect.innerHTML = '<option value="">-- Seleccione sucursal --</option>';
             }
         });
+
+        // Búsqueda rápida con Enter
+        const pedidoInput = document.querySelector('input[name="pedido_buscar"]');
+        if (pedidoInput) {
+            pedidoInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const btnBuscar = document.querySelector('button[type="submit"]');
+                    if (btnBuscar) btnBuscar.click();
+                }
+            });
+        }
     </script>
 </body>
 </html>

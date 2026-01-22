@@ -196,6 +196,7 @@
     <div class="container-main">
         <form method="POST" id="mainForm">
             <!-- Selección de Pedido -->
+            {% if not datos_proyecto %}
             <div class="glass-card">
                 <div class="section-title">
                     <i class="bi bi-file-earmark-text"></i>
@@ -208,7 +209,9 @@
                         <select class="form-select" name="pedido" id="sel_pedido" required>
                             <option value="">-- Seleccione un pedido --</option>
                             {% for proyecto in proyectos %}
-                            <option value="{{ proyecto.pedido }}">{{ proyecto.pedido }} - {{ proyecto.cliente_nombre }}</option>
+                            <option value="{{ proyecto.pedido }}" {% if request.args.get('pedido') == proyecto.pedido %}selected{% endif %}>
+                                {{ proyecto.pedido }} - {{ proyecto.cliente_nombre or proyecto.cliente_snap }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -219,6 +222,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             {% if datos_proyecto %}
             <!-- Datos del Proyecto Cargados -->
@@ -228,17 +232,17 @@
                     Datos del Proyecto
                 </div>
 
-                <div class="row mb-3">
+                <div class="row g-3 mb-3">
                     <div class="col-md-4">
                         <div class="info-display">
                             <div class="info-label">Cliente</div>
-                            <div class="info-value">{{ datos_proyecto.cliente_nombre }}</div>
+                            <div class="info-value">{{ datos_proyecto.cliente_nombre or datos_proyecto.cliente_snap }}</div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="info-display">
                             <div class="info-label">Sucursal</div>
-                            <div class="info-value">{{ datos_proyecto.sucursal_nombre or 'N/A' }}</div>
+                            <div class="info-value">{{ datos_proyecto.sucursal_nombre or datos_proyecto.sucursal_snap or 'N/A' }}</div>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -248,6 +252,36 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Datos Técnicos del Proyecto (si existen) -->
+                {% if datos_proyecto.modelo_snap or datos_proyecto.potencia_snap %}
+                <div class="row g-3 mb-3">
+                    {% if datos_proyecto.modelo_snap %}
+                    <div class="col-md-4">
+                        <div class="info-display" style="background: rgba(52, 199, 89, 0.1); border-left-color: #34c759;">
+                            <div class="info-label"><i class="bi bi-lightning-charge-fill me-2"></i>Modelo UPS</div>
+                            <div class="info-value">{{ datos_proyecto.modelo_snap }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if datos_proyecto.potencia_snap %}
+                    <div class="col-md-4">
+                        <div class="info-display" style="background: rgba(10, 132, 255, 0.1); border-left-color: #0a84ff;">
+                            <div class="info-label"><i class="bi bi-speedometer me-2"></i>Capacidad</div>
+                            <div class="info-value">{{ datos_proyecto.potencia_snap }} kVA</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if datos_proyecto.calibre_fases %}
+                    <div class="col-md-4">
+                        <div class="info-display" style="background: rgba(255, 159, 10, 0.1); border-left-color: #ff9f0a;">
+                            <div class="info-label"><i class="bi bi-diagram-3 me-2"></i>Calibre Fases</div>
+                            <div class="info-value">{{ datos_proyecto.calibre_fases }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
 
             <!-- Datos Adicionales del Checklist -->

@@ -397,18 +397,9 @@ def procesar_calculo_ups(db, form):
         'ruido': ups_data.get('Nivel_Ruido_dB')
     })
     
-    mensaje = "👁️ VISTA PREVIA GENERADA"
-    if accion == 'publicar':
-        if not form.get('pedido'):
-            mensaje = "⚠️ Falta el número de Pedido"
-        else:
-            save_data = {'pedido': form.get('pedido'), 'cliente_nombre': form.get('cliente_texto'), 'sucursal_nombre': form.get('sucursal_texto'), 'fases': form.get('fases')}
-            if db.publicar_proyecto(resultado, save_data):
-                mensaje = "✅ PROYECTO PUBLICADO CORRECTAMENTE"
-                resultado['es_publicado'] = True
-            else:
-                mensaje = "⚠️ ERROR: El número de pedido ya existe."
-                
+    # Mensaje inicial (la publicación se hace en rutas.py con todos los datos)
+    mensaje = "👁️ VISTA PREVIA GENERADA" if accion != 'publicar' else "📊 Cálculos realizados"
+
     return resultado, mensaje
 
 def _procesar_carga_masiva(db, file, tipo_carga):
