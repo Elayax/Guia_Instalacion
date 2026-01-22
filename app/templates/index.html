@@ -929,12 +929,32 @@
                             if(inputLongitud) inputLongitud.value = d.longitud;
                         }
 
+                        // Cargar batería si existe
+                        if(d.id_bateria){
+                            const selBateria = document.getElementById('sel_bateria');
+                            if(selBateria){
+                                selBateria.value = d.id_bateria;
+                                // Disparar evento change para cargar datos de la batería
+                                const event = new Event('change');
+                                selBateria.dispatchEvent(event);
+                            }
+                        }
+
+                        // Cargar tiempo de respaldo
+                        if(d.tiempo_respaldo){
+                            const inputTiempo = document.querySelector('input[name="tiempo_respaldo"]');
+                            if(inputTiempo) inputTiempo.value = d.tiempo_respaldo;
+                        }
+
                         // Mensaje diferente si ya tiene datos guardados
                         let mensaje = `✅ Pedido encontrado\n${clienteNombre} - ${sucursalNombre}`;
                         if(d.modelo_snap){
                             mensaje += `\n\n📦 UPS: ${d.modelo_snap} (${d.potencia_snap} kVA)`;
                             mensaje += `\n⚡ Config: ${d.voltaje}V, ${d.fases}F, ${d.longitud}m`;
-                            mensaje += '\n\n✨ Puedes modificar y reimprimir la guía.';
+                            if(d.bateria_modelo){
+                                mensaje += `\n🔋 Batería: ${d.bateria_modelo} (${d.tiempo_respaldo || 0} min)`;
+                            }
+                            mensaje += '\n\n✨ Todo cargado! Puedes modificar y reimprimir.';
                         } else {
                             mensaje += '\n\nAhora selecciona el equipo y batería.';
                         }

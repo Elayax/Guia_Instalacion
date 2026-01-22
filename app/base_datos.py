@@ -125,34 +125,54 @@ class GestorDB:
         if 'imagen_layout_url' not in columns:
             cursor.execute("ALTER TABLE ups_specs ADD COLUMN imagen_layout_url TEXT")
 
-        # 3. TABLA PROYECTOS
+        # 3. TABLA PROYECTOS (ESPINA DORSAL DEL SISTEMA)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS proyectos_publicados (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 pedido TEXT UNIQUE NOT NULL,
                 fecha_publicacion TEXT,
+
+                -- Referencias a otras tablas (espina dorsal)
+                id_ups INTEGER REFERENCES ups_specs(id),
+                id_bateria INTEGER REFERENCES baterias_modelos(id),
+                id_cliente INTEGER REFERENCES clientes(id),
+
+                -- Snapshots para preservar datos históricos
                 modelo_snap TEXT,
                 potencia_snap REAL,
                 cliente_snap TEXT,
                 sucursal_snap TEXT,
-                calibre_fases TEXT,
-                config_salida TEXT,
-                calibre_tierra TEXT,
+
+                -- Configuración técnica
                 voltaje REAL,
                 fases INTEGER,
-                longitud REAL
+                longitud REAL,
+                tiempo_respaldo REAL,
+
+                -- Resultados de cálculos
+                calibre_fases TEXT,
+                config_salida TEXT,
+                calibre_tierra TEXT
             )
         ''')
 
-        # Agregar columnas si no existen
+        # Agregar columnas si no existen (para BD existentes)
         cursor.execute("PRAGMA table_info(proyectos_publicados)")
         columns = [row[1] for row in cursor.fetchall()]
-        if 'voltaje' not in columns:
-            cursor.execute("ALTER TABLE proyectos_publicados ADD COLUMN voltaje REAL")
-        if 'fases' not in columns:
-            cursor.execute("ALTER TABLE proyectos_publicados ADD COLUMN fases INTEGER")
-        if 'longitud' not in columns:
-            cursor.execute("ALTER TABLE proyectos_publicados ADD COLUMN longitud REAL")
+
+        columnas_nuevas = {
+            'voltaje': 'REAL',
+            'fases': 'INTEGER',
+            'longitud': 'REAL',
+            'tiempo_respaldo': 'REAL',
+            'id_ups': 'INTEGER',
+            'id_bateria': 'INTEGER',
+            'id_cliente': 'INTEGER'
+        }
+
+        for col, tipo in columnas_nuevas.items():
+            if col not in columns:
+                cursor.execute(f"ALTER TABLE proyectos_publicados ADD COLUMN {col} {tipo}")
 
         # 4. TABLAS BATERIAS (NUEVO MODULO - ADAPTADO)
         cursor.execute('''
@@ -452,31 +472,85 @@ class GestorDB:
         conn.close()
 
     def publicar_proyecto(self, datos_calculados, form_data):
+        """
+        Función principal para publicar un proyecto completo con todas sus relaciones.
+        Esta es la ESPINA DORSAL del sistema - vincula UPS, baterías, clientes y configuración.
+        """
         conn = self._conectar()
         try:
+            # Preparar valores
+            id_ups = int(form_data.get('id_ups', 0)) or None
+            id_bateria = int(form_data.get('id_bateria', 0)) if form_data.get('id_bateria') else None
+            tiempo_respaldo = float(form_data.get('tiempo_respaldo', 0)) if form_data.get('tiempo_respaldo') else None
+
             conn.execute('''
                 INSERT INTO proyectos_publicados
-                (pedido, fecha_publicacion, modelo_snap, potencia_snap, cliente_snap, sucursal_snap,
-                 calibre_fases, config_salida, calibre_tierra, voltaje, fases, longitud)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (pedido, fecha_publicacion,
+                 id_ups, id_bateria,
+                 modelo_snap, potencia_snap, cliente_snap, sucursal_snap,
+                 voltaje, fases, longitud, tiempo_respaldo,
+                 calibre_fases, config_salida, calibre_tierra)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 form_data['pedido'],
                 datetime.now().strftime("%Y-%m-%d %H:%M"),
+                id_ups,
+                id_bateria,
                 datos_calculados.get('Nombre_del_Producto', 'Desconocido'),
                 datos_calculados.get('Capacidad_kVA', 0),
-                form_data['cliente_nombre'],
-                form_data['sucursal_nombre'],
-                datos_calculados['fase_sel'],
-                f"{form_data['fases']}F + N + GND",
-                datos_calculados['gnd_sel'],
+                form_data.get('cliente_nombre', ''),
+                form_data.get('sucursal_nombre', ''),
                 float(form_data.get('voltaje', 0)),
                 int(form_data.get('fases', 3)),
-                float(form_data.get('longitud', 0))
+                float(form_data.get('longitud', 0)),
+                tiempo_respaldo,
+                datos_calculados.get('fase_sel', ''),
+                f"{form_data['fases']}F + N + GND",
+                datos_calculados.get('gnd_sel', '')
             ))
             conn.commit()
             return True
         except sqlite3.IntegrityError:
-            return False
+            # Pedido duplicado - actualizar en lugar de insertar
+            try:
+                id_ups = int(form_data.get('id_ups', 0)) or None
+                id_bateria = int(form_data.get('id_bateria', 0)) if form_data.get('id_bateria') else None
+                tiempo_respaldo = float(form_data.get('tiempo_respaldo', 0)) if form_data.get('tiempo_respaldo') else None
+
+                conn.execute('''
+                    UPDATE proyectos_publicados
+                    SET fecha_publicacion = ?,
+                        id_ups = ?,
+                        id_bateria = ?,
+                        modelo_snap = ?,
+                        potencia_snap = ?,
+                        voltaje = ?,
+                        fases = ?,
+                        longitud = ?,
+                        tiempo_respaldo = ?,
+                        calibre_fases = ?,
+                        config_salida = ?,
+                        calibre_tierra = ?
+                    WHERE pedido = ?
+                ''', (
+                    datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    id_ups,
+                    id_bateria,
+                    datos_calculados.get('Nombre_del_Producto', 'Desconocido'),
+                    datos_calculados.get('Capacidad_kVA', 0),
+                    float(form_data.get('voltaje', 0)),
+                    int(form_data.get('fases', 3)),
+                    float(form_data.get('longitud', 0)),
+                    tiempo_respaldo,
+                    datos_calculados.get('fase_sel', ''),
+                    f"{form_data['fases']}F + N + GND",
+                    datos_calculados.get('gnd_sel', ''),
+                    form_data['pedido']
+                ))
+                conn.commit()
+                return True
+            except:
+                return False
         finally:
             conn.close()
             
@@ -487,11 +561,22 @@ class GestorDB:
         return [dict(row) for row in res]
     
     def obtener_proyecto_por_pedido(self, pedido):
+        """
+        Obtiene un proyecto completo con todas sus relaciones (UPS, batería, cliente).
+        Esta función es CLAVE para cargar toda la información del pedido.
+        """
         conn = self._conectar()
         cursor = conn.execute('''
-            SELECT p.*, m.id as modelo_id_real 
+            SELECT
+                p.*,
+                p.id_ups as modelo_id_real,
+                ups.Nombre_del_Producto as ups_nombre,
+                ups.Capacidad_kVA as ups_kva,
+                bat.modelo as bateria_modelo,
+                bat.capacidad_nominal_ah as bateria_ah
             FROM proyectos_publicados p
-            LEFT JOIN ups_specs m ON m.Nombre_del_Producto = p.modelo_snap
+            LEFT JOIN ups_specs ups ON ups.id = p.id_ups
+            LEFT JOIN baterias_modelos bat ON bat.id = p.id_bateria
             WHERE p.pedido = ?
         ''', (pedido,))
         row = cursor.fetchone()
