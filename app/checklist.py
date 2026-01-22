@@ -270,7 +270,7 @@ class ChecklistPDF(FPDF):
         texto_intro = (
             "Para llevar a cabo la puesta en marcha del sistema UPS de manera adecuada y conforme a los procedimientos "
             "tecnicos del fabricante, es indispensable que el sitio se haya acondicionado previamente conforme a las especificaciones "
-            "establecidas, asi como los puntos de revisión del presente Checklist denominado "Criterios de Cumplimiento para Garantias del UPS"."
+            "establecidas, asi como los puntos de revisión del presente Checklist denominado 'Criterios de Cumplimiento para Garantias del UPS'."
         )
         self.multi_cell(190, 3, texto_intro, 1)
 
