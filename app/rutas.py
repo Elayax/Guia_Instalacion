@@ -63,55 +63,79 @@ def get_tipos_ventilacion():
     tipos = db.obtener_tipos_ventilacion()
     return json.dumps(tipos)
 
-# --- DASHBOARD PRINCIPAL ---
+# --- DASHBOARD PRINCIPAL (POR PEDIDO) ---
 @main.route('/', methods=['GET', 'POST'])
 def dashboard():
+    pedido_data = None
+    estado_pedido = None
+    pedido_buscado = None
+    clientes = db.obtener_clientes_unicos()
+
     if request.method == 'POST':
         accion = request.form.get('accion')
 
-        if accion == 'crear_proyecto':
+        if accion == 'buscar_pedido':
+            # Buscar pedido específico
+            pedido_num = request.form.get('pedido_buscar', '').strip()
+            pedido_buscado = pedido_num
+
+            if pedido_num:
+                # Buscar en base de datos
+                pedido_data = db.obtener_proyecto_por_pedido(pedido_num)
+
+                if pedido_data:
+                    # Determinar el estado del pedido
+                    estado_pedido = {
+                        'tiene_ups': False,
+                        'tiene_calculos': False,
+                        'tiene_aviso': False,
+                        'modelo_ups': None
+                    }
+
+                    # Verificar si tiene UPS asignado (modelo_snap guardado)
+                    if pedido_data.get('modelo_snap'):
+                        estado_pedido['tiene_ups'] = True
+                        estado_pedido['modelo_ups'] = pedido_data['modelo_snap']
+
+                    # Verificar si tiene cálculos publicados
+                    # Si el proyecto existe en proyectos_publicados, significa que fue publicado
+                    if pedido_data.get('fecha_publicacion'):
+                        estado_pedido['tiene_calculos'] = True
+
+                    # Verificar si tiene checklist/aviso generado
+                    # Buscar archivos PDF de checklist en /static/temp
+                    temp_dir = os.path.join(os.path.dirname(__file__), 'static', 'temp')
+                    if os.path.exists(temp_dir):
+                        checklist_files = [f for f in os.listdir(temp_dir)
+                                         if f.endswith('.pdf') and 'Checklist' in f and pedido_num in f]
+                        if checklist_files:
+                            estado_pedido['tiene_aviso'] = True
+
+        elif accion == 'crear_proyecto':
             # Crear nuevo proyecto
             pedido = request.form.get('pedido')
             cliente_nombre = request.form.get('cliente_nombre')
             sucursal_nombre = request.form.get('sucursal_nombre')
 
-            # Insertar proyecto en BD (simplificado, puedes mejorarlo)
+            # Insertar proyecto en BD
             try:
-                conn = db.conn
+                conn = db._conectar()
                 cursor = conn.cursor()
                 cursor.execute('''
-                    INSERT INTO proyectos (pedido, cliente_nombre, sucursal_nombre, fecha_creacion)
+                    INSERT INTO proyectos_publicados (pedido, cliente_snap, sucursal_snap, fecha_publicacion)
                     VALUES (?, ?, ?, datetime('now'))
                 ''', (pedido, cliente_nombre, sucursal_nombre))
                 conn.commit()
+                conn.close()
                 return redirect(url_for('main.calculadora', pedido=pedido))
             except Exception as e:
                 print(f"Error al crear proyecto: {e}")
 
-    # Obtener datos para el dashboard
-    proyectos = db.obtener_proyectos()
-    clientes = db.obtener_clientes_unicos()
-    equipos_count = len(db.obtener_ups_todos())
-
-    # Contar PDFs generados (archivos en /static/temp y /static/img/proyectos)
-    pdfs_count = 0
-    temp_dir = os.path.join(os.path.dirname(__file__), 'static', 'temp')
-    if os.path.exists(temp_dir):
-        pdfs_count = len([f for f in os.listdir(temp_dir) if f.endswith('.pdf')])
-
-    # Contar proyectos publicados
-    publicados_count = len([p for p in proyectos if p.get('fecha_creacion')])
-
-    # Archivos recientes (simplificado)
-    archivos_recientes = []
-
     return render_template('dashboard.html',
-                         proyectos=proyectos,
-                         clientes=clientes,
-                         equipos_count=equipos_count,
-                         pdfs_count=pdfs_count,
-                         publicados_count=publicados_count,
-                         archivos_recientes=archivos_recientes)
+                         pedido=pedido_data,
+                         estado=estado_pedido,
+                         pedido_buscado=pedido_buscado,
+                         clientes=clientes)
 
 @main.route('/calculadora', methods=['GET', 'POST'])
 def calculadora():

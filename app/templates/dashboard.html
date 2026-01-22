@@ -289,164 +289,179 @@
     </header>
 
     <div class="container-main">
-        <!-- Estadísticas -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-folder"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ proyectos|length }}</h3>
-                    <p>Proyectos Registrados</p>
-                </div>
+        <!-- Buscador de Pedido -->
+        <div class="glass-card mb-4">
+            <div class="section-title">
+                <i class="bi bi-search"></i>
+                Buscar Pedido
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-lightning-charge"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ equipos_count }}</h3>
-                    <p>Equipos UPS en BD</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ pdfs_count }}</h3>
-                    <p>Documentos Generados</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ publicados_count }}</h3>
-                    <p>Proyectos Publicados</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Columna Izquierda: Proyectos -->
-            <div class="col-lg-8">
-                <div class="glass-card">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div class="section-title mb-0">
-                            <i class="bi bi-folder-fill"></i>
-                            Proyectos Activos
-                        </div>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
-                            <i class="bi bi-plus-circle me-2"></i>Nuevo Proyecto
+            <form method="POST" action="{{ url_for('main.dashboard') }}">
+                <input type="hidden" name="accion" value="buscar_pedido">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label class="form-label">Número de Pedido / OC</label>
+                        <input type="text" class="form-control form-control-lg" name="pedido_buscar"
+                               placeholder="Ingrese número de pedido..."
+                               value="{{ pedido_buscado }}"
+                               required>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-search me-2"></i>Buscar
                         </button>
                     </div>
+                </div>
+            </form>
 
-                    {% if proyectos %}
-                        {% for proyecto in proyectos %}
-                        <div class="project-card" onclick="window.location.href='{{ url_for('main.calculadora', pedido=proyecto.pedido) }}'">
-                            <div class="project-title">
-                                <i class="bi bi-building me-2"></i>{{ proyecto.cliente_nombre }}
-                                {% if proyecto.sucursal_nombre %}
-                                    - {{ proyecto.sucursal_nombre }}
-                                {% endif %}
-                            </div>
-                            <div class="project-meta">
-                                <span><i class="bi bi-hash me-1"></i>{{ proyecto.pedido }}</span>
-                                <span><i class="bi bi-calendar me-1"></i>{{ proyecto.fecha_creacion or 'N/A' }}</span>
-                                {% if proyecto.fases %}
-                                <span class="project-badge">{{ proyecto.fases }} Fases</span>
-                                {% endif %}
-                            </div>
-                            <div class="mt-2">
-                                <a href="{{ url_for('main.calculadora', pedido=proyecto.pedido) }}" class="btn btn-sm btn-outline-danger me-2" onclick="event.stopPropagation()">
-                                    <i class="bi bi-calculator"></i> Calcular
-                                </a>
-                                <a href="{{ url_for('main.aviso', pedido=proyecto.pedido) }}" class="btn btn-sm btn-outline-info" onclick="event.stopPropagation()">
-                                    <i class="bi bi-file-earmark-check"></i> Checklist
-                                </a>
-                            </div>
+            <div class="mt-3 text-center">
+                <span class="text-muted" style="font-size: 0.85rem;">¿No existe el pedido?</span>
+                <button class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
+                    <i class="bi bi-plus-circle me-1"></i>Crear Nuevo Pedido
+                </button>
+            </div>
+        </div>
+
+        {% if pedido %}
+        <!-- Estado del Pedido -->
+        <div class="glass-card">
+            <div class="section-title mb-4">
+                <i class="bi bi-info-circle-fill"></i>
+                Estado del Pedido: {{ pedido.pedido }}
+            </div>
+
+            <!-- Información del Proyecto -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="font-size: 0.75rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Cliente</div>
+                        <div style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">
+                            <i class="bi bi-building me-2"></i>{{ pedido.cliente_nombre or pedido.cliente_snap or 'N/A' }}
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="bi bi-inbox"></i>
-                            <h5>No hay proyectos registrados</h5>
-                            <p class="text-muted">Comienza creando tu primer proyecto</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
-                                <i class="bi bi-plus-circle me-2"></i>Crear Primer Proyecto
-                            </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                        <div style="font-size: 0.75rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Sucursal</div>
+                        <div style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">
+                            <i class="bi bi-geo-alt me-2"></i>{{ pedido.sucursal_nombre or pedido.sucursal_snap or 'N/A' }}
                         </div>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
 
-            <!-- Columna Derecha: Accesos Rápidos y Mapa -->
-            <div class="col-lg-4">
-                <!-- Accesos Rápidos -->
-                <div class="glass-card">
-                    <div class="section-title">
-                        <i class="bi bi-lightning-fill"></i>
-                        Accesos Rápidos
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="quick-action" onclick="window.location.href='{{ url_for('main.calculadora') }}'">
-                                <i class="bi bi-calculator"></i>
-                                <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">Calculadora</div>
-                            </div>
+            <!-- Indicadores de Estado -->
+            <div class="row g-3 mb-4">
+                <!-- UPS Asignado -->
+                <div class="col-md-4">
+                    <div class="stat-card" style="{% if estado.tiene_ups %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
+                        <div class="stat-icon" style="{% if estado.tiene_ups %}background: #34c759;{% endif %}">
+                            <i class="bi bi-lightning-charge-fill"></i>
                         </div>
-                        <div class="col-6">
-                            <div class="quick-action" onclick="window.location.href='{{ url_for('main.gestion') }}'">
-                                <i class="bi bi-database"></i>
-                                <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">Gestión BD</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="quick-action" onclick="window.location.href='{{ url_for('main.aviso') }}'">
-                                <i class="bi bi-clipboard-check"></i>
-                                <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">Checklist</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="quick-action" onclick="window.open('https://drive.google.com', '_blank')">
-                                <i class="bi bi-cloud-download"></i>
-                                <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">Curvas Descarga</div>
-                            </div>
+                        <div class="stat-content">
+                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_ups %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
+                            <p style="margin-bottom: 5px;">UPS Asignado</p>
+                            {% if estado.tiene_ups %}
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">{{ estado.modelo_ups }}</small>
+                            {% else %}
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">Sin equipo</small>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <!-- Archivos Recientes -->
-                <div class="glass-card mt-3">
-                    <div class="section-title">
-                        <i class="bi bi-file-earmark-pdf-fill"></i>
-                        Documentos Recientes
+                <!-- Cálculos Publicados -->
+                <div class="col-md-4">
+                    <div class="stat-card" style="{% if estado.tiene_calculos %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
+                        <div class="stat-icon" style="{% if estado.tiene_calculos %}background: #34c759;{% endif %}">
+                            <i class="bi bi-calculator-fill"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_calculos %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
+                            <p style="margin-bottom: 5px;">Cálculos Publicados</p>
+                            {% if estado.tiene_calculos %}
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">{{ pedido.fecha_publicacion or 'Fecha N/A' }}</small>
+                            {% else %}
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">No generados</small>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="list-group">
-                        {% if archivos_recientes %}
-                            {% for archivo in archivos_recientes %}
-                            <a href="{{ archivo.url }}" class="list-group-item list-group-item-action" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-main); margin-bottom: 8px; border-radius: 10px;">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="bi bi-file-pdf text-danger me-2"></i>
-                                        <span style="font-size: 0.9rem;">{{ archivo.nombre }}</span>
-                                    </div>
-                                    <small class="text-muted">{{ archivo.fecha }}</small>
-                                </div>
-                            </a>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center text-muted py-3">
-                                <i class="bi bi-file-earmark-x" style="font-size: 2rem;"></i>
-                                <p class="mb-0 mt-2" style="font-size: 0.85rem;">No hay documentos generados</p>
-                            </div>
-                        {% endif %}
+                </div>
+
+                <!-- Aviso Generado -->
+                <div class="col-md-4">
+                    <div class="stat-card" style="{% if estado.tiene_aviso %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
+                        <div class="stat-icon" style="{% if estado.tiene_aviso %}background: #34c759;{% endif %}">
+                            <i class="bi bi-file-earmark-check-fill"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_aviso %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
+                            <p style="margin-bottom: 5px;">Aviso / Checklist</p>
+                            {% if estado.tiene_aviso %}
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">Checklist generado</small>
+                            {% else %}
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">No generado</small>
+                            {% endif %}
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Acciones Directas -->
+            <div class="section-title mb-3">
+                <i class="bi bi-lightning-fill"></i>
+                Acciones para este Pedido
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a href="{{ url_for('main.calculadora', pedido=pedido.pedido) }}" class="btn btn-lg w-100"
+                       style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.2) 0%, rgba(255, 69, 58, 0.1) 100%);
+                              border: 2px solid var(--accent-red); color: var(--text-main); font-weight: 600; padding: 1.5rem;">
+                        <i class="bi bi-calculator me-2" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <div style="font-size: 1.1rem;">{% if estado.tiene_calculos %}Modificar{% else %}Iniciar{% endif %} Cálculos</div>
+                            <small style="font-size: 0.75rem; opacity: 0.7;">Ir a Calculadora</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a href="{{ url_for('main.aviso', pedido=pedido.pedido) }}" class="btn btn-lg w-100"
+                       style="background: linear-gradient(135deg, rgba(10, 132, 255, 0.2) 0%, rgba(10, 132, 255, 0.1) 100%);
+                              border: 2px solid #0a84ff; color: var(--text-main); font-weight: 600; padding: 1.5rem;">
+                        <i class="bi bi-clipboard-check me-2" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <div style="font-size: 1.1rem;">{% if estado.tiene_aviso %}Modificar{% else %}Generar{% endif %} Aviso</div>
+                            <small style="font-size: 0.75rem; opacity: 0.7;">Ir a Checklist</small>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
+        {% elif pedido_buscado %}
+        <!-- Pedido no encontrado -->
+        <div class="glass-card text-center">
+            <div style="padding: 3rem;">
+                <i class="bi bi-exclamation-triangle" style="font-size: 4rem; color: rgba(255, 159, 10, 0.5);"></i>
+                <h4 class="mt-3" style="color: var(--text-main);">Pedido no encontrado</h4>
+                <p style="color: var(--text-sec); margin-bottom: 2rem;">
+                    No se encontró ningún pedido con el número <strong>"{{ pedido_buscado }}"</strong>
+                </p>
+                <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Pedido "{{ pedido_buscado }}"
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <!-- Estado inicial -->
+        <div class="glass-card text-center">
+            <div style="padding: 3rem;">
+                <i class="bi bi-search" style="font-size: 4rem; color: rgba(255, 255, 255, 0.1);"></i>
+                <h4 class="mt-3" style="color: var(--text-main);">Busca un Pedido para Comenzar</h4>
+                <p style="color: var(--text-sec);">
+                    Ingresa el número de pedido arriba para ver su estado y acceder a las funciones
+                </p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Modal: Nuevo Proyecto -->
@@ -463,6 +478,13 @@
                     <input type="hidden" name="accion" value="crear_proyecto">
                     <div class="modal-body">
                         <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Número de Pedido / OC</label>
+                                <input type="text" class="form-control" name="pedido" id="input_pedido_modal"
+                                       placeholder="Ej: OC-2024-001"
+                                       value="{{ pedido_buscado if pedido_buscado and not pedido else '' }}"
+                                       required>
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Cliente</label>
                                 <select class="form-select" name="cliente_nombre" id="sel_cliente_modal" required>
@@ -477,10 +499,6 @@
                                 <select class="form-select" name="sucursal_nombre" id="sel_sucursal_modal">
                                     <option value="">-- Seleccione sucursal --</option>
                                 </select>
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Número de Pedido / OC</label>
-                                <input type="text" class="form-control" name="pedido" placeholder="Ej: OC-2024-001" required>
                             </div>
                         </div>
                     </div>
@@ -503,14 +521,14 @@
             const sucursalSelect = document.getElementById('sel_sucursal_modal');
 
             if (cliente) {
-                fetch(`/api/sucursales/${cliente}`)
+                fetch(`/api/sucursales/${encodeURIComponent(cliente)}`)
                     .then(response => response.json())
-                    .then(sucursales => {
+                    .then(data => {
                         sucursalSelect.innerHTML = '<option value="">-- Seleccione sucursal --</option>';
-                        sucursales.forEach(sucursal => {
+                        data.forEach(item => {
                             const option = document.createElement('option');
-                            option.value = sucursal;
-                            option.textContent = sucursal;
+                            option.value = item.sucursal;
+                            option.textContent = item.sucursal;
                             sucursalSelect.appendChild(option);
                         });
                     })
