@@ -137,9 +137,22 @@ class GestorDB:
                 sucursal_snap TEXT,
                 calibre_fases TEXT,
                 config_salida TEXT,
-                calibre_tierra TEXT
+                calibre_tierra TEXT,
+                voltaje REAL,
+                fases INTEGER,
+                longitud REAL
             )
         ''')
+
+        # Agregar columnas si no existen
+        cursor.execute("PRAGMA table_info(proyectos_publicados)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if 'voltaje' not in columns:
+            cursor.execute("ALTER TABLE proyectos_publicados ADD COLUMN voltaje REAL")
+        if 'fases' not in columns:
+            cursor.execute("ALTER TABLE proyectos_publicados ADD COLUMN fases INTEGER")
+        if 'longitud' not in columns:
+            cursor.execute("ALTER TABLE proyectos_publicados ADD COLUMN longitud REAL")
 
         # 4. TABLAS BATERIAS (NUEVO MODULO - ADAPTADO)
         cursor.execute('''
@@ -442,9 +455,10 @@ class GestorDB:
         conn = self._conectar()
         try:
             conn.execute('''
-                INSERT INTO proyectos_publicados 
-                (pedido, fecha_publicacion, modelo_snap, potencia_snap, cliente_snap, sucursal_snap, calibre_fases, config_salida, calibre_tierra)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO proyectos_publicados
+                (pedido, fecha_publicacion, modelo_snap, potencia_snap, cliente_snap, sucursal_snap,
+                 calibre_fases, config_salida, calibre_tierra, voltaje, fases, longitud)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 form_data['pedido'],
                 datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -454,12 +468,15 @@ class GestorDB:
                 form_data['sucursal_nombre'],
                 datos_calculados['fase_sel'],
                 f"{form_data['fases']}F + N + GND",
-                datos_calculados['gnd_sel']
+                datos_calculados['gnd_sel'],
+                float(form_data.get('voltaje', 0)),
+                int(form_data.get('fases', 3)),
+                float(form_data.get('longitud', 0))
             ))
             conn.commit()
             return True
         except sqlite3.IntegrityError:
-            return False 
+            return False
         finally:
             conn.close()
             

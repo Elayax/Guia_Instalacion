@@ -291,7 +291,6 @@
             <a href="{{ url_for('main.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> DASHBOARD</a>
             <a href="{{ url_for('main.calculadora') }}" class="nav-link active"><i class="bi bi-calculator me-1"></i> CALCULADORA</a>
             <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
-            <a href="{{ url_for('main.aviso') }}" class="nav-link">GENERACIÓN AVISO</a>
         </nav>
     </header>
 
@@ -308,10 +307,10 @@
             <div class="card-control">
                 <div class="control-title"><i class="bi bi-search me-2"></i> PEDIDO</div>
                 <label class="small text-muted">No. Pedido</label>
-                <div class="input-group input-group-sm">
-                    <input type="text" name="pedido" id="input_pedido" class="form-control fw-bold" value="{{ request.form.get('pedido','') }}" placeholder="OC-2024-001" required>
-                    <button type="button" id="btn_buscar" class="btn btn-warning"><i class="bi bi-search"></i></button>
-                </div>
+                <input type="text" name="pedido" id="input_pedido" class="form-control form-control-lg fw-bold mb-2" value="{{ request.form.get('pedido','') }}" placeholder="OC-2024-001" required>
+                <button type="button" id="btn_buscar" class="btn btn-primary w-100 btn-lg">
+                    <i class="bi bi-search me-2"></i>BUSCAR PEDIDO
+                </button>
             </div>
 
             <!-- EQUIPO + CONFIGURACIÓN -->
@@ -889,7 +888,7 @@
                 .then(r => r.json())
                 .then(d => {
                     if(d.pedido){
-                        // Pedido encontrado - cargar datos
+                        // Pedido encontrado - cargar TODOS los datos
                         const clienteNombre = d.cliente_nombre || d.cliente_snap || 'N/A';
                         const sucursalNombre = d.sucursal_nombre || d.sucursal_snap || 'N/A';
 
@@ -916,8 +915,30 @@
                             }
                         }
 
-                        // Notificación de éxito - más simple
-                        alert(`✅ Pedido encontrado\n${clienteNombre} - ${sucursalNombre}\n\nAhora selecciona el equipo y batería.`);
+                        // Cargar configuración guardada: voltaje, fases, longitud
+                        if(d.voltaje){
+                            const selVoltaje = document.getElementById('sel_voltaje');
+                            if(selVoltaje) selVoltaje.value = d.voltaje;
+                        }
+                        if(d.fases){
+                            const selFases = document.querySelector('select[name="fases"]');
+                            if(selFases) selFases.value = d.fases;
+                        }
+                        if(d.longitud){
+                            const inputLongitud = document.querySelector('input[name="longitud"]');
+                            if(inputLongitud) inputLongitud.value = d.longitud;
+                        }
+
+                        // Mensaje diferente si ya tiene datos guardados
+                        let mensaje = `✅ Pedido encontrado\n${clienteNombre} - ${sucursalNombre}`;
+                        if(d.modelo_snap){
+                            mensaje += `\n\n📦 UPS: ${d.modelo_snap} (${d.potencia_snap} kVA)`;
+                            mensaje += `\n⚡ Config: ${d.voltaje}V, ${d.fases}F, ${d.longitud}m`;
+                            mensaje += '\n\n✨ Puedes modificar y reimprimir la guía.';
+                        } else {
+                            mensaje += '\n\nAhora selecciona el equipo y batería.';
+                        }
+                        alert(mensaje);
                     } else {
                         alert("❌ Pedido no encontrado.\n\nCrea el pedido desde el Dashboard primero.");
                     }
@@ -929,7 +950,7 @@
                 .finally(() => {
                     // Restaurar botón
                     btnBuscar.disabled = false;
-                    btnBuscar.innerHTML = '<i class="bi bi-search"></i>';
+                    btnBuscar.innerHTML = '<i class="bi bi-search me-2"></i>BUSCAR PEDIDO';
                 });
         };
 
@@ -944,6 +965,17 @@
                     buscarPedido();
                 }
             });
+        }
+
+        // Auto-buscar si viene pedido en la URL (desde dashboard)
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoUrl = urlParams.get('pedido');
+        if(pedidoUrl && inputPedido){
+            inputPedido.value = pedidoUrl;
+            // Buscar automáticamente después de un breve delay
+            setTimeout(() => {
+                buscarPedido();
+            }, 500);
         }
     }
 

@@ -128,15 +128,12 @@ def dashboard():
                 conn.commit()
                 conn.close()
 
-                # Redirigir al aviso para que el usuario pueda generarlo primero
-                # Según el nuevo flujo: Datos Cliente → Generar Aviso → Después Cálculos
-                return redirect(url_for('main.aviso', pedido=pedido))
+                # Redirigir a calculadora para generar la guía directamente
+                return redirect(url_for('main.calculadora') + f'?pedido={pedido}')
             except Exception as e:
                 print(f"Error al crear proyecto: {e}")
-                # Si hay error (ej: pedido duplicado), buscar el proyecto existente
-                pedido_data = db.obtener_proyecto_por_pedido(pedido)
-                if pedido_data:
-                    return redirect(url_for('main.dashboard') + f'?pedido_buscar={pedido}')
+                # Si hay error (ej: pedido duplicado), mostrar el proyecto existente
+                return redirect(url_for('main.dashboard'))
 
     return render_template('dashboard.html',
                          pedido=pedido_data,
@@ -573,114 +570,3 @@ def descargar_pdf():
     prefijo = "Publicado" if es_publicar else "Preview"
     response.headers['Content-Disposition'] = f'attachment; filename={prefijo}_Memoria_{nombre_seguro}.pdf'
     return response
-# --- GENERACIÓN DE AVISO / CHECKLIST ---
-@main.route('/aviso', methods=['GET', 'POST'])
-def aviso():
-    proyectos = db.obtener_proyectos()
-    datos_proyecto = None
-    pdf_trigger = None
-
-    # Si viene pedido por query string (desde dashboard), cargar automáticamente
-    pedido_query = request.args.get('pedido')
-    if pedido_query and request.method == 'GET':
-        datos_proyecto = db.obtener_proyecto_por_pedido(pedido_query)
-
-    if request.method == 'POST':
-        accion = request.form.get('accion')
-
-        if accion == 'cargar':
-            # Cargar datos del proyecto seleccionado
-            pedido = request.form.get('pedido')
-            if pedido:
-                datos_proyecto = db.obtener_proyecto_por_pedido(pedido)
-                # También obtener datos del UPS si existe
-                if datos_proyecto:
-                    # Buscar datos adicionales del cálculo si existen
-                    try:
-                        # Aquí podrías buscar el UPS asociado si lo guardaste
-                        pass
-                    except:
-                        pass
-
-        elif accion in ['preview', 'publicar']:
-            # Generar PDF del checklist
-            datos = request.form.to_dict()
-            pedido = datos.get('pedido_seleccionado')
-
-            if pedido:
-                # Obtener datos del proyecto
-                proyecto = db.obtener_proyecto_por_pedido(pedido)
-
-                if proyecto:
-                    # Obtener datos del UPS si existen (opcional)
-                    modelo_ups = proyecto.get('modelo_snap', '')
-                    capacidad_ups = ''
-                    if proyecto.get('potencia_snap'):
-                        capacidad_ups = f"{proyecto.get('potencia_snap')} kVA"
-
-                    # Preparar datos para el checklist
-                    datos_checklist = {
-                        'cliente_nombre': proyecto.get('cliente_nombre', '') or proyecto.get('cliente_snap', ''),
-                        'sucursal_nombre': proyecto.get('sucursal_nombre', '') or proyecto.get('sucursal_snap', ''),
-                        'pedido': proyecto.get('pedido', ''),
-                        'area_frente': datos.get('area_frente', ''),
-                        'nombre_jefe': datos.get('nombre_jefe', ''),
-                        'modelo_ups': modelo_ups,
-                        'capacidad': capacidad_ups,
-                        'observaciones_conexion': datos.get('observaciones_conexion', ''),
-                        'comentarios': datos.get('comentarios', ''),
-                        'contacto_nombre': datos.get('contacto_nombre', ''),
-                        'contacto_cargo': datos.get('contacto_cargo', ''),
-                        'contacto_telefono': datos.get('contacto_telefono', ''),
-                        'contacto_email': datos.get('contacto_email', ''),
-                        'direccion_instalacion': datos.get('direccion_instalacion', ''),
-                    }
-
-                    # Manejo de imágenes
-                    imagenes = {}
-                    if 'imagen_sitio_1' in request.files:
-                        file = request.files['imagen_sitio_1']
-                        if file and file.filename:
-                            imagenes['sitio_1'] = guardar_archivo_temporal(file)
-
-                    if 'imagen_sitio_2' in request.files:
-                        file = request.files['imagen_sitio_2']
-                        if file and file.filename:
-                            imagenes['sitio_2'] = guardar_archivo_temporal(file)
-
-                    if 'imagen_sitio_3' in request.files:
-                        file = request.files['imagen_sitio_3']
-                        if file and file.filename:
-                            imagenes['sitio_3'] = guardar_archivo_temporal(file)
-
-                    # Generar PDF
-                    checklist = ChecklistPDF()
-                    pdf_bytes = checklist.generar_checklist(datos_checklist, imagenes)
-
-                    # Crear directorio temp si no existe
-                    temp_dir = os.path.join(os.path.dirname(__file__), 'static', 'temp')
-                    os.makedirs(temp_dir, exist_ok=True)
-
-                    # Guardar PDF temporalmente
-                    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', dir=temp_dir)
-                    temp_pdf.write(bytes(pdf_bytes))
-                    temp_pdf.close()
-
-                    # Nombre para descarga
-                    nombre_seguro = str(pedido).replace(" ", "_")
-                    prefijo = "Publicado" if accion == 'publicar' else "Preview"
-                    pdf_filename = f'{prefijo}_Checklist_{nombre_seguro}.pdf'
-
-                    # Activar descarga automática
-                    pdf_trigger = {
-                        'path': f'/static/temp/{os.path.basename(temp_pdf.name)}',
-                        'filename': pdf_filename
-                    }
-
-                    # Cargar datos del proyecto para mostrar el formulario
-                    datos_proyecto = proyecto
-
-    return render_template('aviso.html',
-                         proyectos=proyectos,
-                         datos_proyecto=datos_proyecto,
-                         pdf_trigger=pdf_trigger)
