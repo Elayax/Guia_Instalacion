@@ -45,12 +45,12 @@ class ReportePDF(FPDF):
         self.set_x(50) 
         self.set_font('Arial', 'B', 16)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 8, 'GUIA DE INSTALACION Y MEMORIA TECNICA', 0, 1, 'L') 
+        self.cell(0, 8, 'GUÍA DE INSTALACIÓN Y MEMORIA TÉCNICA', 0, 1, 'L') 
         
         self.set_x(50)
         self.set_font('Arial', 'B', 10)
         self.set_text_color(*COLOR_GRIS_CLARO)
-        self.cell(0, 5, 'SISTEMA DE ENERGIA ININTERRUMPIDA (UPS) - BAJA TENSION', 0, 1, 'L')
+        self.cell(0, 5, 'SISTEMA DE ENERGÍA ININTERRUMPIDA (UPS) - BAJA TENSIÓN', 0, 1, 'L')
         
         self.ln(4)
         self.set_draw_color(*COLOR_ROJO)
@@ -63,7 +63,7 @@ class ReportePDF(FPDF):
         self.set_font('Arial', 'I', 7)
         self.set_text_color(*COLOR_GRIS_CLARO)
         fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
-        texto = f"Documento generado el {fecha} | Cumplimiento NOM-001-SEDE-2012 | Pagina {self.page_no()}"
+        texto = f"Documento generado el {fecha} | Cumplimiento NOM-001-SEDE-2012 | Página {self.page_no()}"
         self.cell(0, 10, texto, 0, 0, 'C')
 
     # ==========================================================================
@@ -231,8 +231,8 @@ class ReportePDF(FPDF):
         self.set_y(y_pos_after_image)
 
         self.set_font('Arial', 'B', 24); self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 12, "MEMORIA TECNICA", 0, 1, 'C')
-        self.cell(0, 12, "DE INSTALACION UPS", 0, 1, 'C')
+        self.cell(0, 12, "MEMORIA TÉCNICA", 0, 1, 'C')
+        self.cell(0, 12, "DE INSTALACIÓN UPS", 0, 1, 'C')
         self.ln(20)
         self.set_font('Arial', '', 12); self.set_text_color(*COLOR_NEGRO)
         self.set_fill_color(245, 245, 245)
@@ -267,8 +267,8 @@ class ReportePDF(FPDF):
         self.set_text_color(*COLOR_NEGRO)
         
         intro = (
-            "Con esta documentacion, LBS le ofrece toda la informacion necesaria sobre la correcta instalacion del UPS."
-            "Antes de instalar o manejar el UPS lea esta GUIA, asi mismo recomendamos que lo guarde para una futura consulta."
+            "Con esta documentación, LBS le ofrece toda la información necesaria sobre la correcta instalación del UPS."
+            "Antes de instalar o manejar el UPS lea esta GUÍA, asimismo recomendamos que lo guarde para una futura consulta."
         )
         self.multi_cell(0, 5, intro)
         self.ln(3)
@@ -282,7 +282,7 @@ class ReportePDF(FPDF):
         # SUBSECCIÓN: IMPORTANTES NORMAS
         self._subtitulo_rojo("IMPORTANTES NORMAS DE SEGURIDAD")
         normas = [
-            "Mover el UPS en posicion vertical en su embalaje original hasta su destino final.",
+            "Mover el UPS en posición vertical en su embalaje original hasta su destino final.",
             "Para levantar los armarios, usar una carretilla elevadora o cintas apropiadas.",
             "Comprobar la suficiente capacidad del suelo y del ascensor.",
             "Comprobar la integridad del equipo cuidadosamente.",
@@ -297,18 +297,18 @@ class ReportePDF(FPDF):
         self.set_text_color(*COLOR_NEGRO)
         texto_almacen = (
             "Almacenar el UPS en un lugar seco, la temperatura debe estar entre -25 C y +30 C.\n"
-            "Si la unidad esta almacenada por un periodo mayor a 3 meses, la bateria debe recargarse periodicamente "
-            "(el tiempo depende de la temperatura del almacen)."
+            "Si la unidad está almacenada por un período mayor a 3 meses, la batería debe recargarse periódicamente "
+            "(el tiempo depende de la temperatura del almacén)."
         )
         self.multi_cell(0, 5, texto_almacen)
         self.ln(4)
 
         # SUBSECCIÓN: INSTALACION
-        self._subtitulo_rojo("INSTALACION")
+        self._subtitulo_rojo("INSTALACIÓN")
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
         textos_instalacion = [
-            "La conexion de alimentacion del UPS y salida hacia la carga, debe ser realizada como mas adelante se indica por un electricista calificado.",
+            "La conexión de alimentación del UPS y salida hacia la carga, debe ser realizada como más adelante se indica por un electricista calificado.",
             "La puesta en marcha debe ser realizada por personal adecuadamente entrenado (LBS).",
             "Si se han quitado los paneles del armario, al momento de colocarlos comprobar que todas las puestas a tierra o conexiones de tierra esten correctamente conectadas."
         ]
@@ -320,14 +320,14 @@ class ReportePDF(FPDF):
         # SUBSECCIÓN: CORRIENTES A TIERRA
         self._subtitulo_rojo("CORRIENTES DE DESCARGA A TIERRA")
         puntos_tierra = [
-            "La conexion a tierra es fundamental antes de conectar la tension de entrada.",
-            "No instalar el UPS en un ambiente excesivamente humedo o cerca de agua.",
-            "No derramar liquidos o dejar objetos extranios dentro del UPS.",
-            "La unidad debe ser colocada en un area bien ventilada; la temperatura ambiente no debe exceder los 25 C.",
-            "Un tiempo de vida optimo de la bateria solo se obtiene si la temperatura no excede 25 C.",
-            "Es importante que el aire se pueda mover libremente a traves de la unidad.",
-            "No bloquear las rejillas de ventilacion.",
-            "Evitar ubicaciones en exposicion al sol o a fuentes de calor."
+            "La conexión a tierra es fundamental antes de conectar la tensión de entrada.",
+            "No instalar el UPS en un ambiente excesivamente húmedo o cerca de agua.",
+            "No derramar líquidos o dejar objetos extraños dentro del UPS.",
+            "La unidad debe ser colocada en un área bien ventilada; la temperatura ambiente no debe exceder los 25 C.",
+            "Un tiempo de vida óptimo de la batería solo se obtiene si la temperatura no excede 25 C.",
+            "Es importante que el aire se pueda mover libremente a través de la unidad.",
+            "No bloquear las rejillas de ventilación.",
+            "Evitar ubicaciones en exposición al sol o a fuentes de calor."
         ]
         self._imprimir_lista_bullets(puntos_tierra)
         
@@ -346,11 +346,9 @@ class ReportePDF(FPDF):
         col1 = 12
         col2 = 110
 
-        # USAR CAMPOS CORRECTOS DEL FORMULARIO (igual que portada)
-        proyecto_nombre = datos.get('cliente_texto', datos.get('nombre', 'SIN NOMBRE'))
-        if datos.get('sucursal_texto'):
-            proyecto_nombre = f"{proyecto_nombre} - {datos.get('sucursal_texto')}"
-        nombre_completo = str(proyecto_nombre).upper()
+        # Separar Cliente y Sucursal para evitar amontonamiento
+        cliente_texto = str(datos.get('cliente_texto', datos.get('nombre', 'SIN NOMBRE'))).upper()
+        sucursal_texto = str(datos.get('sucursal_texto', '')).upper()
 
         # Capacidad del UPS o de los datos del formulario
         capacidad_valor = ups.get('Capacidad_kVA') if ups else datos.get('kva', 'S/D')
@@ -358,12 +356,20 @@ class ReportePDF(FPDF):
         # COLUMNA IZQUIERDA
         self.set_xy(col1, y_inicio + 3)
         self.set_text_color(*COLOR_NEGRO)
-        self.cell(50, 6, "Proyecto / Cliente:  ", 0, 0)
+        self.cell(50, 6, "Cliente:             ", 0, 0)
         self.set_font('Arial', 'B', 9)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 6, nombre_completo, 0, 1)
+        self.cell(0, 6, cliente_texto, 0, 1)
 
         self.set_xy(col1, y_inicio + 9)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(*COLOR_NEGRO)
+        self.cell(50, 6, "Sucursal / Proyecto: ", 0, 0)
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(*COLOR_ROJO)
+        self.cell(0, 6, sucursal_texto, 0, 1)
+
+        self.set_xy(col1, y_inicio + 15)
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
         self.cell(50, 6, "Capacidad UPS:       ", 0, 0)
@@ -371,10 +377,10 @@ class ReportePDF(FPDF):
         self.set_text_color(*COLOR_ROJO)
         self.cell(0, 6, f"{capacidad_valor} kVA", 0, 1)
 
-        self.set_xy(col1, y_inicio + 15)
+        self.set_xy(col1, y_inicio + 21)
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
-        self.cell(50, 6, "Voltaje Operacion:   ", 0, 0)
+        self.cell(50, 6, "Voltaje Operación:   ", 0, 0)
         self.set_font('Arial', 'B', 9)
         self.set_text_color(*COLOR_ROJO)
         self.cell(0, 6, f"{datos.get('voltaje')} VCA", 0, 1)
@@ -383,7 +389,7 @@ class ReportePDF(FPDF):
         self.set_xy(col2, y_inicio + 3)
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
-        self.cell(48, 6, "Configuracion:       ", 0, 0)
+        self.cell(48, 6, "Configuración:       ", 0, 0)
         self.set_font('Arial', 'B', 9)
         self.set_text_color(*COLOR_ROJO)
         self.cell(0, 6, f"{datos.get('fases')} Fases + N + Tierra", 0, 1)
@@ -410,7 +416,7 @@ class ReportePDF(FPDF):
         # TÍTULO MANUAL CON PUNTO 3 EXPLÍCITO
         self.set_font('Arial', 'B', 14)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 10, "3. ESPECIFICACIONES DE INSTALACION ELECTRICA", 0, 1, 'L')
+        self.cell(0, 10, "3. ESPECIFICACIONES DE INSTALACIÓN ELÉCTRICA", 0, 1, 'L')
         self.set_draw_color(200, 200, 200)
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)
@@ -418,7 +424,7 @@ class ReportePDF(FPDF):
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
         norma_txt = (
-            "Para la puesta en marcha deben existir las condiciones electricas adecuadas. "
+            "Para la puesta en marcha deben existir las condiciones eléctricas adecuadas. "
             "Utilizar conductores de cobre, aislamiento tipo THHN/THWN-2 a 75 C / 90 C. "
             "Dimensionamiento basado estrictamente en la NOM-001-SEDE-2012."
         )
@@ -428,14 +434,14 @@ class ReportePDF(FPDF):
         # 3.1 PROTECCIONES
         self.set_font('Arial', 'B', 10)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 6, "3.1 Protecciones Electricas", 0, 1)
+        self.cell(0, 6, "3.1 Protecciones Eléctricas", 0, 1)
         self.set_text_color(*COLOR_NEGRO)
         self.ln(2)
 
-        self._dibujar_encabezado_tabla(["ELEMENTO / PARAMETRO", "ESPECIFICACION TECNICA", "DETALLE NOM"])
-        self._dibujar_fila_tabla("Corriente de Disenio (+25%)", f"{res['i_diseno']} Amperes", f"Base: {res['i_nom']} A (In)", resaltar_col2=True)
+        self._dibujar_encabezado_tabla(["ELEMENTO / PARÁMETRO", "ESPECIFICACIÓN TÉCNICA", "DETALLE NOM"])
+        self._dibujar_fila_tabla("Corriente de Diseño (+25%)", f"{res['i_diseno']} Amperes", f"Base: {res['i_nom']} A (In)", resaltar_col2=True)
         polos = datos.get('fases')
-        self._dibujar_fila_tabla("Proteccion Principal (Breaker)", f"{res['breaker_sel']} Amperes", f"Termomagnetico {polos} Polos", resaltar_col2=True)
+        self._dibujar_fila_tabla("Protección Principal (Breaker)", f"{res['breaker_sel']} Amperes", f"Termomagnético {polos} Polos", resaltar_col2=True)
         self.ln(5)
 
         # 3.2 CABLEADO
@@ -448,34 +454,34 @@ class ReportePDF(FPDF):
         self._dibujar_encabezado_tabla(["CONDUCTOR", "CALIBRE SUGERIDO", "TIPO MATERIAL"])
         self._dibujar_fila_tabla("Fases (L1, L2, L3)", f"{res['fase_sel']} AWG/kcmil", "Cobre THHN/THWN-2", resaltar_col2=True)
         self._dibujar_fila_tabla("Neutro (N)", f"{res['fase_sel']} AWG/kcmil", "Cobre (No reducir)", resaltar_col2=True)
-        self._dibujar_fila_tabla("Tierra Fisica (GND/PE)", f"{res['gnd_sel']} AWG", "Cobre Desnudo / Verde", resaltar_col2=True)
+        self._dibujar_fila_tabla("Tierra Física (GND/PE)", f"{res['gnd_sel']} AWG", "Cobre Desnudo / Verde", resaltar_col2=True)
         self.ln(5)
 
         # 3.3 ANÁLISIS DE INGENIERÍA
         self.set_font('Arial', 'B', 10)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 6, "3.3 Analisis de Ingenieria y Validacion", 0, 1)
+        self.cell(0, 6, "3.3 Análisis de Ingeniería y Validación", 0, 1)
         self.set_text_color(*COLOR_NEGRO)
         self.ln(2)
 
         # Análisis de Caída de Tensión
         dv_pct = res.get('dv_pct', 0)
         self.set_font('Arial', 'B', 9)
-        self.cell(0, 5, "  A) Caida de Tension:", 0, 1)
+        self.cell(0, 5, "  A) Caída de Tensión:", 0, 1)
         self.set_font('Arial', '', 9)
         self.set_x(self.l_margin + 5)
 
         # Texto con variable resaltada - ARREGLADO PARA NO IRSE A LA DERECHA
         self.set_font('Arial', '', 9)
-        self.multi_cell(0, 5, f"El calculo arroja una caida de tension de {dv_pct}%.")
+        self.multi_cell(0, 5, f"El cálculo arroja una caída de tensión de {dv_pct}%.")
 
         self.set_x(self.l_margin + 5)
         if dv_pct <= 3.0:
             self.set_text_color(*COLOR_VERDE)
-            self.multi_cell(0, 5, "Este valor es OPTIMO y se encuentra dentro de los limites recomendados por la norma (<3%), asegurando que el equipo y la carga operaran con un voltaje adecuado.")
+            self.multi_cell(0, 5, "Este valor es ÓPTIMO y se encuentra dentro de los límites recomendados por la norma (<3%), asegurando que el equipo y la carga operarán con un voltaje adecuado.")
         else:
             self.set_text_color(*COLOR_ALERTA)
-            self.multi_cell(0, 5, "ALERTA: Este valor excede el limite recomendado por la norma (>3%). Se recomienda utilizar un calibre de conductor superior para mitigar riesgos de sobrecalentamiento y asegurar el correcto funcionamiento de la carga.")
+            self.multi_cell(0, 5, "ALERTA: Este valor excede el límite recomendado por la norma (>3%). Se recomienda utilizar un calibre de conductor superior para mitigar riesgos de sobrecalentamiento y asegurar el correcto funcionamiento de la carga.")
         self.set_text_color(*COLOR_NEGRO)
         self.ln(3)
 
@@ -497,11 +503,11 @@ class ReportePDF(FPDF):
         self.set_x(self.l_margin + 5)
         if i_real > i_diseno:
             self.set_text_color(*COLOR_VERDE)
-            texto_suficiente = f"Esta capacidad es SUFICIENTE para la corriente de disenio de {i_diseno} A, garantizando una operacion segura y sin sobrecalentamiento del cableado."
+            texto_suficiente = f"Esta capacidad es SUFICIENTE para la corriente de diseño de {i_diseno} A, garantizando una operación segura y sin sobrecalentamiento del cableado."
             self.multi_cell(0, 5, texto_suficiente)
         else:
             self.set_text_color(*COLOR_ALERTA)
-            texto_alerta = f"ALERTA: La capacidad del conductor ({i_real} A) es MENOR a la corriente de disenio ({i_diseno} A). Se requiere un conductor de mayor calibre para cumplir con la norma y evitar fallas criticas."
+            texto_alerta = f"ALERTA: La capacidad del conductor ({i_real} A) es MENOR a la corriente de diseño ({i_diseno} A). Se requiere un conductor de mayor calibre para cumplir con la norma y evitar fallas críticas."
             self.multi_cell(0, 5, texto_alerta)
         self.set_text_color(*COLOR_NEGRO)
         self.ln(3)
@@ -518,27 +524,27 @@ class ReportePDF(FPDF):
     # SECCIÓN BATERÍAS
     # ==========================================================================
     def _seccion_baterias(self, bateria, res):
-        self._titulo_seccion("BANCO DE BATERIAS")
+        self._titulo_seccion("BANCO DE BATERÍAS")
         
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
         
         if not res.get('baterias_total'):
-            self.multi_cell(0, 5, "No se realizaron calculos para el banco de baterias.")
+            self.multi_cell(0, 5, "No se realizaron cálculos para el banco de baterías.")
             return
             
         self.ln(5)
-        self._subtitulo_rojo("BATERIA SELECCIONADA")
+        self._subtitulo_rojo("BATERÍA SELECCIONADA")
         self._dibujar_encabezado_tabla(["MODELO / FABRICANTE", "VOLTAJE NOMINAL", "CAPACIDAD"])
         self._dibujar_fila_tabla(f"{bateria.get('modelo', 'S/D')} / {bateria.get('fabricante', 'S/D')}", f"{bateria.get('voltaje_nominal', 'S/D')} V", f"{bateria.get('capacidad_ah', 'S/D')} Ah", resaltar_col2=True)
 
         self.ln(5)
 
-        self._subtitulo_rojo("CONFIGURACION CALCULADA")
-        self._dibujar_encabezado_tabla(["PARAMETRO", "VALOR", "DESCRIPCION"])
+        self._subtitulo_rojo("CONFIGURACIÓN CALCULADA")
+        self._dibujar_encabezado_tabla(["PARÁMETRO", "VALOR", "DESCRIPCIÓN"])
         self._dibujar_fila_tabla("Tiempo de Respaldo Calculado", f"{res.get('autonomia_calculada_min', 'S/D')} min", f"Objetivo: {res.get('autonomia_deseada_min', 'S/D')} min", resaltar_col2=True)
-        self._dibujar_fila_tabla("Total de Baterias", f"{res.get('baterias_total', 'S/D')} pzas", f"{res.get('numero_strings', 'S/D')} arreglo(s) en paralelo", resaltar_col2=True)
-        self._dibujar_fila_tabla("Baterias por Arreglo", f"{res.get('baterias_por_string', 'S/D')} pzas", "En serie para alcanzar el voltaje DC del UPS", resaltar_col2=True)
+        self._dibujar_fila_tabla("Total de Baterías", f"{res.get('baterias_total', 'S/D')} pzas", f"{res.get('numero_strings', 'S/D')} arreglo(s) en paralelo", resaltar_col2=True)
+        self._dibujar_fila_tabla("Baterías por Arreglo", f"{res.get('baterias_por_string', 'S/D')} pzas", "En serie para alcanzar el voltaje DC del UPS", resaltar_col2=True)
 
         self.ln(5)
 
@@ -551,10 +557,10 @@ class ReportePDF(FPDF):
     # SECCIÓN NOTAS DE INSTALACION
     # ==========================================================================
     def _seccion_notas_instalacion(self, ups=None):
-        self._titulo_seccion("NOTAS IMPORTANTES DE INSTALACION")
+        self._titulo_seccion("NOTAS IMPORTANTES DE INSTALACIÓN")
         
         self.set_font('Arial', '', 9)
-        self.multi_cell(0, 5, "Nota: Tenga en cuenta que, para facilitar la operacion y el mantenimiento, el espacio en la parte delantera y trasera del gabinete debe dejarse al menos 800 mm y 800 mm respectivamente al instalar el gabinete.")
+        self.multi_cell(0, 5, "Nota: Tenga en cuenta que, para facilitar la operación y el mantenimiento, el espacio en la parte delantera y trasera del gabinete debe dejarse al menos 800 mm y 800 mm respectivamente al instalar el gabinete.")
         self.ln(5)
 
         self.set_font('Arial', 'B', 10)
@@ -593,14 +599,14 @@ class ReportePDF(FPDF):
     # HOJA 4: DIAGRAMA
     # ==========================================================================
     def _hoja_4_diagrama(self, ups=None):
-        self._titulo_seccion("DIAGRAMA DE CONEXION SUGERIDO")
+        self._titulo_seccion("DIAGRAMA DE CONEXIÓN SUGERIDO")
 
         # DESCRIPCIÓN GENERAL
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
         descripcion = (
-            "Los diagramas siguientes muestran la configuracion electrica recomendada para la instalacion del sistema UPS, "
-            "incluyendo el diagrama unifilar de corriente alterna (AC) y el esquema de conexion del banco de baterias (DC)."
+            "Los diagramas siguientes muestran la configuración eléctrica recomendada para la instalación del sistema UPS, "
+            "incluyendo el diagrama unifilar de corriente alterna (AC) y el esquema de conexión del banco de baterías (DC)."
         )
         self.multi_cell(0, 5, descripcion)
         self.ln(5)
@@ -651,16 +657,16 @@ class ReportePDF(FPDF):
         # Battery Connection Diagram (usar imagen temporal si está disponible)
         self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', 'B', 10)
-        self.cell(0, 8, "4.2 Diagrama de Conexion de Baterias DC:", 0, 1)
+        self.cell(0, 8, "4.2 Diagrama de Conexión de Baterías DC:", 0, 1)
 
         # Descripción del diagrama de baterías
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_GRIS)
-        self.multi_cell(0, 4, "Muestra la configuracion del banco de baterias en serie/paralelo, incluyendo el interruptor de proteccion DC y las conexiones al UPS.")
+        self.multi_cell(0, 4, "Muestra la configuración del banco de baterías en serie/paralelo, incluyendo el interruptor de protección DC y las conexiones al UPS.")
         self.ln(3)
 
         self.set_text_color(*COLOR_NEGRO)
-        self.multi_cell(0, 5, "En el siguiente diagrama se muestra la manera recomendada de conexion de baterias en serie asi como la conexion del interruptor de DC.")
+        self.multi_cell(0, 5, "En el siguiente diagrama se muestra la manera recomendada de conexión de baterías en serie así como la conexión del interruptor de DC.")
         self.ln(3)
 
         draw_placeholder = True
@@ -705,7 +711,7 @@ class ReportePDF(FPDF):
             self.set_xy(45, y + 35)
             self.set_font('Arial', 'B', 12)
             self.set_text_color(150, 150, 150)
-            self.cell(120, 10, "[ IMAGEN CONEXION BATERIAS ]", 0, 0, 'C')
+            self.cell(120, 10, "[ IMAGEN CONEXIÓN BATERÍAS ]", 0, 0, 'C')
             self.set_text_color(*COLOR_NEGRO)
 
     def _seccion_fotografia(self, titulo, imagen_url=None):
@@ -717,21 +723,21 @@ class ReportePDF(FPDF):
 
         if "DISPOSICION" in titulo.upper():
             descripcion = (
-                "La siguiente imagen muestra la distribucion fisica recomendada de los equipos en el sitio de instalacion, "
-                "incluyendo el UPS, banco de baterias, y espacios de ventilacion requeridos."
+                "La siguiente imagen muestra la distribución física recomendada de los equipos en el sitio de instalación, "
+                "incluyendo el UPS, banco de baterías, y espacios de ventilación requeridos."
             )
         elif "CONEXION" in titulo.upper() and "BATERIA" in titulo.upper():
             descripcion = (
-                "Fotografia de referencia que ilustra la conexion fisica del banco de baterias al sistema UPS, "
+                "Fotografía de referencia que ilustra la conexión física del banco de baterías al sistema UPS, "
                 "mostrando terminales, cableado DC y polaridad correcta."
             )
         elif "VENTILACION" in titulo.upper():
             descripcion = (
-                "Imagen de referencia del sistema de ventilacion recomendado para mantener la temperatura operativa "
-                "del equipo dentro de los parametros especificados por el fabricante."
+                "Imagen de referencia del sistema de ventilación recomendado para mantener la temperatura operativa "
+                "del equipo dentro de los parámetros especificados por el fabricante."
             )
         else:
-            descripcion = "Imagen de referencia para la instalacion del sistema."
+            descripcion = "Imagen de referencia para la instalación del sistema."
 
         self.multi_cell(0, 4, descripcion)
         self.ln(5)
@@ -783,7 +789,7 @@ class ReportePDF(FPDF):
             self.set_text_color(*COLOR_NEGRO)
 
     def _seccion_tipo_ventilacion(self, tipo_ventilacion=None, tipo_ventilacion_data=None):
-        self._titulo_seccion("TIPO DE VENTILACION DEL SISTEMA")
+        self._titulo_seccion("TIPO DE VENTILACIÓN DEL SISTEMA")
 
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
@@ -791,10 +797,10 @@ class ReportePDF(FPDF):
         if tipo_ventilacion:
             # INTRODUCCIÓN CON TEXTO NEGRO
             intro_texto = (
-                "El sistema de ventilacion es un componente critico para garantizar el funcionamiento "
-                "optimo y la vida util del equipo UPS. Una ventilacion adecuada previene el sobrecalentamiento, "
+                "El sistema de ventilación es un componente crítico para garantizar el funcionamiento "
+                "óptimo y la vida útil del equipo UPS. Una ventilación adecuada previene el sobrecalentamiento, "
                 "reduce el desgaste de componentes internos y asegura que el equipo opere dentro de los "
-                "parametros especificados por el fabricante."
+                "parámetros especificados por el fabricante."
             )
             self.multi_cell(0, 5, intro_texto)
             self.ln(5)
@@ -807,7 +813,7 @@ class ReportePDF(FPDF):
             self.set_xy(50, y_pos + 8)
             self.set_font('Arial', 'B', 10)
             self.set_text_color(*COLOR_NEGRO)
-            self.cell(0, 6, "Sistema de Ventilacion Especificado:", 0, 1)
+            self.cell(0, 6, "Sistema de Ventilación Especificado:", 0, 1)
 
             self.set_xy(50, y_pos + 16)
             self.set_font('Arial', 'B', 13)
@@ -860,11 +866,11 @@ class ReportePDF(FPDF):
             self.ln(2)
 
             consideraciones = [
-                "Mantener las rejillas de ventilacion libres de obstrucciones en todo momento.",
-                "Respetar las distancias minimas especificadas (minimo 800mm frontal y posterior).",
-                "Verificar que la temperatura ambiente no exceda los 25 grados C para vida util optima de baterias.",
-                "Evitar la exposicion directa a fuentes de calor, luz solar o ambientes humedos.",
-                "Realizar inspecciones periodicas para asegurar el flujo de aire adecuado."
+                "Mantener las rejillas de ventilación libres de obstrucciones en todo momento.",
+                "Respetar las distancias mínimas especificadas (mínimo 800mm frontal y posterior).",
+                "Verificar que la temperatura ambiente no exceda los 25 grados C para vida útil óptima de baterías.",
+                "Evitar la exposición directa a fuentes de calor, luz solar o ambientes húmedos.",
+                "Realizar inspecciones periódicas para asegurar el flujo de aire adecuado."
             ]
 
             self.set_font('Arial', '', 9)
@@ -875,7 +881,7 @@ class ReportePDF(FPDF):
             self.ln(5)
             self.set_text_color(*COLOR_GRIS_CLARO)
             self.set_font('Arial', 'I', 10)
-            self.multi_cell(0, 5, "No se ha especificado el tipo de ventilacion para este equipo.")
+            self.multi_cell(0, 5, "No se ha especificado el tipo de ventilación para este equipo.")
             self.set_text_color(*COLOR_NEGRO)
 
     def _marca_agua_preview(self):
