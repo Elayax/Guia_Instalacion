@@ -63,7 +63,7 @@ class ReportePDF(FPDF):
         self.set_font('Arial', 'I', 7)
         self.set_text_color(*COLOR_GRIS_CLARO)
         fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
-        texto = f"Documento generado el {fecha} | Cumplimiento NOM-001-SEDE-2012 | Página {self.page_no()}"
+        texto = f"Página {self.page_no()}"
         self.cell(0, 10, texto, 0, 0, 'C')
 
     # ==========================================================================
@@ -148,7 +148,7 @@ class ReportePDF(FPDF):
             self.set_xy(10, 100)
             self.cell(0, 10, "VISTA PREVIA - BORRADOR", 0, 0, 'C')
             self.set_xy(10, 120)
-            self.cell(0, 10, "NO VALIDO PARA INSTALACION", 0, 0, 'C')
+            self.cell(0, 10, "NO VALIDO PARA INSTALACIÓN", 0, 0, 'C')
 
             # Restauramos color normal
             self.set_text_color(*COLOR_NEGRO)
@@ -172,7 +172,7 @@ class ReportePDF(FPDF):
 
             self.add_page()
             if not es_publicado: self._marca_agua_preview()
-            self._seccion_fotografia("CONEXION DE BATERIAS", ups.get('imagen_baterias_url'))
+            self._seccion_fotografia("CONEXIÓN DE BATERÍAS", ups.get('imagen_baterias_url'))
 
         # Notas de Instalación
         self.add_page()
@@ -192,7 +192,7 @@ class ReportePDF(FPDF):
         # Sección de Disposición de los Equipos
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
-        self._seccion_fotografia("DISPOSICION DE LOS EQUIPOS", ups.get('imagen_layout_url'))
+        self._seccion_fotografia("DISPOSICIÓN DE LOS EQUIPOS", ups.get('imagen_layout_url'))
 
         return self.output()
 
@@ -286,7 +286,7 @@ class ReportePDF(FPDF):
             "Para levantar los armarios, usar una carretilla elevadora o cintas apropiadas.",
             "Comprobar la suficiente capacidad del suelo y del ascensor.",
             "Comprobar la integridad del equipo cuidadosamente.",
-            "Si observa algun daño, no instalar o arrancar el UPS y contactar con el Centro de Servicio mas cercano inmediatamente."
+            "Si observa algún daño, no instalar o arrancar el UPS y contactar con el Centro de Servicio más cercano inmediatamente."
         ]
         self._imprimir_lista_bullets(normas)
         self.ln(4)
@@ -308,8 +308,8 @@ class ReportePDF(FPDF):
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
         textos_instalacion = [
-            "La conexión de alimentación del UPS y salida hacia la carga, debe ser realizada como más adelante se indica por un electricista calificado.",
-            "La puesta en marcha debe ser realizada por personal adecuadamente entrenado (LBS).",
+            "La conexión de alimentación del UPS y salida hacia la carga, debe ser realizada como más adelante se indica por un técnico electricista calificado.",
+            "La puesta en marcha debe ser realizada por personal adecuadamente entrenado por LBS.",
             "Si se han quitado los paneles del armario, al momento de colocarlos comprobar que todas las puestas a tierra o conexiones de tierra esten correctamente conectadas."
         ]
         for t in textos_instalacion:
@@ -321,13 +321,13 @@ class ReportePDF(FPDF):
         self._subtitulo_rojo("CORRIENTES DE DESCARGA A TIERRA")
         puntos_tierra = [
             "La conexión a tierra es fundamental antes de conectar la tensión de entrada.",
-            "No instalar el UPS en un ambiente excesivamente húmedo o cerca de agua.",
+            "No instalar el UPS en un ambiente húmedo o cerca de agua.",
             "No derramar líquidos o dejar objetos extraños dentro del UPS.",
-            "La unidad debe ser colocada en un área bien ventilada; la temperatura ambiente no debe exceder los 25 C.",
-            "Un tiempo de vida óptimo de la batería solo se obtiene si la temperatura no excede 25 C.",
+            "La unidad debe ser colocada en un área bien ventilada; la temperatura ambiente no debe exceder los 25 °C.",
+            "Un tiempo de vida óptimo de la batería solo se obtiene si la temperatura no excede 25 °C.",
             "Es importante que el aire se pueda mover libremente a través de la unidad.",
             "No bloquear las rejillas de ventilación.",
-            "Evitar ubicaciones en exposición al sol o a fuentes de calor."
+            "Evitar ubicaciones en exposición al sol y fuentes de calor."
         ]
         self._imprimir_lista_bullets(puntos_tierra)
         
@@ -335,7 +335,7 @@ class ReportePDF(FPDF):
     # HOJA 2: DATOS DEL SITIO
     # ==========================================================================
     def _hoja_2_datos_sitio(self, datos, ups=None):
-        self._titulo_seccion("DATOS DEL SITIO DE INSTALACION")
+        self._titulo_seccion("DATOS DEL SITIO DE INSTALACIÓN")
 
         self.set_fill_color(*COLOR_FONDO)
         self.set_font('Arial', '', 9)
@@ -380,7 +380,7 @@ class ReportePDF(FPDF):
         self.set_xy(col1, y_inicio + 21)
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_NEGRO)
-        self.cell(50, 6, "Voltaje Operación:   ", 0, 0)
+        self.cell(50, 6, "Voltaje de Operación:   ", 0, 0)
         self.set_font('Arial', 'B', 9)
         self.set_text_color(*COLOR_ROJO)
         self.cell(0, 6, f"{datos.get('voltaje')} VCA", 0, 1)
@@ -425,7 +425,7 @@ class ReportePDF(FPDF):
         self.set_text_color(*COLOR_NEGRO)
         norma_txt = (
             "Para la puesta en marcha deben existir las condiciones eléctricas adecuadas. "
-            "Utilizar conductores de cobre, aislamiento tipo THHN/THWN-2 a 75 C / 90 C. "
+            "Utilizar conductores de cobre, aislamiento tipo THHN/THWN-2 a 75 °C / 90 °C. "
             "Dimensionamiento basado estrictamente en la NOM-001-SEDE-2012."
         )
         self.multi_cell(0, 5, norma_txt)
@@ -557,8 +557,9 @@ class ReportePDF(FPDF):
     # SECCIÓN NOTAS DE INSTALACION
     # ==========================================================================
     def _seccion_notas_instalacion(self, ups=None):
-        self._titulo_seccion("NOTAS IMPORTANTES DE INSTALACIÓN")
+        self._titulo_seccion("DISPOSICIÓN Y NOTAS DEL ESPACIO DE INSTALACIÓN")
         
+        self.set_text_color(*COLOR_NEGRO)
         self.set_font('Arial', '', 9)
         self.multi_cell(0, 5, "Nota: Tenga en cuenta que, para facilitar la operación y el mantenimiento, el espacio en la parte delantera y trasera del gabinete debe dejarse al menos 800 mm y 800 mm respectivamente al instalar el gabinete.")
         self.ln(5)
@@ -583,7 +584,7 @@ class ReportePDF(FPDF):
                         except:
                             pass
                 except Exception as e:
-                    print(f"Error cargando imagen de instalacion: {e}")
+                    print(f"Error cargando imagen de instalación: {e}")
         
         if draw_placeholder:
             y = self.get_y()
@@ -618,7 +619,7 @@ class ReportePDF(FPDF):
         # Descripción del diagrama unifilar
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_GRIS)
-        self.multi_cell(0, 4, "Representa la arquitectura electrica de alimentacion AC del UPS, mostrando protecciones, conductores y conexiones principales.")
+        self.multi_cell(0, 4, "Representa la arquitectura eléctrica de alimentación AC del UPS, mostrando protecciones, conductores y conexiones principales.")
         self.ln(3)
         self.set_text_color(*COLOR_NEGRO)
 
@@ -721,17 +722,17 @@ class ReportePDF(FPDF):
         self.set_font('Arial', '', 9)
         self.set_text_color(*COLOR_GRIS)
 
-        if "DISPOSICION" in titulo.upper():
+        if "DISPOSICIÓN" in titulo.upper():
             descripcion = (
                 "La siguiente imagen muestra la distribución física recomendada de los equipos en el sitio de instalación, "
                 "incluyendo el UPS, banco de baterías, y espacios de ventilación requeridos."
             )
-        elif "CONEXION" in titulo.upper() and "BATERIA" in titulo.upper():
+        elif "CONEXIÓN" in titulo.upper() and "BATERÍA" in titulo.upper():
             descripcion = (
                 "Fotografía de referencia que ilustra la conexión física del banco de baterías al sistema UPS, "
                 "mostrando terminales, cableado DC y polaridad correcta."
             )
-        elif "VENTILACION" in titulo.upper():
+        elif "VENTILACIÓN" in titulo.upper():
             descripcion = (
                 "Imagen de referencia del sistema de ventilación recomendado para mantener la temperatura operativa "
                 "del equipo dentro de los parámetros especificados por el fabricante."
@@ -746,7 +747,7 @@ class ReportePDF(FPDF):
         draw_placeholder = True
 
         # Si el título es "DISPOSICION DE LOS EQUIPOS", usar imagen temporal si existe - REDIMENSIONADA
-        if "DISPOSICION" in titulo.upper() and self.imagenes_temp.get('layout_equipos'):
+        if "DISPOSICIÓN" in titulo.upper() and self.imagenes_temp.get('layout_equipos'):
             try:
                 img_procesada = self._preparar_imagen(self.imagenes_temp['layout_equipos'], ancho_mm=120)
                 self.image(img_procesada, x=45, w=120)
@@ -776,7 +777,7 @@ class ReportePDF(FPDF):
                         except:
                             pass
                 except Exception as e:
-                    print(f"Error cargando imagen de seccion '{titulo}': {e}")
+                    print(f"Error cargando imagen de sección '{titulo}': {e}")
 
         if draw_placeholder:
             y = self.get_y()
@@ -785,7 +786,7 @@ class ReportePDF(FPDF):
             self.set_xy(45, y + 35)
             self.set_font('Arial', 'B', 12)
             self.set_text_color(150, 150, 150)
-            self.cell(120, 10, f"[ FOTOGRAFIA: {titulo.upper()} ]", 0, 0, 'C')
+            self.cell(120, 10, f"[ FOTOGRAFÍA: {titulo.upper()} ]", 0, 0, 'C')
             self.set_text_color(*COLOR_NEGRO)
 
     def _seccion_tipo_ventilacion(self, tipo_ventilacion=None, tipo_ventilacion_data=None):
@@ -853,7 +854,7 @@ class ReportePDF(FPDF):
                             except:
                                 pass
                     except Exception as e:
-                        print(f"Error cargando imagen de ventilacion: {e}")
+                        print(f"Error cargando imagen de ventilación: {e}")
 
             if draw_placeholder:
                 self.ln(3)
@@ -868,7 +869,7 @@ class ReportePDF(FPDF):
             consideraciones = [
                 "Mantener las rejillas de ventilación libres de obstrucciones en todo momento.",
                 "Respetar las distancias mínimas especificadas (mínimo 800mm frontal y posterior).",
-                "Verificar que la temperatura ambiente no exceda los 25 grados C para vida útil óptima de baterías.",
+                "Verificar que la temperatura ambiente no exceda los 25 °C para vida útil óptima de baterías.",
                 "Evitar la exposición directa a fuentes de calor, luz solar o ambientes húmedos.",
                 "Realizar inspecciones periódicas para asegurar el flujo de aire adecuado."
             ]
