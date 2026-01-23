@@ -152,7 +152,11 @@ class GestorDB:
                 -- Resultados de cálculos
                 calibre_fases TEXT,
                 config_salida TEXT,
-                calibre_tierra TEXT
+                calibre_tierra TEXT,
+
+                -- Rutas de documentos generados
+                pdf_guia_url TEXT,
+                pdf_checklist_url TEXT
             )
         ''')
 
@@ -167,7 +171,9 @@ class GestorDB:
             'tiempo_respaldo': 'REAL',
             'id_ups': 'INTEGER',
             'id_bateria': 'INTEGER',
-            'id_cliente': 'INTEGER'
+            'id_cliente': 'INTEGER',
+            'pdf_guia_url': 'TEXT',
+            'pdf_checklist_url': 'TEXT'
         }
 
         for col, tipo in columnas_nuevas.items():
@@ -1060,5 +1066,31 @@ class GestorDB:
                 row = conn.execute("SELECT id FROM ups_specs WHERE Nombre_del_Producto = ?",
                                   (nombre_modelo,)).fetchone()
             return row is not None
+        finally:
+            conn.close()
+
+    def actualizar_pdf_guia(self, pedido, pdf_url):
+        """Actualiza la ruta del PDF de guía para un pedido"""
+        conn = self._conectar()
+        try:
+            conn.execute("UPDATE proyectos_publicados SET pdf_guia_url = ? WHERE pedido = ?", (pdf_url, pedido))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando PDF guía: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def actualizar_pdf_checklist(self, pedido, pdf_url):
+        """Actualiza la ruta del PDF de checklist para un pedido"""
+        conn = self._conectar()
+        try:
+            conn.execute("UPDATE proyectos_publicados SET pdf_checklist_url = ? WHERE pedido = ?", (pdf_url, pedido))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando PDF checklist: {e}")
+            return False
         finally:
             conn.close()
