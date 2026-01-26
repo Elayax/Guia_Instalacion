@@ -137,7 +137,7 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
             <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">GENERAR <span style="color:var(--accent-red)">CHECKLIST</span></span>
         </div>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-light">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-sm btn-outline-light">
             <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
         </a>
     </header>
@@ -172,7 +172,7 @@
         </div>
 
         <!-- Formulario de Checklist -->
-        <form method="POST" action="{{ url_for('main.generar_checklist', pedido=pedido) }}">
+        <form method="POST" action="{{ url_for('documents.generar_checklist', pedido=pedido) }}">
             <div class="glass-card">
                 <div class="section-title">
                     <i class="bi bi-clipboard-check"></i>
@@ -246,7 +246,7 @@
             <!-- Botones -->
             <div class="glass-card">
                 <div class="d-flex gap-3 justify-content-end">
-                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">
                         <i class="bi bi-x-circle me-2"></i>Cancelar
                     </a>
                     <button type="submit" class="btn btn-primary btn-lg">

@@ -1,296 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Ingeniería UPS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/calculator.css') }}">
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-            --accent-red: #ff453a;
-            --accent-red-dim: #cf2e26;
-            --text-main: #f5f5f7;
-            --text-sec: #a1a1a6;
-            --bg-body: #1c1c1e;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(60, 20, 20, 0.15) 0%, transparent 40%);
-            background-attachment: fixed;
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            min-height: 100vh;
-        }
-
-        /* Header Glass */
-        .app-header {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-links {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 4px;
-            border-radius: 100px;
-            border: 1px solid var(--glass-border);
-            display: flex;
-            gap: 2px;
-        }
-
-        .nav-link {
-            color: var(--text-sec) !important;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            padding: 0.4rem 1.2rem;
-            border-radius: 20px;
-        }
-        .nav-link:hover {
-            color: var(--text-main) !important;
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .nav-link.active {
-            color: var(--text-main) !important;
-            background: rgba(60, 60, 60, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        /* Layout Grid */
-        .top-controls {
-            display: flex;
-            width: 100%;
-            gap: 15px;
-            padding: 20px;
-            overflow-x: auto;
-        }
-
-        /* Glass Cards */
-        .card-control {
-            flex: 1;
-            min-width: 240px;
-            background: rgba(30, 30, 30, 0.4);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 25px;
-            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        .card-control:hover {
-            border-color: var(--accent-red);
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(255, 69, 58, 0.15);
-            background: rgba(40, 40, 40, 0.6);
-        }
-
-        .control-title {
-            color: var(--accent-red);
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            opacity: 0.9;
-        }
-
-        /* Inputs Modernos */
-        .form-select, .form-control {
-            background-color: rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid var(--glass-border) !important;
-            color: var(--text-main) !important;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            padding: 10px 12px;
-            transition: all 0.2s;
-        }
-        .form-select:focus, .form-control:focus {
-            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15) !important;
-            border-color: var(--accent-red) !important;
-            background-color: rgba(0, 0, 0, 0.5) !important;
-        }
-        .form-control::placeholder { color: rgba(255,255,255,0.2); }
-        .form-control:disabled, .form-select:disabled { opacity: 0.5; }
-
-        /* Botones */
-        .btn {
-            border-radius: 12px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-            border: none;
-            padding: 10px 20px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dim));
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2);
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #ff5e55, #d63a30);
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
-        }
-        .btn-dark {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-main);
-            border: 1px solid var(--glass-border);
-        }
-        .btn-dark:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-        .btn-warning {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-main);
-            border: 1px solid var(--glass-border);
-        }
-        .btn-warning:hover {
-            background: var(--text-main);
-            color: black;
-        }
-
-        /* Matriz de Resultados */
-        .tech-matrix {
-            background: rgba(20, 20, 20, 0.7);
-            backdrop-filter: blur(30px);
-            border-radius: 30px;
-            padding: 25px;
-            border: 1px solid var(--glass-border);
-            margin: 20px auto 50px auto;
-            max-width: 1400px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-
-        .recap-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px;
-            margin-bottom: 40px;
-        }
-        .recap-item {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 15px;
-            border-radius: 16px;
-            border-left: 2px solid var(--accent-red);
-        }
-        .recap-label { font-size: 0.7rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .recap-value { font-size: 1rem; font-weight: 600; color: var(--text-main); }
-
-        .data-grid.redesigned {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-        }
-        
-        .data-cell {
-            background: rgba(40, 40, 40, 0.3);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 15px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 100px;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        .data-cell::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-        }
-        .data-cell.active {
-            background: rgba(255, 59, 48, 0.03);
-            border-color: rgba(255, 59, 48, 0.2);
-        }
-        .data-cell:hover {
-            background: rgba(255, 69, 58, 0.08);
-            border-color: var(--accent-red);
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 10px 30px rgba(255, 69, 58, 0.25);
-            z-index: 10;
-        }
-
-        .cell-label {
-            font-size: 0.75rem;
-            color: var(--text-sec);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-        }
-        .cell-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-main);
-            letter-spacing: -0.5px;
-        }
-        .cell-unit {
-            font-size: 0.9rem;
-            color: var(--text-sec);
-            margin-left: 6px;
-            font-weight: 400;
-        }
-        
-        /* Text Colors overrides */
-        .text-muted { color: var(--text-sec) !important; }
-        .text-primary { color: var(--accent-red) !important; }
-        .text-success { color: #32d74b !important; }
-        .text-warning { color: #ff9f0a !important; }
-        .text-danger { color: #ff453a !important; }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-
-        /* Ficha técnica rápida */
-        .specs-panel {
-            background: rgba(0,0,0,0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-    </style>
 </head>
+
 <body>
     <header class="app-header">
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span style="color:var(--accent-red)">MANAGER</span></span>
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span
+                    style="color:var(--accent-red)">MANAGER</span></span>
         </div>
         <nav class="nav-links">
-            <a href="{{ url_for('main.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> DASHBOARD</a>
-            <a href="{{ url_for('main.calculadora') }}" class="nav-link active"><i class="bi bi-calculator me-1"></i> CALCULADORA</a>
-            <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>
+                DASHBOARD</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link active"><i
+                    class="bi bi-calculator me-1"></i>
+                CALCULADORA</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link">GESTIÓN BD</a>
         </nav>
     </header>
 
@@ -302,12 +38,25 @@
         <input type="hidden" name="lon_oculta" id="h_lon" value="{{ request.form.get('lon_oculta', '') }}">
 
         <!-- =================== CONTROLES SUPERIORES =================== -->
+
+        <!-- NUEVO: Mensaje informativo si hay datos guardados -->
+        {% if es_recalculo and datos_guardados %}
+        <div class="alert alert-info mx-4 mt-3"
+            style="background: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.3); color: #0dcaf0;">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Proyecto encontrado:</strong> Este pedido ya tiene cálculos guardados del {{
+            datos_guardados.fecha_publicacion[:10] if datos_guardados.fecha_publicacion else 'fecha desconocida' }}.
+            Los valores han sido pre-cargados. Puedes modificarlos y hacer click en <strong>"ReCalcular"</strong>.
+        </div>
+        {% endif %}
+
         <section class="top-controls">
             <!-- PEDIDO -->
             <div class="card-control">
                 <div class="control-title"><i class="bi bi-search me-2"></i> PEDIDO</div>
                 <label class="small text-muted">No. Pedido</label>
-                <input type="text" name="pedido" id="input_pedido" class="form-control form-control-lg fw-bold mb-2" value="{{ request.form.get('pedido','') }}" placeholder="OC-2024-001" required>
+                <input type="text" name="pedido" id="input_pedido" class="form-control form-control-lg fw-bold mb-2"
+                    value="{{ request.form.get('pedido','') }}" placeholder="OC-2024-001" required>
                 <button type="button" id="btn_buscar" class="btn btn-primary w-100 btn-lg">
                     <i class="bi bi-search me-2"></i>BUSCAR PEDIDO
                 </button>
@@ -322,7 +71,8 @@
                     <option value="">Seleccionar...</option>
                     {% for u in ups %}
                     <option value="{{ u.id }}" data-kva="{{ u.Capacidad_kVA }}" data-vin="{{ u.Voltaje_Entrada_1_V }}"
-                        {% if request.form.get('id_ups') and request.form.get('id_ups')|int == u.id %}selected{% endif %}>
+                        {% if (datos_guardados and datos_guardados.id_ups==u.id) or (request.form.get('id_ups') and
+                        request.form.get('id_ups')|int==u.id) %}selected{% endif %}>
                         {{ u.Serie }} {{ u.Nombre_del_Producto }}
                     </option>
                     {% endfor %}
@@ -332,32 +82,52 @@
                     <div class="col-4">
                         <label class="small text-muted">Voltaje</label>
                         <select name="voltaje" id="sel_voltaje" class="form-select form-select-sm">
-                            <option value="220" {% if request.form.get('voltaje') == '220' %}selected{% endif %}>220V</option>
-                            <option value="208" {% if request.form.get('voltaje') == '208' %}selected{% endif %}>208V</option>
-                            <option value="480" {% if request.form.get('voltaje') == '480' %}selected{% endif %}>480V</option>
-                            <option value="127" {% if request.form.get('voltaje') == '127' %}selected{% endif %}>127V</option>
+                            <option value="220" {% if (datos_guardados and datos_guardados.voltaje|string=='220.0' or
+                                datos_guardados.voltaje==220) or request.form.get('voltaje')=='220' %}selected{% endif
+                                %}>220V
+                            </option>
+                            <option value="208" {% if (datos_guardados and datos_guardados.voltaje|string=='208.0' or
+                                datos_guardados.voltaje==208) or request.form.get('voltaje')=='208' %}selected{% endif
+                                %}>208V
+                            </option>
+                            <option value="480" {% if (datos_guardados and datos_guardados.voltaje|string=='480.0' or
+                                datos_guardados.voltaje==480) or request.form.get('voltaje')=='480' %}selected{% endif
+                                %}>480V
+                            </option>
+                            <option value="127" {% if (datos_guardados and datos_guardados.voltaje|string=='127.0' or
+                                datos_guardados.voltaje==127) or request.form.get('voltaje')=='127' %}selected{% endif
+                                %}>127V
+                            </option>
                         </select>
                     </div>
                     <div class="col-4">
                         <label class="small text-muted">Fases</label>
                         <select name="fases" class="form-select form-select-sm">
-                            <option value="3" {% if request.form.get('fases') == '3' %}selected{% endif %}>3F</option>
-                            <option value="2" {% if request.form.get('fases') == '2' %}selected{% endif %}>2F</option>
-                            <option value="1" {% if request.form.get('fases') == '1' %}selected{% endif %}>1F</option>
+                            <option value="3" {% if (datos_guardados and datos_guardados.fases|string=='3' ) or
+                                request.form.get('fases')=='3' %}selected{% endif %}>3F</option>
+                            <option value="2" {% if (datos_guardados and datos_guardados.fases|string=='2' ) or
+                                request.form.get('fases')=='2' %}selected{% endif %}>2F</option>
+                            <option value="1" {% if (datos_guardados and datos_guardados.fases|string=='1' ) or
+                                request.form.get('fases')=='1' %}selected{% endif %}>1F</option>
                         </select>
                     </div>
                     <div class="col-4">
                         <label class="small text-muted">Dist.(m)</label>
-                        <input type="number" name="longitud" class="form-control form-control-sm" value="{{ request.form.get('longitud', '') }}" placeholder="0">
+                        <input type="number" name="longitud" class="form-control form-control-sm"
+                            value="{{ datos_guardados.longitud if datos_guardados else request.form.get('longitud', '') }}"
+                            placeholder="0">
                     </div>
                 </div>
 
                 <!-- FICHA UPS COMPACTA -->
                 <div id="ups_specs_container" class="specs-panel d-none">
-                    <div class="text-center mb-2" style="color: var(--text-main); font-weight:700; font-size:0.75rem; letter-spacing:1px;">FICHA TÉCNICA</div>
+                    <div class="text-center mb-2"
+                        style="color: var(--text-main); font-weight:700; font-size:0.75rem; letter-spacing:1px;">FICHA
+                        TÉCNICA</div>
                     <div class="d-flex justify-content-between small"><span>kVA:</span><span id="sp_kva">--</span></div>
                     <div class="d-flex justify-content-between small"><span>kW:</span><span id="sp_kw">--</span></div>
-                    <div class="d-flex justify-content-between small"><span>Eficiencia:</span><span id="sp_eff">--</span>%</div>
+                    <div class="d-flex justify-content-between small"><span>Eficiencia:</span><span
+                            id="sp_eff">--</span>%</div>
                     <div class="d-flex justify-content-between small"><span>VDC:</span><span id="sp_bat">--</span></div>
                 </div>
             </div>
@@ -370,30 +140,41 @@
                     <option value="">Seleccionar...</option>
                     {% for b in baterias %}
                     <!-- CORRECCIÓN: Usar capacidad_nominal_ah según base_datos.py -->
-                    <option value="{{ b.id }}" {% if request.form.get('id_bateria') and request.form.get('id_bateria')|int == b.id %}selected{% endif %}>{{ b.modelo }} ({{ b.capacidad_nominal_ah }}Ah)</option>
+                    <option value="{{ b.id }}" {% if (datos_guardados and datos_guardados.id_bateria==b.id) or
+                        (request.form.get('id_bateria') and request.form.get('id_bateria')|int==b.id) %}selected{% endif
+                        %}>{{ b.modelo }} ({{
+                        b.capacidad_nominal_ah }}Ah)</option>
                     {% endfor %}
                 </select>
                 <!-- Ficha compacta -->
                 <div id="bat_specs_container" class="specs-panel" style="display: none;">
-                    <div class="text-center mb-2" style="color: var(--text-success); font-size: .75rem; font-weight:700;">DATOS BATERÍA</div>
-                    <div class="d-flex justify-content-between small"><span>Voltaje:</span><span id="bat_volt">--</span> V</div>
-                    <div class="d-flex justify-content-between small"><span>Capacidad:</span><span id="bat_ah">--</span> Ah</div>
-                    <div class="d-flex justify-content-between small"><span>Dimensiones:</span><span id="bat_dim">--</span></div>
+                    <div class="text-center mb-2"
+                        style="color: var(--text-success); font-size: .75rem; font-weight:700;">DATOS BATERÍA</div>
+                    <div class="d-flex justify-content-between small"><span>Voltaje:</span><span id="bat_volt">--</span>
+                        V</div>
+                    <div class="d-flex justify-content-between small"><span>Capacidad:</span><span id="bat_ah">--</span>
+                        Ah</div>
+                    <div class="d-flex justify-content-between small"><span>Dimensiones:</span><span
+                            id="bat_dim">--</span></div>
                 </div>
 
                 <label class="small text-muted mt-2">Tiempo de Respaldo (min)</label>
-                <input type="number" name="tiempo_respaldo" class="form-control form-control-sm" value="{{ request.form.get('tiempo_respaldo', '') }}" placeholder="Ej. 15">
+                <input type="number" name="tiempo_respaldo" class="form-control form-control-sm"
+                    value="{{ datos_guardados.tiempo_respaldo if datos_guardados else request.form.get('tiempo_respaldo', '') }}"
+                    placeholder="Ej. 15">
             </div>
 
             <!-- ACCIONES -->
             <div class="card-control">
                 <div class="control-title"><i class="bi bi-clipboard-check me-2"></i> ACCIONES</div>
                 <div class="d-grid gap-2">
-                    <button type="button" onclick="abrirModalVistaPrevia(false)" class="btn btn-dark btn-lg">
-                        <i class="bi bi-eye me-2"></i>VISTA PREVIA
-                    </button>
-                    <button type="button" onclick="abrirModalVistaPrevia(true)" class="btn btn-primary btn-lg">
-                        <i class="bi bi-check-circle me-2"></i>PUBLICAR
+                    <input type="hidden" name="accion" id="accion_hidden" value="calcular">
+                    <button type="submit" class="btn btn-dark btn-lg">
+                        {% if es_recalculo %}
+                        <i class="bi bi-arrow-repeat me-2"></i>RECALCULAR
+                        {% else %}
+                        <i class="bi bi-calculator me-2"></i>CALCULAR
+                        {% endif %}
                     </button>
                 </div>
             </div>
@@ -410,11 +191,13 @@
             <section class="recap-grid mb-3">
                 <div class="recap-item">
                     <div class="recap-label">Cliente</div>
-                    <div class="recap-value">{{ res.cliente_nom if res else (request.form.get('cliente_texto','') or '--') }}</div>
+                    <div class="recap-value">{{ res.cliente_nom if res else (request.form.get('cliente_texto','') or
+                        '--') }}</div>
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">Sucursal</div>
-                    <div class="recap-value">{{ res.sucursal_nom if res else (request.form.get('sucursal_texto','') or '--') }}</div>
+                    <div class="recap-value">{{ res.sucursal_nom if res else (request.form.get('sucursal_texto','') or
+                        '--') }}</div>
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">Pedido</div>
@@ -422,25 +205,30 @@
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">UPS</div>
-                    <div class="recap-value">{{ res.modelo_nombre if res else '--' }} ({{ res.kva if res else '--' }} kVA)</div>
+                    <div class="recap-value">{{ res.modelo_nombre if res else '--' }} ({{ res.kva if res else '--' }}
+                        kVA)</div>
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">Batería</div>
-                    <div class="recap-value" id="recap_bateria">{{ res.bateria_modelo if res and res.bateria_modelo else '--' }}</div>
+                    <div class="recap-value" id="recap_bateria">{{ res.bateria_modelo if res and res.bateria_modelo else
+                        '--' }}</div>
                 </div>
                 <div class="recap-item">
                     <div class="recap-label">Respaldo</div>
-                    <div class="recap-value">{{ res.tiempo_respaldo if res and res.tiempo_respaldo else '--' }} min</div>
+                    <div class="recap-value">{{ res.tiempo_respaldo if res and res.tiempo_respaldo else '--' }} min
+                    </div>
                 </div>
             </section>
 
             <!-- TABS RESULTADOS -->
             <ul class="nav nav-tabs border-bottom-0 mb-3" id="resTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active text-white bg-transparent border-0 border-bottom border-danger" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-pane" type="button">Resultados</button>
+                    <button class="nav-link active text-white bg-transparent border-0 border-bottom border-danger"
+                        id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid-pane" type="button">Resultados</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-muted bg-transparent border-0" id="math-tab" data-bs-toggle="tab" data-bs-target="#math-pane" type="button">Justificación Matemática</button>
+                    <button class="nav-link text-muted bg-transparent border-0" id="math-tab" data-bs-toggle="tab"
+                        data-bs-target="#math-pane" type="button">Justificación Matemática</button>
                 </li>
             </ul>
 
@@ -451,7 +239,9 @@
                         <div class="data-cell {{ 'active' if res else 'inactive' }}">
                             <span class="cell-label">Corriente Diseño</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.i_diseno if res else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_i_diseno"
+                                    value="{{ res.i_diseno if res else '' }}" step="0.01" {{ 'disabled' if not res
+                                    else '' }}>
                                 <span class="cell-unit">Amps</span>
                             </div>
                         </div>
@@ -459,7 +249,9 @@
                         <div class="data-cell {{ 'active' if res else 'inactive' }}">
                             <span class="cell-label"><i class="bi bi-arrow-left-circle"></i> Voltaje Salida</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.voltaje if res else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_voltaje"
+                                    value="{{ res.voltaje if res else '' }}" step="1" {{ 'disabled' if not res else ''
+                                    }}>
                                 <span class="cell-unit">V</span>
                             </div>
                         </div>
@@ -467,74 +259,116 @@
                         <div class="data-cell {{ 'active' if res else 'inactive' }}">
                             <span class="cell-label text-warning">Caída de Tensión</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.dv_pct if res else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_dv_pct"
+                                    value="{{ res.dv_pct if res else '' }}" step="0.01" {{ 'disabled' if not res else ''
+                                    }}>
                                 <span class="cell-unit">%</span>
                             </div>
                         </div>
 
                         <div class="data-cell {{ 'active' if res else 'inactive' }}">
                             <span class="cell-label text-success">CABLE FASES (THHN)</span>
-                            <span class="cell-value huge text-success">{{ res.fase_sel if res else '--' }}</span>
+                            <input type="text" class="cell-value-edit huge text-success" id="edit_fase_sel"
+                                value="{{ res.fase_sel if res else '' }}" {{ 'disabled' if not res else '' }}>
                             <span class="cell-unit">AWG/kcmil</span>
                         </div>
 
                         <div class="data-cell {{ 'active' if res else 'inactive' }}">
                             <span class="cell-label">PROTECCIÓN ITM</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.breaker_sel if res else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_breaker_sel"
+                                    value="{{ res.breaker_sel if res else '' }}" step="1" {{ 'disabled' if not res
+                                    else '' }}>
                                 <span class="cell-unit">Amps</span>
                             </div>
                         </div>
 
-                        <div class="data-cell {{ 'active' if res and res.bat_series else 'inactive' }}" style="border-color: var(--accent-red);">
+                        <div class="data-cell {{ 'active' if res and res.bat_series else 'inactive' }}"
+                            style="border-color: var(--accent-red);">
                             <span class="cell-label text-danger">Baterías por String (Serie)</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.bat_series if res and res.bat_series else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_bat_series"
+                                    value="{{ res.bat_series if res and res.bat_series else '' }}" step="1"
+                                    {{ 'disabled' if not (res and res.bat_series) else '' }}>
                                 <span class="cell-unit">Unidades</span>
                             </div>
                         </div>
 
-                        <div class="data-cell {{ 'active' if res and res.bat_strings else 'inactive' }}" style="border-color: var(--accent-red);">
+                        <div class="data-cell {{ 'active' if res and res.bat_strings else 'inactive' }}"
+                            style="border-color: var(--accent-red);">
                             <span class="cell-label text-danger">Baterías en Paralelo (Strings)</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.bat_strings if res and res.bat_strings else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_bat_strings"
+                                    value="{{ res.bat_strings if res and res.bat_strings else '' }}" step="1"
+                                    {{ 'disabled' if not (res and res.bat_strings) else '' }}>
                                 <span class="cell-unit">Juegos</span>
                             </div>
                         </div>
-                        
-                        <div class="data-cell {{ 'active' if res and res.bat_total else 'inactive' }}" style="border-color: var(--accent-red);">
+
+                        <div class="data-cell {{ 'active' if res and res.bat_total else 'inactive' }}"
+                            style="border-color: var(--accent-red);">
                             <span class="cell-label text-danger">Total de Baterías</span>
                             <div class="d-flex align-items-baseline gap-2">
-                                <span class="cell-value">{{ res.bat_total if res and res.bat_total else '--' }}</span>
+                                <input type="number" class="cell-value-edit" id="edit_bat_total"
+                                    value="{{ res.bat_total if res and res.bat_total else '' }}" step="1" {{ 'disabled'
+                                    if not (res and res.bat_total) else '' }}>
                                 <span class="cell-unit">Unidades</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="tab-pane fade p-4 rounded" id="math-pane" role="tabpanel" style="background: rgba(0,0,0,0.2);">
+                <div class="tab-pane fade p-4 rounded" id="math-pane" role="tabpanel"
+                    style="background: rgba(0,0,0,0.2);">
                     <h6 class="text-danger fw-bold mb-3">Cálculo de Banco de Baterías</h6>
                     <div class="text-light">
-                        {{ res.bat_justificacion|safe if res and res.bat_justificacion else 'Realice un cálculo para ver la justificación.' }}
+                        {{ res.bat_justificacion|safe if res and res.bat_justificacion else 'Realice un cálculo para ver
+                        la justificación.' }}
                     </div>
                 </div>
             </div>
 
             {% if res %}
-            <div class="d-flex justify-content-end align-items-center p-4 rounded border shadow-sm mt-4" style="background-color: rgba(0,0,0,0.3); border-color: var(--glass-border);">
+            <div class="d-flex justify-content-end align-items-center p-4 rounded border shadow-sm mt-4"
+                style="background-color: rgba(0,0,0,0.3); border-color: var(--glass-border);">
                 <div class="me-auto text-muted">
                     <small><i class="bi bi-check-circle-fill text-success"></i> Cálculo Completado</small>
-                    <div style="font-size: 0.85rem;">Cliente: <strong>{{ res.cliente_nom }}</strong> — Sucursal: <strong>{{ res.sucursal_nom }}</strong></div>
+                    <div style="font-size: 0.85rem;">Cliente: <strong>{{ res.cliente_nom }}</strong> — Sucursal:
+                        <strong>{{ res.sucursal_nom }}</strong>
+                    </div>
                 </div>
-                <button type="button" onclick="descargarPDF()" class="btn btn-primary btn-lg px-5 fw-bold shadow">
-                    <i class="bi bi-file-earmark-pdf-fill"></i> DESCARGAR PDF
-                </button>
+                <div class="d-flex gap-3">
+                    <button type="button" onclick="abrirModalImprimir(false)"
+                        class="btn btn-warning btn-lg px-4 fw-bold shadow">
+                        <i class="bi bi-eye me-2"></i>VISTA PREVIA PDF
+                    </button>
+                    <button type="button" onclick="abrirModalImprimir(true)"
+                        class="btn btn-primary btn-lg px-4 fw-bold shadow">
+                        <i class="bi bi-printer-fill me-2"></i>PUBLICAR PDF
+                    </button>
+                </div>
             </div>
             {% endif %}
         </main>
+
+        {# Campos ocultos para capturar resultados calculados que no son editables pero se necesitan en el PDF #}
+        <input type="hidden" name="i_nom" id="hidden_i_nom" value="{{ res.i_nom if res else '' }}">
+        <input type="hidden" name="gnd_sel" id="hidden_gnd_sel" value="{{ res.gnd_sel if res else '' }}">
+        <input type="hidden" name="i_real_cable" id="hidden_i_real_cable" value="{{ res.i_real_cable if res else '' }}">
+        <input type="hidden" name="nota_altitud" id="hidden_nota_altitud" value="{{ res.nota_altitud if res else '' }}">
+        <input type="hidden" name="autonomia_calculada_min" id="hidden_bat_max"
+            value="{{ res.tiempo_maximo_calculado if res else '' }}">
+        <input type="hidden" name="autonomia_deseada_min" id="hidden_bat_req"
+            value="{{ res.tiempo_respaldo if res else '' }}">
+        <input type="hidden" name="numero_strings" id="hidden_bat_strings" value="{{ res.bat_strings if res else '' }}">
+        <input type="hidden" name="baterias_por_string" id="hidden_bat_series"
+            value="{{ res.bat_series if res else '' }}">
+        <input type="hidden" name="baterias_total" id="hidden_bat_total" value="{{ res.bat_total if res else '' }}">
+
     </form>
 
     {% if res %}
-    <form id="pdfForm" action="{{ url_for('main.descargar_pdf') }}" method="POST" target="_blank" style="display:none;">
+    <form id="pdfForm" action="{{ url_for('calculator.generar_pdf_calculadora') }}" method="POST" target="_blank"
+        style="display:none;">
         <input type="hidden" name="id_ups" value="{{ request.form.get('id_ups') }}">
         <input type="hidden" name="pedido" value="{{ res.pedido }}">
         <input type="hidden" name="es_publicado" value="{{ res.es_publicado }}">
@@ -560,7 +394,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-white border-danger">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error de Cálculo</h5>
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error de Cálculo
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -573,9 +408,11 @@
     <!-- MODAL VALIDACION -->
     <div class="modal fade" id="validationModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+            <div class="modal-content"
+                style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Faltan Datos</h5>
+                    <h5 class="modal-title text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Faltan Datos</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -591,41 +428,51 @@
     <!-- MODAL VISTA PREVIA CON CARGA DE IMAGENES -->
     <div class="modal fade" id="vistaPreviewModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+            <div class="modal-content"
+                style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-danger fw-bold" id="modalTituloPreview"><i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
+                    <h5 class="modal-title text-danger fw-bold" id="modalTituloPreview"><i
+                            class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ url_for('main.calculadora') }}" enctype="multipart/form-data" id="formVistaPrevia">
+                <form method="POST" action="{{ url_for('calculator.generar_pdf_calculadora') }}"
+                    enctype="multipart/form-data" id="formVistaPrevia">
                     <input type="hidden" name="accion" value="preview">
                     <div class="modal-body">
-                        <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes obligatorias para generar el reporte PDF:</p>
+                        <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes obligatorias
+                            para generar el reporte PDF:</p>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-danger"><i class="bi bi-diagram-3-fill me-2"></i>Diagrama Unifilar AC *</label>
+                            <label class="form-label fw-bold text-danger"><i
+                                    class="bi bi-diagram-3-fill me-2"></i>Diagrama Unifilar AC *</label>
                             <input type="file" name="imagen_unifilar_ac" class="form-control" accept="image/*" required>
                             <small class="text-muted">Formato: PNG, JPG, PDF. Máximo 5MB</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-danger"><i class="bi bi-battery-charging me-2"></i>Diagrama de Baterías DC *</label>
+                            <label class="form-label fw-bold text-danger"><i
+                                    class="bi bi-battery-charging me-2"></i>Diagrama de Baterías DC *</label>
                             <input type="file" name="imagen_baterias_dc" class="form-control" accept="image/*" required>
                             <small class="text-muted">Formato: PNG, JPG, PDF. Máximo 5MB</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-danger"><i class="bi bi-grid-3x3 me-2"></i>Disposición de Equipos *</label>
-                            <input type="file" name="imagen_layout_equipos" class="form-control" accept="image/*" required>
+                            <label class="form-label fw-bold text-danger"><i class="bi bi-grid-3x3 me-2"></i>Disposición
+                                de Equipos *</label>
+                            <input type="file" name="imagen_layout_equipos" class="form-control" accept="image/*"
+                                required>
                             <small class="text-muted">Formato: PNG, JPG, PDF. Máximo 5MB</small>
                         </div>
 
                         <div class="alert alert-warning border-0 mt-3" style="background: rgba(255, 193, 7, 0.1);">
-                            <i class="bi bi-info-circle me-2"></i><strong>Nota:</strong> Estas imágenes serán incluidas en el PDF de vista previa. Para la versión publicada, deberá volver a cargarlas.
+                            <i class="bi bi-info-circle me-2"></i><strong>Nota:</strong> Estas imágenes serán incluidas
+                            en el PDF de vista previa. Para la versión publicada, deberá volver a cargarlas.
                         </div>
                     </div>
                     <div class="modal-footer border-secondary">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" id="btnSubmitPreview"><i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitPreview"><i
+                                class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa</button>
                     </div>
                 </form>
             </div>
@@ -636,451 +483,494 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    // --- 1. PDF ---
-    function descargarPDF(){ const form = document.getElementById('pdfForm'); if(form) form.submit(); else alert("Primero debes realizar un cálculo."); }
+        // --- 1. PDF ---
+        function descargarPDF() { const form = document.getElementById('pdfForm'); if (form) form.submit(); else alert("Primero debes realizar un cálculo."); }
 
-    // --- 1.0 Cerrar Modal Después de Submit ---
-    function cerrarModalDespuesDeSubmit() {
-        console.log('Formulario enviado, cerrando modal en 500ms...');
+        // --- 1.0 Cerrar Modal Después de Submit ---
+        function cerrarModalDespuesDeSubmit() {
+            console.log('Formulario enviado, cerrando modal en 500ms...');
 
-        // Cerrar el modal después de un breve delay
-        setTimeout(function() {
-            const modalElement = document.getElementById('vistaPreviewModal');
-            if(modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if(modal) {
-                    modal.hide();
-                    console.log('Modal cerrado exitosamente');
+            // Cerrar el modal después de un breve delay
+            setTimeout(function () {
+                const modalElement = document.getElementById('vistaPreviewModal');
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                        console.log('Modal cerrado exitosamente');
+                    }
                 }
+
+                // Limpiar el backdrop manualmente si quedó
+                setTimeout(function () {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => backdrop.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                    console.log('Backdrop limpiado');
+                }, 300);
+            }, 500);
+
+            return true; // Permitir que el formulario se envíe
+        }
+
+        // --- 1.1 Modal Vista Previa / Publicar ---
+        function abrirModalVistaPrevia(esPublicar = false) {
+            console.log('=== INICIANDO abrirModalVistaPrevia ===');
+            console.log('esPublicar:', esPublicar);
+
+            // VALIDACIÓN SIMPLE - Solo verificar campos críticos
+            let errors = [];
+
+            const ups = document.getElementById('sel_ups');
+            console.log('UPS element:', ups);
+            console.log('UPS value:', ups ? ups.value : 'NO ENCONTRADO');
+
+            if (!ups || !ups.value) {
+                errors.push("Seleccione un Modelo de UPS");
             }
 
-            // Limpiar el backdrop manualmente si quedó
-            setTimeout(function() {
-                const backdrops = document.querySelectorAll('.modal-backdrop');
-                backdrops.forEach(backdrop => backdrop.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-                console.log('Backdrop limpiado');
-            }, 300);
-        }, 500);
+            // Si es publicar, validar número de pedido
+            const pedidoInput = document.getElementById('input_pedido');
+            console.log('Pedido element:', pedidoInput);
+            console.log('Pedido value:', pedidoInput ? pedidoInput.value : 'NO ENCONTRADO');
 
-        return true; // Permitir que el formulario se envíe
-    }
-
-    // --- 1.1 Modal Vista Previa / Publicar ---
-    function abrirModalVistaPrevia(esPublicar = false) {
-        console.log('=== INICIANDO abrirModalVistaPrevia ===');
-        console.log('esPublicar:', esPublicar);
-
-        // VALIDACIÓN SIMPLE - Solo verificar campos críticos
-        let errors = [];
-
-        const ups = document.getElementById('sel_ups');
-        console.log('UPS element:', ups);
-        console.log('UPS value:', ups ? ups.value : 'NO ENCONTRADO');
-
-        if(!ups || !ups.value) {
-            errors.push("Seleccione un Modelo de UPS");
-        }
-
-        // Si es publicar, validar número de pedido
-        const pedidoInput = document.getElementById('input_pedido');
-        console.log('Pedido element:', pedidoInput);
-        console.log('Pedido value:', pedidoInput ? pedidoInput.value : 'NO ENCONTRADO');
-
-        if(esPublicar && (!pedidoInput || !pedidoInput.value)) {
-            errors.push("Ingrese el Número de Pedido (OC-XXXX)");
-        }
-
-        console.log('Errores encontrados:', errors);
-
-        if(errors.length > 0){
-            const msgContainer = document.getElementById('validationMsg');
-            if(msgContainer) {
-                msgContainer.innerHTML = "<strong>Faltan los siguientes datos:</strong><ul class='mt-2 mb-0 text-start'>" +
-                                         errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+            if (esPublicar && (!pedidoInput || !pedidoInput.value)) {
+                errors.push("Ingrese el Número de Pedido (OC-XXXX)");
             }
 
-            const modalEl = document.getElementById('validationModal');
-            if(modalEl) {
-                const modal = new bootstrap.Modal(modalEl);
-                modal.show();
-            }
-            return;
-        }
+            console.log('Errores encontrados:', errors);
 
-        console.log('=== VALIDACIÓN PASADA - ABRIENDO MODAL ===');
+            if (errors.length > 0) {
+                const msgContainer = document.getElementById('validationMsg');
+                if (msgContainer) {
+                    msgContainer.innerHTML = "<strong>Faltan los siguientes datos:</strong><ul class='mt-2 mb-0 text-start'>" +
+                        errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
+                }
 
-        // Obtener formularios
-        const mainForm = document.getElementById('mainForm');
-        const previewForm = document.getElementById('formVistaPrevia');
-
-        console.log('mainForm:', mainForm);
-        console.log('previewForm:', previewForm);
-
-        if(!mainForm || !previewForm) {
-            alert('ERROR: No se encontraron los formularios. mainForm: ' + !!mainForm + ', previewForm: ' + !!previewForm);
-            return;
-        }
-
-        // Limpiar campos clonados anteriores
-        const existingClones = previewForm.querySelectorAll('input[type="hidden"]:not([name="accion"])');
-        existingClones.forEach(input => input.remove());
-
-        // Cambiar el valor de accion según si es publicar o preview
-        const accionInput = previewForm.querySelector('input[name="accion"]');
-        if(accionInput) {
-            accionInput.value = esPublicar ? 'publicar' : 'preview';
-            console.log('Acción configurada:', accionInput.value);
-        }
-
-        // Actualizar título del modal
-        const modalTitle = document.getElementById('modalTituloPreview');
-        if(modalTitle) {
-            if(esPublicar) {
-                modalTitle.innerHTML = '<i class="bi bi-check-circle me-2"></i> PUBLICAR - Cargar Imágenes';
-                modalTitle.classList.remove('text-danger');
-                modalTitle.classList.add('text-success');
-            } else {
-                modalTitle.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes';
-                modalTitle.classList.remove('text-success');
-                modalTitle.classList.add('text-danger');
-            }
-        }
-
-        // Actualizar texto del botón submit
-        const submitBtn = document.getElementById('btnSubmitPreview');
-        if(submitBtn) {
-            if(esPublicar) {
-                submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>PUBLICAR PROYECTO';
-                submitBtn.classList.remove('btn-primary');
-                submitBtn.classList.add('btn-success');
-            } else {
-                submitBtn.innerHTML = '<i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa';
-                submitBtn.classList.remove('btn-success');
-                submitBtn.classList.add('btn-primary');
-            }
-        }
-
-        // Copiar todos los campos del formulario principal
-        const mainInputs = mainForm.querySelectorAll('input, select, textarea');
-        console.log('Total de inputs encontrados:', mainInputs.length);
-
-        let copiedCount = 0;
-        mainInputs.forEach(input => {
-            if(input.name && input.value) {
-                const clonedInput = document.createElement('input');
-                clonedInput.type = 'hidden';
-                clonedInput.name = input.name;
-                clonedInput.value = input.value;
-                previewForm.appendChild(clonedInput);
-                copiedCount++;
-            }
-        });
-        console.log('Campos copiados:', copiedCount);
-
-        // ABRIR MODAL - CON MÚLTIPLES INTENTOS
-        console.log('=== INTENTANDO ABRIR MODAL ===');
-        const modalElement = document.getElementById('vistaPreviewModal');
-        console.log('Modal element:', modalElement);
-
-        if(!modalElement) {
-            alert('ERROR CRÍTICO: Modal no encontrado en el DOM. ID: vistaPreviewModal');
-            return;
-        }
-
-        try {
-            // Intento 1: Bootstrap 5 estándar
-            const modal = new bootstrap.Modal(modalElement);
-            console.log('Modal instance creada:', modal);
-            modal.show();
-            console.log('Modal.show() ejecutado');
-        } catch(error) {
-            console.error('Error al abrir modal:', error);
-            alert('ERROR al abrir modal: ' + error.message);
-
-            // Intento 2: Fallback manual
-            try {
-                modalElement.classList.add('show');
-                modalElement.style.display = 'block';
-                document.body.classList.add('modal-open');
-
-                // Crear backdrop
-                const backdrop = document.createElement('div');
-                backdrop.className = 'modal-backdrop fade show';
-                document.body.appendChild(backdrop);
-
-                console.log('Modal abierto manualmente (fallback)');
-            } catch(error2) {
-                console.error('Error en fallback:', error2);
-                alert('ERROR TOTAL: No se pudo abrir el modal de ninguna forma.');
-            }
-        }
-    }
-
-    // --- 2. [ELIMINADO] Cargar sucursales por cliente ---
-    // Los datos de cliente y sucursal ahora se cargan automáticamente al buscar el pedido
-
-    // --- 3. [ELIMINADO] Guardar datos ocultos cuando cambia sucursal ---
-    // Ahora los campos ocultos se llenan automáticamente desde la búsqueda de pedido
-
-    // NOTA: Los campos ocultos h_cliente y h_sucursal se llenan en la función buscarPedido()
-    const hCliente = document.getElementById('h_cliente');
-    const hSucursal = document.getElementById('h_sucursal');
-
-    // Si los campos ya tienen valores (página recargada), actualizar el recapitulado
-    if(hCliente && hCliente.value){
-        const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
-        if(recapCliente) recapCliente.textContent = hCliente.value;
-    }
-    if(hSucursal && hSucursal.value){
-        const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
-        if(recapSucursal) recapSucursal.textContent = hSucursal.value;
-    }
-
-    // --- 3b. Nota: lat/lon ahora se pueden obtener del pedido o desde la BD ---
-    // Los campos h_lat y h_lon se mantienen para compatibilidad con el backend
-
-    // --- 4. Datos UPS + Ficha rápida ---
-    const selUps = document.getElementById('sel_ups');
-    if(selUps){
-        selUps.addEventListener('change', function(){
-            const opt=this.options[this.selectedIndex];
-            if(opt && opt.value){
-                // Actualizar recapitulado con nombre y kVA del UPS
-                const recapUps = document.querySelector('.recap-grid .recap-item:nth-child(4) .recap-value');
-                if(recapUps) recapUps.textContent = `${opt.text} (${opt.dataset.kva || '--'} kVA)`;
-
-                fetch(`/api/ups/${opt.value}`).then(r=>r.json()).then(data=>{
-                    const upsCont = document.getElementById('ups_specs_container');
-                    if(upsCont) upsCont.classList.remove('d-none');
-                    document.getElementById('sp_kva') && (document.getElementById('sp_kva').textContent = data.Capacidad_kVA || '--');
-                    document.getElementById('sp_kw') && (document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--');
-                    document.getElementById('sp_eff') && (document.getElementById('sp_eff').textContent = data.Eficiencia_Modo_AC_pct || '--');
-                    document.getElementById('sp_bat') && (document.getElementById('sp_bat').textContent = data.Bateria_Vdc || '--');
-                });
-            }
-        });
-    }
-
-    // --- 4.1 [ELIMINADO] Sync Volts Out -> Project Voltage ---
-    // Ya no es necesario porque el usuario selecciona manualmente el voltaje
-
-    // --- 5. Buscador pedido optimizado ---
-    const btnBuscar = document.getElementById('btn_buscar');
-    const inputPedido = document.getElementById('input_pedido');
-
-    if(btnBuscar){
-        // Función de búsqueda
-        const buscarPedido = function(){
-            const ped = inputPedido.value.trim();
-            if(!ped){
-                alert("⚠️ Por favor ingresa un número de pedido");
+                const modalEl = document.getElementById('validationModal');
+                if (modalEl) {
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                }
                 return;
             }
 
-            // Mostrar indicador de carga
-            btnBuscar.disabled = true;
-            btnBuscar.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            console.log('=== VALIDACIÓN PASADA - ABRIENDO MODAL ===');
 
-            fetch(`/api/buscar-pedido/${encodeURIComponent(ped)}`)
-                .then(r => r.json())
-                .then(d => {
-                    if(d.pedido){
-                        // Pedido encontrado - cargar TODOS los datos
-                        const clienteNombre = d.cliente_nombre || d.cliente_snap || 'N/A';
-                        const sucursalNombre = d.sucursal_nombre || d.sucursal_snap || 'N/A';
+            // Obtener formularios
+            const mainForm = document.getElementById('mainForm');
+            const previewForm = document.getElementById('formVistaPrevia');
 
-                        // Actualizar campos ocultos
-                        document.getElementById('h_cliente').value = clienteNombre;
-                        document.getElementById('h_sucursal').value = sucursalNombre;
+            console.log('mainForm:', mainForm);
+            console.log('previewForm:', previewForm);
 
-                        // Actualizar recapitulado
-                        const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
-                        const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
-                        const recapPedido = document.querySelector('.recap-grid .recap-item:nth-child(3) .recap-value');
-                        if(recapCliente) recapCliente.textContent = clienteNombre;
-                        if(recapSucursal) recapSucursal.textContent = sucursalNombre;
-                        if(recapPedido) recapPedido.textContent = ped;
+            if (!mainForm || !previewForm) {
+                alert('ERROR: No se encontraron los formularios. mainForm: ' + !!mainForm + ', previewForm: ' + !!previewForm);
+                return;
+            }
 
-                        // Cargar UPS si existe modelo_id_real
-                        if(d.modelo_id_real){
-                            const selUps = document.getElementById('sel_ups');
-                            if(selUps){
-                                selUps.value = d.modelo_id_real;
-                                // Disparar evento change para cargar datos del UPS
-                                const event = new Event('change');
-                                selUps.dispatchEvent(event);
-                            }
+            // Limpiar campos clonados anteriores
+            const existingClones = previewForm.querySelectorAll('input[type="hidden"]:not([name="accion"])');
+            existingClones.forEach(input => input.remove());
+
+            // Cambiar el valor de accion según si es publicar o preview
+            const accionInput = previewForm.querySelector('input[name="accion"]');
+            if (accionInput) {
+                accionInput.value = esPublicar ? 'publicar' : 'preview';
+                console.log('Acción configurada:', accionInput.value);
+            }
+
+            // Actualizar título del modal
+            const modalTitle = document.getElementById('modalTituloPreview');
+            if (modalTitle) {
+                if (esPublicar) {
+                    modalTitle.innerHTML = '<i class="bi bi-check-circle me-2"></i> PUBLICAR - Cargar Imágenes';
+                    modalTitle.classList.remove('text-danger');
+                    modalTitle.classList.add('text-success');
+                } else {
+                    modalTitle.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Vista Previa - Cargar Imágenes';
+                    modalTitle.classList.remove('text-success');
+                    modalTitle.classList.add('text-danger');
+                }
+            }
+
+            // Actualizar texto del botón submit
+            const submitBtn = document.getElementById('btnSubmitPreview');
+            if (submitBtn) {
+                if (esPublicar) {
+                    submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>PUBLICAR PROYECTO';
+                    submitBtn.classList.remove('btn-primary');
+                    submitBtn.classList.add('btn-success');
+                } else {
+                    submitBtn.innerHTML = '<i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Vista Previa';
+                    submitBtn.classList.remove('btn-success');
+                    submitBtn.classList.add('btn-primary');
+                }
+            }
+
+            // Copiar todos los campos del formulario principal
+            const mainInputs = mainForm.querySelectorAll('input, select, textarea');
+            console.log('Total de inputs encontrados:', mainInputs.length);
+
+            let copiedCount = 0;
+            mainInputs.forEach(input => {
+                if (input.name && input.value) {
+                    const clonedInput = document.createElement('input');
+                    clonedInput.type = 'hidden';
+                    clonedInput.name = input.name;
+                    clonedInput.value = input.value;
+                    previewForm.appendChild(clonedInput);
+                    copiedCount++;
+                }
+            });
+            console.log('Campos copiados:', copiedCount);
+
+            // ABRIR MODAL - CON MÚLTIPLES INTENTOS
+            console.log('=== INTENTANDO ABRIR MODAL ===');
+            const modalElement = document.getElementById('vistaPreviewModal');
+            console.log('Modal element:', modalElement);
+
+            if (!modalElement) {
+                alert('ERROR CRÍTICO: Modal no encontrado en el DOM. ID: vistaPreviewModal');
+                return;
+            }
+
+            try {
+                // Intento 1: Bootstrap 5 estándar
+                const modal = new bootstrap.Modal(modalElement);
+                console.log('Modal instance creada:', modal);
+                modal.show();
+                console.log('Modal.show() ejecutado');
+            } catch (error) {
+                console.error('Error al abrir modal:', error);
+                alert('ERROR al abrir modal: ' + error.message);
+
+                // Intento 2: Fallback manual
+                try {
+                    modalElement.classList.add('show');
+                    modalElement.style.display = 'block';
+                    document.body.classList.add('modal-open');
+
+                    // Crear backdrop
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'modal-backdrop fade show';
+                    document.body.appendChild(backdrop);
+
+                    console.log('Modal abierto manualmente (fallback)');
+                } catch (error2) {
+                    console.error('Error en fallback:', error2);
+                    alert('ERROR TOTAL: No se pudo abrir el modal de ninguna forma.');
+                }
+            }
+        }
+
+        // --- 1.2 NUEVO: Función que llaman los botones (copia valores editados) ---
+        function abrirModalImprimir(esPublicar = false) {
+            console.log('=== INICIANDO abrirModalImprimir ===');
+            console.log('esPublicar:', esPublicar);
+
+            // PASO 1: Copiar valores editados de los inputs cell-value-edit a campos hidden
+            const mainForm = document.getElementById('mainForm');
+            if (mainForm) {
+                // Copiar todos los valores editables
+                const editables = {
+                    'i_diseno': document.getElementById('edit_i_diseno'),
+                    'voltaje': document.getElementById('edit_voltaje'),
+                    'dv_pct': document.getElementById('edit_dv_pct'),
+                    'fase_sel': document.getElementById('edit_fase_sel'),
+                    'breaker_sel': document.getElementById('edit_breaker_sel'),
+                    'bat_series': document.getElementById('edit_bat_series'),
+                    'bat_strings': document.getElementById('edit_bat_strings'),
+                    'bat_total': document.getElementById('edit_bat_total')
+                };
+
+                // Crear o actualizar inputs hidden para cada valor editable
+                Object.keys(editables).forEach(fieldName => {
+                    const input = editables[fieldName];
+                    if (input && input.value) {
+                        // Buscar si ya existe un hidden field
+                        let hiddenField = mainForm.querySelector(`input[name="${fieldName}"]`);
+                        if (!hiddenField) {
+                            // Crear nuevo hidden field
+                            hiddenField = document.createElement('input');
+                            hiddenField.type = 'hidden';
+                            hiddenField.name = fieldName;
+                            mainForm.appendChild(hiddenField);
                         }
-
-                        // Cargar configuración guardada: voltaje, fases, longitud
-                        if(d.voltaje){
-                            const selVoltaje = document.getElementById('sel_voltaje');
-                            if(selVoltaje) selVoltaje.value = d.voltaje;
-                        }
-                        if(d.fases){
-                            const selFases = document.querySelector('select[name="fases"]');
-                            if(selFases) selFases.value = d.fases;
-                        }
-                        if(d.longitud){
-                            const inputLongitud = document.querySelector('input[name="longitud"]');
-                            if(inputLongitud) inputLongitud.value = d.longitud;
-                        }
-
-                        // Cargar batería si existe
-                        if(d.id_bateria){
-                            const selBateria = document.getElementById('sel_bateria');
-                            if(selBateria){
-                                selBateria.value = d.id_bateria;
-                                // Disparar evento change para cargar datos de la batería
-                                const event = new Event('change');
-                                selBateria.dispatchEvent(event);
-                            }
-                        }
-
-                        // Cargar tiempo de respaldo
-                        if(d.tiempo_respaldo){
-                            const inputTiempo = document.querySelector('input[name="tiempo_respaldo"]');
-                            if(inputTiempo) inputTiempo.value = d.tiempo_respaldo;
-                        }
-
-                        // Mensaje diferente si ya tiene datos guardados
-                        let mensaje = `✅ Pedido encontrado\n${clienteNombre} - ${sucursalNombre}`;
-                        if(d.modelo_snap){
-                            mensaje += `\n\n📦 UPS: ${d.modelo_snap} (${d.potencia_snap} kVA)`;
-                            mensaje += `\n⚡ Config: ${d.voltaje}V, ${d.fases}F, ${d.longitud}m`;
-                            if(d.bateria_modelo){
-                                mensaje += `\n🔋 Batería: ${d.bateria_modelo} (${d.tiempo_respaldo || 0} min)`;
-                            }
-                            mensaje += '\n\n✨ Todo cargado! Puedes modificar y reimprimir.';
-                        } else {
-                            mensaje += '\n\nAhora selecciona el equipo y batería.';
-                        }
-                        alert(mensaje);
-                    } else {
-                        alert("❌ Pedido no encontrado.\n\nCrea el pedido desde el Dashboard primero.");
+                        hiddenField.value = input.value;
+                        console.log(`Copiado ${fieldName}: ${input.value}`);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("❌ Error al buscar el pedido");
-                })
-                .finally(() => {
-                    // Restaurar botón
-                    btnBuscar.disabled = false;
-                    btnBuscar.innerHTML = '<i class="bi bi-search me-2"></i>BUSCAR PEDIDO';
                 });
-        };
+            }
 
-        // Click en botón
-        btnBuscar.addEventListener('click', buscarPedido);
+            // PASO 2: Llamar a la función real que abre el modal
+            abrirModalVistaPrevia(esPublicar);
+        }
 
-        // Enter en input
-        if(inputPedido){
-            inputPedido.addEventListener('keypress', function(e){
-                if(e.key === 'Enter'){
-                    e.preventDefault();
-                    buscarPedido();
+        // --- 2. [ELIMINADO] Cargar sucursales por cliente ---
+        // Los datos de cliente y sucursal ahora se cargan automáticamente al buscar el pedido
+
+        // --- 3. [ELIMINADO] Guardar datos ocultos cuando cambia sucursal ---
+        // Ahora los campos ocultos se llenan automáticamente desde la búsqueda de pedido
+
+        // NOTA: Los campos ocultos h_cliente y h_sucursal se llenan en la función buscarPedido()
+        const hCliente = document.getElementById('h_cliente');
+        const hSucursal = document.getElementById('h_sucursal');
+
+        // Si los campos ya tienen valores (página recargada), actualizar el recapitulado
+        if (hCliente && hCliente.value) {
+            const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
+            if (recapCliente) recapCliente.textContent = hCliente.value;
+        }
+        if (hSucursal && hSucursal.value) {
+            const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
+            if (recapSucursal) recapSucursal.textContent = hSucursal.value;
+        }
+
+        // --- 3b. Nota: lat/lon ahora se pueden obtener del pedido o desde la BD ---
+        // Los campos h_lat y h_lon se mantienen para compatibilidad con el backend
+
+        // --- 4. Datos UPS + Ficha rápida ---
+        const selUps = document.getElementById('sel_ups');
+        if (selUps) {
+            selUps.addEventListener('change', function () {
+                const opt = this.options[this.selectedIndex];
+                if (opt && opt.value) {
+                    // Actualizar recapitulado con nombre y kVA del UPS
+                    const recapUps = document.querySelector('.recap-grid .recap-item:nth-child(4) .recap-value');
+                    if (recapUps) recapUps.textContent = `${opt.text} (${opt.dataset.kva || '--'} kVA)`;
+
+                    fetch(`/api/ups/${opt.value}`).then(r => r.json()).then(data => {
+                        const upsCont = document.getElementById('ups_specs_container');
+                        if (upsCont) upsCont.classList.remove('d-none');
+                        document.getElementById('sp_kva') && (document.getElementById('sp_kva').textContent = data.Capacidad_kVA || '--');
+                        document.getElementById('sp_kw') && (document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--');
+                        document.getElementById('sp_eff') && (document.getElementById('sp_eff').textContent = data.Eficiencia_Modo_AC_pct || '--');
+                        document.getElementById('sp_bat') && (document.getElementById('sp_bat').textContent = data.Bateria_Vdc || '--');
+                    });
                 }
             });
         }
 
-        // Auto-buscar si viene pedido en la URL (desde dashboard)
-        const urlParams = new URLSearchParams(window.location.search);
-        const pedidoUrl = urlParams.get('pedido');
-        if(pedidoUrl && inputPedido){
-            inputPedido.value = pedidoUrl;
-            // Buscar automáticamente después de un breve delay
-            setTimeout(() => {
-                buscarPedido();
-            }, 500);
+        // --- 4.1 [ELIMINADO] Sync Volts Out -> Project Voltage ---
+        // Ya no es necesario porque el usuario selecciona manualmente el voltaje
+
+        // --- 5. Buscador pedido optimizado ---
+        const btnBuscar = document.getElementById('btn_buscar');
+        const inputPedido = document.getElementById('input_pedido');
+
+        if (btnBuscar) {
+            // Función de búsqueda
+            const buscarPedido = function () {
+                const ped = inputPedido.value.trim();
+                if (!ped) {
+                    alert("⚠️ Por favor ingresa un número de pedido");
+                    return;
+                }
+
+                // Mostrar indicador de carga
+                btnBuscar.disabled = true;
+                btnBuscar.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+                fetch(`/api/buscar-pedido/${encodeURIComponent(ped)}`)
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.pedido) {
+                            // Pedido encontrado - cargar TODOS los datos
+                            const clienteNombre = d.cliente_nombre || d.cliente_snap || 'N/A';
+                            const sucursalNombre = d.sucursal_nombre || d.sucursal_snap || 'N/A';
+
+                            // Actualizar campos ocultos
+                            document.getElementById('h_cliente').value = clienteNombre;
+                            document.getElementById('h_sucursal').value = sucursalNombre;
+
+                            // Actualizar recapitulado
+                            const recapCliente = document.querySelector('.recap-grid .recap-item:nth-child(1) .recap-value');
+                            const recapSucursal = document.querySelector('.recap-grid .recap-item:nth-child(2) .recap-value');
+                            const recapPedido = document.querySelector('.recap-grid .recap-item:nth-child(3) .recap-value');
+                            if (recapCliente) recapCliente.textContent = clienteNombre;
+                            if (recapSucursal) recapSucursal.textContent = sucursalNombre;
+                            if (recapPedido) recapPedido.textContent = ped;
+
+                            // Cargar UPS si existe modelo_id_real
+                            if (d.modelo_id_real) {
+                                const selUps = document.getElementById('sel_ups');
+                                if (selUps) {
+                                    selUps.value = d.modelo_id_real;
+                                    // Disparar evento change para cargar datos del UPS
+                                    const event = new Event('change');
+                                    selUps.dispatchEvent(event);
+                                }
+                            }
+
+                            // Cargar configuración guardada: voltaje, fases, longitud
+                            if (d.voltaje) {
+                                const selVoltaje = document.getElementById('sel_voltaje');
+                                if (selVoltaje) selVoltaje.value = d.voltaje;
+                            }
+                            if (d.fases) {
+                                const selFases = document.querySelector('select[name="fases"]');
+                                if (selFases) selFases.value = d.fases;
+                            }
+                            if (d.longitud) {
+                                const inputLongitud = document.querySelector('input[name="longitud"]');
+                                if (inputLongitud) inputLongitud.value = d.longitud;
+                            }
+
+                            // Cargar batería si existe
+                            if (d.id_bateria) {
+                                const selBateria = document.getElementById('sel_bateria');
+                                if (selBateria) {
+                                    selBateria.value = d.id_bateria;
+                                    // Disparar evento change para cargar datos de la batería
+                                    const event = new Event('change');
+                                    selBateria.dispatchEvent(event);
+                                }
+                            }
+
+                            // Cargar tiempo de respaldo
+                            if (d.tiempo_respaldo) {
+                                const inputTiempo = document.querySelector('input[name="tiempo_respaldo"]');
+                                if (inputTiempo) inputTiempo.value = d.tiempo_respaldo;
+                            }
+
+                            // Mensaje diferente si ya tiene datos guardados
+                            let mensaje = `✅ Pedido encontrado\n${clienteNombre} - ${sucursalNombre}`;
+                            if (d.modelo_snap) {
+                                mensaje += `\n\n📦 UPS: ${d.modelo_snap} (${d.potencia_snap} kVA)`;
+                                mensaje += `\n⚡ Config: ${d.voltaje}V, ${d.fases}F, ${d.longitud}m`;
+                                if (d.bateria_modelo) {
+                                    mensaje += `\n🔋 Batería: ${d.bateria_modelo} (${d.tiempo_respaldo || 0} min)`;
+                                }
+                                mensaje += '\n\n✨ Todo cargado! Puedes modificar y reimprimir.';
+                            } else {
+                                mensaje += '\n\nAhora selecciona el equipo y batería.';
+                            }
+                            alert(mensaje);
+                        } else {
+                            alert("❌ Pedido no encontrado.\n\nCrea el pedido desde el Dashboard primero.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("❌ Error al buscar el pedido");
+                    })
+                    .finally(() => {
+                        // Restaurar botón
+                        btnBuscar.disabled = false;
+                        btnBuscar.innerHTML = '<i class="bi bi-search me-2"></i>BUSCAR PEDIDO';
+                    });
+            };
+
+            // Click en botón
+            btnBuscar.addEventListener('click', buscarPedido);
+
+            // Enter en input
+            if (inputPedido) {
+                inputPedido.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        buscarPedido();
+                    }
+                });
+            }
+
+            // Auto-buscar si viene pedido en la URL (desde dashboard)
+            const urlParams = new URLSearchParams(window.location.search);
+            const pedidoUrl = urlParams.get('pedido');
+            if (pedidoUrl && inputPedido) {
+                inputPedido.value = pedidoUrl;
+                // Buscar automáticamente después de un breve delay
+                setTimeout(() => {
+                    buscarPedido();
+                }, 500);
+            }
         }
-    }
 
-    // --- 6. Datos de batería para recap ---
-    const selBat = document.getElementById('sel_bateria');
-    if(selBat){
-        selBat.addEventListener('change', function(){
-            const idBat=this.value; if(!idBat) return;
-            fetch(`/api/bateria/${idBat}`).then(r=>r.json()).then(data=>{
-                const cont=document.getElementById('bat_specs_container');
-                if(cont) cont.style.display='block';
-                // CORRECCIÓN: Nombres de campos según base_datos.py
-                const txt=(data.modelo?data.modelo:'--')+ (data.capacidad_nominal_ah?` (${data.capacidad_nominal_ah}Ah)`:'');
-                const recap = document.getElementById('recap_bateria'); if(recap) recap.textContent = txt;
-                document.getElementById('bat_volt').textContent = data.voltaje_nominal || '--';
-                document.getElementById('bat_ah').textContent = data.capacidad_nominal_ah || '--';
-                document.getElementById('bat_dim').textContent = `${data.largo_mm}x${data.ancho_mm}x${data.alto_total_mm} mm`;
+        // --- 6. Datos de batería para recap ---
+        const selBat = document.getElementById('sel_bateria');
+        if (selBat) {
+            selBat.addEventListener('change', function () {
+                const idBat = this.value; if (!idBat) return;
+                fetch(`/api/bateria/${idBat}`).then(r => r.json()).then(data => {
+                    const cont = document.getElementById('bat_specs_container');
+                    if (cont) cont.style.display = 'block';
+                    // CORRECCIÓN: Nombres de campos según base_datos.py
+                    const txt = (data.modelo ? data.modelo : '--') + (data.capacidad_nominal_ah ? ` (${data.capacidad_nominal_ah}Ah)` : '');
+                    const recap = document.getElementById('recap_bateria'); if (recap) recap.textContent = txt;
+                    document.getElementById('bat_volt').textContent = data.voltaje_nominal || '--';
+                    document.getElementById('bat_ah').textContent = data.capacidad_nominal_ah || '--';
+                    document.getElementById('bat_dim').textContent = `${data.largo_mm}x${data.ancho_mm}x${data.alto_total_mm} mm`;
+                });
             });
+        }
+
+        // --- 7. Popup Error Batería ---
+        {% if res and res.bat_error %}
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('errorBatMsg').textContent = "{{ res.bat_error }}";
+            new bootstrap.Modal(document.getElementById('errorBatModal')).show();
         });
-    }
+        {% endif %}
 
-    // --- 7. Popup Error Batería ---
-    {% if res and res.bat_error %}
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('errorBatMsg').textContent = "{{ res.bat_error }}";
-        new bootstrap.Modal(document.getElementById('errorBatModal')).show();
-    });
-    {% endif %}
+        // --- 8. Validación Formulario ---
+        const mainForm = document.getElementById('mainForm');
+        if (mainForm) {
+            mainForm.addEventListener('submit', function (e) {
+                let errors = [];
+                let firstField = null;
 
-    // --- 8. Validación Formulario ---
-    const mainForm = document.getElementById('mainForm');
-    if(mainForm){
-        mainForm.addEventListener('submit', function(e){
-            let errors = [];
-            let firstField = null;
+                // Validar pedido
+                const pedidoInput = document.getElementById('input_pedido');
+                if (pedidoInput && !pedidoInput.value.trim()) {
+                    errors.push("Ingrese el Número de Pedido y búsquelo");
+                    if (!firstField) firstField = pedidoInput;
+                }
 
-            // Validar pedido
-            const pedidoInput = document.getElementById('input_pedido');
-            if(pedidoInput && !pedidoInput.value.trim()) {
-                errors.push("Ingrese el Número de Pedido y búsquelo");
-                if(!firstField) firstField = pedidoInput;
-            }
+                // Validar que se hayan cargado los datos del cliente
+                const hCliente = document.getElementById('h_cliente');
+                const hSucursal = document.getElementById('h_sucursal');
+                if (!hCliente || !hCliente.value || !hSucursal || !hSucursal.value) {
+                    errors.push("Busque el pedido para cargar los datos del cliente");
+                    if (!firstField) firstField = pedidoInput;
+                }
 
-            // Validar que se hayan cargado los datos del cliente
-            const hCliente = document.getElementById('h_cliente');
-            const hSucursal = document.getElementById('h_sucursal');
-            if(!hCliente || !hCliente.value || !hSucursal || !hSucursal.value) {
-                errors.push("Busque el pedido para cargar los datos del cliente");
-                if(!firstField) firstField = pedidoInput;
-            }
+                const ups = document.getElementById('sel_ups');
+                if (ups && !ups.value) {
+                    errors.push("Seleccione un Modelo de UPS");
+                    if (!firstField) firstField = ups;
+                }
 
-            const ups = document.getElementById('sel_ups');
-            if(ups && !ups.value) {
-                errors.push("Seleccione un Modelo de UPS");
-                if(!firstField) firstField = ups;
-            }
+                const longInput = document.querySelector('input[name="longitud"]');
+                if (longInput && !longInput.value) {
+                    errors.push("Ingrese la Distancia (mts)");
+                    if (!firstField) firstField = longInput;
+                }
 
-            const longInput = document.querySelector('input[name="longitud"]');
-            if(longInput && !longInput.value) {
-                errors.push("Ingrese la Distancia (mts)");
-                if(!firstField) firstField = longInput;
-            }
+                if (errors.length > 0) {
+                    e.preventDefault();
+                    const msgContainer = document.getElementById('validationMsg');
+                    msgContainer.innerHTML = "<strong>Faltan los siguientes datos para calcular:</strong><ul class='mt-2 mb-0 text-start'>" +
+                        errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
 
-            if(errors.length > 0){
-                e.preventDefault();
-                const msgContainer = document.getElementById('validationMsg');
-                msgContainer.innerHTML = "<strong>Faltan los siguientes datos para calcular:</strong><ul class='mt-2 mb-0 text-start'>" + 
-                                         errors.map(err => `<li>${err}</li>`).join('') + "</ul>";
-                
-                const modalEl = document.getElementById('validationModal');
-                const modal = new bootstrap.Modal(modalEl);
-                modal.show();
-                
-                modalEl.addEventListener('hidden.bs.modal', function () {
-                    if(firstField) firstField.focus();
-                }, {once:true});
-            }
-        });
-    }
+                    const modalEl = document.getElementById('validationModal');
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+
+                    modalEl.addEventListener('hidden.bs.modal', function () {
+                        if (firstField) firstField.focus();
+                    }, { once: true });
+                }
+            });
+        }
     </script>
 
     <!-- Auto-descarga del PDF si está disponible -->
     {% if pdf_trigger %}
     <script>
-        (function() {
+        (function () {
             console.log('PDF generado, iniciando descarga automática...');
             const link = document.createElement('a');
             link.href = '{{ pdf_trigger.path }}';
@@ -1092,7 +982,7 @@
             // Scroll suave a los resultados
             setTimeout(() => {
                 const resultsSection = document.querySelector('.tech-matrix');
-                if(resultsSection) {
+                if (resultsSection) {
                     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 500);
@@ -1100,4 +990,5 @@
     </script>
     {% endif %}
 </body>
+
 </html>
