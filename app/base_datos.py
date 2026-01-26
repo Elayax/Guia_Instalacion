@@ -173,7 +173,10 @@ class GestorDB:
             'id_bateria': 'INTEGER',
             'id_cliente': 'INTEGER',
             'pdf_guia_url': 'TEXT',
-            'pdf_checklist_url': 'TEXT'
+            'pdf_checklist_url': 'TEXT',
+            'voltaje_entrada': 'TEXT',
+            'voltaje_salida': 'TEXT',
+            'potencia_kva': 'REAL'
         }
 
         for col, tipo in columnas_nuevas.items():
@@ -559,6 +562,23 @@ class GestorDB:
                 return False
         finally:
             conn.close()
+
+    def eliminar_proyecto(self, pedido):
+        """Elimina un proyecto publicado por su número de pedido"""
+        conn = self._conectar()
+        try:
+            conn.execute("""
+                DELETE FROM proyectos_publicados 
+                WHERE pedido = ?
+            """, (pedido,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error al eliminar proyecto {pedido}: {e}")
+            return False
+        finally:
+            conn.close()
+
             
     def obtener_proyectos(self):
         conn = self._conectar()
@@ -1082,6 +1102,7 @@ class GestorDB:
         finally:
             conn.close()
 
+
     def actualizar_pdf_checklist(self, pedido, pdf_url):
         """Actualiza la ruta del PDF de checklist para un pedido"""
         conn = self._conectar()
@@ -1091,6 +1112,235 @@ class GestorDB:
             return True
         except Exception as e:
             print(f"Error actualizando PDF checklist: {e}")
+            return False
+        finally:
+            conn.close()
+    
+    # --- VALIDACIÓN Y GESTIÓN DE PROYECTOS (NUEVO) ---
+    def validar_voltaje(self, voltaje, id_ups=None):
+        """Valida que el voltaje sea positivo y razonable"""
+        try:
+            v = float(voltaje)
+            if v <= 0:
+                return False, "El voltaje debe ser positivo"
+            if v > 1000:
+                return False, "El voltaje parece demasiado alto (>1000V)"
+            
+            # Si se proporciona id_ups, verificar compatibilidad
+            if id_ups:
+                ups_data = self.obtener_ups_id(id_ups)
+                if ups_data:
+                    voltajes_validos = []
+                    for i in [1, 2, 3]:
+                        v_entrada = ups_data.get(f'Voltaje_Entrada_{i}_V')
+                        if v_entrada:
+                            voltajes_validos.append(v_entrada)
+                    
+                    if voltajes_validos:
+                        # Verificar si el voltaje está cerca de algún voltaje válido (±10%)
+                        tolerancia = 0.1
+                        compatible = any(abs(v - v_val) / v_val <= tolerancia for v_val in voltajes_validos)
+                        if not compatible:
+                            return False, f"Voltaje no compatible con UPS (acepta: {', '.join(map(str, voltajes_validos))}V)"
+            
+            return True, "OK"
+        except (ValueError, TypeError):
+            return False, "El voltaje debe ser un número válido"
+    
+    def validar_fases(self, fases):
+        """Valida que las fases sean 1 o 3"""
+        try:
+            f = int(fases)
+            if f not in [1, 3]:
+                return False, "Las fases deben ser 1 o 3"
+            return True, "OK"
+        except (ValueError, TypeError):
+            return False, "Las fases deben ser un número entero"
+    
+    def validar_longitud(self, longitud):
+        """Valida que la longitud sea positiva"""
+        try:
+            l = float(longitud)
+            if l <= 0:
+                return False, "La longitud debe ser positiva"
+            if l > 500:
+                return False, "La longitud parece demasiado grande (>500m)"
+            return True, "OK"
+        except (ValueError, TypeError):
+            return False, "La longitud debe ser un número válido"
+    
+    def validar_datos_proyecto(self, datos):
+        """Valida todos los datos de un proyecto antes de guardar"""
+        errores = []
+        
+        # Validar voltaje
+        if 'voltaje' in datos and datos['voltaje']:
+            valido, msg = self.validar_voltaje(datos['voltaje'], datos.get('id_ups'))
+            if not valido:
+                errores.append(f"Voltaje: {msg}")
+        
+        # Validar fases
+        if 'fases' in datos and datos['fases']:
+            valido, msg = self.validar_fases(datos['fases'])
+            if not valido:
+                errores.append(f"Fases: {msg}")
+        
+        # Validar longitud
+        if 'longitud' in datos and datos['longitud']:
+            valido, msg = self.validar_longitud(datos['longitud'])
+            if not valido:
+                errores.append(f"Longitud: {msg}")
+        
+        # Validar tiempo de respaldo si existe
+        if 'tiempo_respaldo' in datos and datos['tiempo_respaldo']:
+            try:
+                t = float(datos['tiempo_respaldo'])
+                if t <= 0:
+                    errores.append("Tiempo de respaldo: Debe ser positivo")
+                if t > 1440:  # 24 horas
+                    errores.append("Tiempo de respaldo: Parece demasiado largo (>24h)")
+            except (ValueError, TypeError):
+                errores.append("Tiempo de respaldo: Debe ser un número válido")
+        
+        return len(errores) == 0, errores
+    
+    def obtener_proyectos_incompletos(self):
+        """Retorna proyectos con datos faltantes (voltaje, fases, longitud)"""
+        conn = self._conectar()
+        cursor = conn.execute("""
+            SELECT id, pedido, cliente_snap, sucursal_snap, modelo_snap, potencia_snap,
+                   id_ups, voltaje, fases, longitud, tiempo_respaldo, id_bateria
+            FROM proyectos_publicados
+            WHERE voltaje IS NULL OR fases IS NULL OR longitud IS NULL
+            ORDER BY id
+        """)
+        proyectos = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return proyectos
+    
+    def completar_datos_proyecto(self, pedido, datos):
+        """Actualiza datos de un proyecto con validación"""
+        # Primero validar
+        valido, errores = self.validar_datos_proyecto(datos)
+        if not valido:
+            return False, errores
+        
+        conn = self._conectar()
+        try:
+            set_parts = []
+            values = []
+            
+            campos_permitidos = ['id_ups', 'voltaje', 'fases', 'longitud', 'tiempo_respaldo', 'id_bateria']
+            
+            for key, value in datos.items():
+                if key in campos_permitidos and value is not None:
+                    set_parts.append(f"{key} = ?")
+                    values.append(value)
+            
+            if not set_parts:
+                return False, ["No hay datos válidos para actualizar"]
+            
+            values.append(pedido)
+            sql = f"UPDATE proyectos_publicados SET {', '.join(set_parts)} WHERE pedido = ?"
+            
+            conn.execute(sql, values)
+            conn.commit()
+            return True, []
+        except Exception as e:
+            return False, [f"Error de base de datos: {str(e)}"]
+        finally:
+            conn.close()
+    
+    # --- MEMORIA DE CALCULADORA (NUEVO) ---
+    def obtener_calculo_por_pedido(self, pedido):
+        """Obtiene datos de cálculo guardados para un pedido específico
+        
+        Args:
+            pedido: Número de pedido a buscar
+            
+        Returns:
+            dict: Datos del cálculo guardado, o None si no existe
+        """
+        conn = self._conectar()
+        try:
+            row = conn.execute("""
+                SELECT * FROM proyectos_publicados 
+                WHERE pedido = ?
+            """, (pedido,)).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+    
+    def guardar_calculo(self, pedido, datos):
+        """Guarda o actualiza cálculo de un pedido en proyectos_publicados
+        
+        Args:
+            pedido: Número de pedido
+            datos: Dict con campos a guardar (voltaje, fases, longitud, id_ups, etc.)
+            
+        Returns:
+            bool: True si se guardó exitosamente, False en caso de error
+        """
+        conn = self._conectar()
+        try:
+            # Verificar si ya existe el pedido
+            existe = conn.execute(
+                "SELECT id FROM proyectos_publicados WHERE pedido = ?",
+                (pedido,)
+            ).fetchone()
+            
+            if existe:
+                # UPDATE: Actualizar solo los campos proporcionados
+                campos = []
+                valores = []
+                
+                campos_validos = ['voltaje', 'fases', 'longitud', 'tiempo_respaldo',
+                                'id_ups', 'id_bateria', 'modelo_snap', 'potencia_snap',
+                                'cliente_snap', 'sucursal_snap', 'calibre_fases',
+                                'config_salida', 'calibre_tierra']
+                
+                for key in campos_validos:
+                    if key in datos and datos[key] is not None:
+                        campos.append(f"{key} = ?")
+                        valores.append(datos[key])
+                
+                if campos:
+                    valores.append(pedido)
+                    sql = f"UPDATE proyectos_publicados SET {', '.join(campos)} WHERE pedido = ?"
+                    conn.execute(sql, valores)
+                    conn.commit()
+                    return True
+                return False
+            else:
+                # INSERT: Crear nuevo registro
+                conn.execute("""
+                    INSERT INTO proyectos_publicados 
+                    (pedido, voltaje, fases, longitud, tiempo_respaldo, id_ups, id_bateria,
+                     modelo_snap, potencia_snap, cliente_snap, sucursal_snap,
+                     calibre_fases, config_salida, calibre_tierra, fecha_publicacion)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """, (
+                    pedido,
+                    datos.get('voltaje'),
+                    datos.get('fases'),
+                    datos.get('longitud'),
+                    datos.get('tiempo_respaldo'),
+                    datos.get('id_ups'),
+                    datos.get('id_bateria'),
+                    datos.get('modelo_snap'),
+                    datos.get('potencia_snap'),
+                    datos.get('cliente_snap'),
+                    datos.get('sucursal_snap'),
+                    datos.get('calibre_fases'),
+                    datos.get('config_salida'),
+                    datos.get('calibre_tierra')
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error guardando cálculo: {e}")
+            import traceback
+            traceback.print_exc()
             return False
         finally:
             conn.close()

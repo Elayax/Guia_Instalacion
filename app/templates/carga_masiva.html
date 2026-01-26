@@ -130,11 +130,11 @@
             <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span style="color:var(--accent-red)">MANAGER</span></span>
         </div>
         <nav class="nav-links">
-            <a href="{{ url_for('main.index') }}" class="nav-link">CALCULADORA</a>
-            <a href="{{ url_for('main.equipos') }}" class="nav-link">EDICIÓN EQUIPOS</a>
-            <a href="{{ url_for('main.baterias') }}" class="nav-link">BATERÍAS</a>
-            <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
-            <a href="{{ url_for('main.carga_masiva') }}" class="nav-link active">CARGA MASIVA</a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link">CALCULADORA</a>
+            <a href="{{ url_for('management.equipos') }}" class="nav-link">EDICIÓN EQUIPOS</a>
+            <a href="{{ url_for('management.baterias') }}" class="nav-link">BATERÍAS</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link">GESTIÓN BD</a>
+            <a href="{{ url_for('management.carga_masiva') }}" class="nav-link active">CARGA MASIVA</a>
         </nav>
     </header>
 
@@ -153,7 +153,7 @@
                     <p class="small text-muted mb-4">Especificaciones técnicas de equipos UPS (kVA, Voltajes, Dimensiones).</p>
                     
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.descargar_plantilla', tipo='ups') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='ups') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="ups">
                             <input type="file" name="archivo_csv" id="csv_ups" class="d-none" accept=".csv" onchange="this.form.submit()">
@@ -171,7 +171,7 @@
                     <p class="small text-muted mb-4">Base de datos de clientes, sucursales y coordenadas geográficas.</p>
                     
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.descargar_plantilla', tipo='clientes') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='clientes') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="clientes">
                             <input type="file" name="archivo_csv" id="csv_clientes" class="d-none" accept=".csv" onchange="this.form.submit()">
@@ -189,7 +189,7 @@
                     <p class="small text-muted mb-4">Fichas técnicas de baterías (Voltaje, Ah, Vida Útil, Dimensiones).</p>
                     
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.descargar_plantilla', tipo='baterias_modelos') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_modelos') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="baterias_modelos">
                             <input type="file" name="archivo_csv" id="csv_bat_mod" class="d-none" accept=".csv" onchange="this.form.submit()">
@@ -207,7 +207,7 @@
                     <p class="small text-muted mb-4">Tablas de potencia constante (Watts/Celda) para dimensionamiento.</p>
                     
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('main.descargar_plantilla', tipo='baterias_curvas') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_curvas') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="baterias_curvas">
                             <input type="file" name="archivo_csv" id="csv_bat_curv" class="d-none" accept=".csv" onchange="this.form.submit()">
