@@ -1,312 +1,29 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Sistema UPS Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-            --accent-red: #ff453a;
-            --accent-red-dim: #cf2e26;
-            --text-main: #f5f5f7;
-            --text-sec: #a1a1a6;
-            --bg-body: #1c1c1e;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            background-image:
-                radial-gradient(circle at 50% 0%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(60, 20, 20, 0.15) 0%, transparent 40%);
-            background-attachment: fixed;
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            min-height: 100vh;
-        }
-
-        .app-header {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-links {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 4px;
-            border-radius: 100px;
-            border: 1px solid var(--glass-border);
-            display: flex;
-            gap: 2px;
-        }
-
-        .nav-link {
-            color: var(--text-sec) !important;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            padding: 0.4rem 1.2rem;
-            border-radius: 20px;
-            text-decoration: none;
-        }
-        .nav-link:hover {
-            color: var(--text-main) !important;
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .nav-link.active {
-            color: var(--text-main) !important;
-            background: rgba(60, 60, 60, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .container-main {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .glass-card {
-            background: rgba(30, 30, 30, 0.4);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-        }
-
-        .glass-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, rgba(255, 69, 58, 0.1) 0%, rgba(255, 69, 58, 0.05) 100%);
-            border: 1px solid rgba(255, 69, 58, 0.2);
-            border-radius: 15px;
-            padding: 25px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--accent-red);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: white;
-        }
-
-        .stat-content h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin: 0;
-        }
-
-        .stat-content p {
-            font-size: 0.85rem;
-            color: var(--text-sec);
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: var(--accent-red);
-            border: none;
-            border-radius: 10px;
-            padding: 0.75rem 2rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-red-dim);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 69, 58, 0.4);
-        }
-
-        .project-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .project-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: var(--accent-red);
-            transform: translateX(5px);
-        }
-
-        .project-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 0.5rem;
-        }
-
-        .project-meta {
-            font-size: 0.85rem;
-            color: var(--text-sec);
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .project-badge {
-            background: rgba(255, 69, 58, 0.15);
-            color: var(--accent-red);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .quick-action {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .quick-action:hover {
-            background: rgba(255, 69, 58, 0.1);
-            border-color: var(--accent-red);
-            transform: scale(1.05);
-        }
-
-        .quick-action i {
-            font-size: 2rem;
-            color: var(--accent-red);
-            margin-bottom: 10px;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title i {
-            color: var(--accent-red);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-sec);
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .form-control, .form-select {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            border-radius: 10px;
-            padding: 0.75rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--accent-red);
-            color: var(--text-main);
-            box-shadow: 0 0 0 0.25rem rgba(255, 69, 58, 0.15);
-        }
-
-        .form-label {
-            color: var(--text-sec);
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-        #map {
-            height: 400px;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .info-display {
-            background: rgba(255, 69, 58, 0.1);
-            border-left: 3px solid var(--accent-red);
-            padding: 1rem;
-            border-radius: 8px;
-            height: 100%;
-        }
-
-        .info-label {
-            color: var(--text-sec);
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-            letter-spacing: 0.5px;
-        }
-
-        .info-value {
-            color: var(--text-main);
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
+
 <body>
     <!-- Header -->
     <header class="app-header">
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span style="color:var(--accent-red)">MANAGER</span></span>
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span
+                    style="color:var(--accent-red)">MANAGER</span></span>
         </div>
         <nav class="nav-links">
-            <a href="{{ url_for('main.dashboard') }}" class="nav-link active"><i class="bi bi-speedometer2 me-1"></i> DASHBOARD</a>
-            <a href="{{ url_for('main.calculadora') }}" class="nav-link">CALCULADORA</a>
-            <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link active"><i class="bi bi-speedometer2 me-1"></i>
+                DASHBOARD</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link">CALCULADORA</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link">GESTIÓN BD</a>
         </nav>
     </header>
 
@@ -317,15 +34,13 @@
                 <i class="bi bi-search"></i>
                 Buscar Pedido
             </div>
-            <form method="POST" action="{{ url_for('main.dashboard') }}">
+            <form method="POST" action="{{ url_for('dashboard.dashboard') }}">
                 <input type="hidden" name="accion" value="buscar_pedido">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-8">
                         <label class="form-label">Número de Pedido / OC</label>
                         <input type="text" class="form-control form-control-lg" name="pedido_buscar"
-                               placeholder="Ingrese número de pedido..."
-                               value="{{ pedido_buscado }}"
-                               required>
+                            placeholder="Ingrese número de pedido..." value="{{ pedido_buscado }}" required>
                     </div>
                     <div class="col-md-4">
                         <button type="submit" class="btn btn-primary btn-lg w-100">
@@ -337,7 +52,8 @@
 
             <div class="mt-3 text-center">
                 <span class="text-muted" style="font-size: 0.85rem;">¿No existe el pedido?</span>
-                <button class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
+                <button class="btn btn-sm btn-outline-danger ms-2" data-bs-toggle="modal"
+                    data-bs-target="#modalNuevoProyecto">
                     <i class="bi bi-plus-circle me-1"></i>Crear Nuevo Pedido
                 </button>
             </div>
@@ -410,12 +126,15 @@
             <div class="row g-3 mb-4">
                 <!-- UPS Asignado -->
                 <div class="col-md-4">
-                    <div class="stat-card" style="{% if estado.tiene_ups %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
+                    <div class="stat-card"
+                        style="{% if estado.tiene_ups %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
                         <div class="stat-icon" style="{% if estado.tiene_ups %}background: #34c759;{% endif %}">
                             <i class="bi bi-lightning-charge-fill"></i>
                         </div>
                         <div class="stat-content">
-                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_ups %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
+                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_ups %}<i
+                                    class="bi bi-check-circle-fill text-success"></i>{% else %}<i
+                                    class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
                             <p style="margin-bottom: 5px;">UPS Asignado</p>
                             {% if estado.tiene_ups %}
                             <small style="color: var(--text-sec); font-size: 0.75rem;">{{ estado.modelo_ups }}</small>
@@ -428,18 +147,40 @@
 
                 <!-- Cálculos Publicados -->
                 <div class="col-md-4">
-                    <div class="stat-card" style="{% if estado.tiene_calculos %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
+                    <div class="stat-card"
+                        style="{% if estado.tiene_calculos %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
                         <div class="stat-icon" style="{% if estado.tiene_calculos %}background: #34c759;{% endif %}">
                             <i class="bi bi-calculator-fill"></i>
                         </div>
                         <div class="stat-content">
-                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_calculos %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
+                            <h3 style="font-size: 1.5rem;">{% if estado.tiene_calculos %}<i
+                                    class="bi bi-check-circle-fill text-success"></i>{% else %}<i
+                                    class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
                             <p style="margin-bottom: 5px;">Cálculos Publicados</p>
                             {% if estado.tiene_calculos %}
-                            <small style="color: var(--text-sec); font-size: 0.75rem;">{{ pedido.fecha_publicacion or 'Fecha N/A' }}</small>
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">{{ pedido.fecha_publicacion or
+                                'Fecha N/A' }}</small>
                             {% else %}
                             <small style="color: var(--text-sec); font-size: 0.75rem;">No generados</small>
                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checklist -->
+                <div class="col-md-4">
+                    <div class="stat-card"
+                        style="{% if pedido.pdf_checklist_url %}background: linear-gradient(135deg, rgba(52, 199, 89, 0.15) 0%, rgba(52, 199, 89, 0.05) 100%); border-color: rgba(52, 199, 89, 0.3);{% endif %}">
+                        <div class="stat-icon" style="{% if pedido.pdf_checklist_url %}background: #34c759;{% endif %}">
+                            <i class="bi bi-clipboard-check-fill"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 style="font-size: 1.5rem;">{% if pedido.pdf_checklist_url %}<i
+                                    class="bi bi-check-circle-fill text-success"></i>{% else %}<i
+                                    class="bi bi-x-circle-fill text-danger"></i>{% endif %}</h3>
+                            <p style="margin-bottom: 5px;">Checklist Generado</p>
+                            <small style="color: var(--text-sec); font-size: 0.75rem;">{% if pedido.pdf_checklist_url
+                                %}Disponible{% else %}No generado{% endif %}</small>
                         </div>
                     </div>
                 </div>
@@ -452,14 +193,70 @@
                 Acciones para este Pedido
             </div>
             <div class="row g-3">
+                <!-- Acción principal: Generar/Modificar Guía -->
                 <div class="col-12">
-                    <a href="{{ url_for('main.calculadora') }}?pedido={{ pedido.pedido }}" class="btn btn-lg w-100"
-                       style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.2) 0%, rgba(255, 69, 58, 0.1) 100%);
+                    <a href="{{ url_for('calculator.calculadora') }}?pedido={{ pedido.pedido }}" class="btn btn-lg w-100"
+                        style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.2) 0%, rgba(255, 69, 58, 0.1) 100%);
                               border: 2px solid var(--accent-red); color: var(--text-main); font-weight: 600; padding: 1.5rem;">
-                        <i class="bi bi-{% if estado.tiene_calculos %}arrow-repeat{% else %}play-circle{% endif %} me-2" style="font-size: 1.5rem;"></i>
+                        <i class="bi bi-{% if estado.tiene_calculos %}arrow-repeat{% else %}play-circle{% endif %} me-2"
+                            style="font-size: 1.5rem;"></i>
                         <div>
-                            <div style="font-size: 1.1rem;">{% if estado.tiene_calculos %}Reimprimir / Modificar Guía{% else %}Generar Guía{% endif %} de Instalación</div>
+                            <div style="font-size: 1.1rem;">{% if estado.tiene_calculos %}Reimprimir / Modificar Guía{%
+                                else %}Generar Guía{% endif %} de Instalación</div>
                             <small style="font-size: 0.75rem; opacity: 0.7;">Ir a Calculadora</small>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Documentos Generados -->
+                {% if pedido.pdf_guia_url or pedido.pdf_checklist_url %}
+                <div class="col-12">
+                    <div class="section-title mb-2" style="font-size: 1rem;">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Documentos Disponibles
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Reimprimir Guía -->
+                {% if pedido.pdf_guia_url %}
+                <div class="col-md-6">
+                    <a href="{{ url_for('documents.reimprimir_guia', pedido=pedido.pedido) }}"
+                        class="btn btn-outline-success w-100" style="padding: 1rem; border-width: 2px;">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        <div>
+                            <div style="font-weight: 600;">Reimprimir Guía</div>
+                            <small style="font-size: 0.7rem; opacity: 0.8;">Descargar PDF guardado</small>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Reimprimir Checklist -->
+                {% if pedido.pdf_checklist_url %}
+                <div class="col-md-6">
+                    <a href="{{ url_for('documents.reimprimir_checklist', pedido=pedido.pedido) }}"
+                        class="btn btn-outline-success w-100" style="padding: 1rem; border-width: 2px;">
+                        <i class="bi bi-clipboard-check me-2"></i>
+                        <div>
+                            <div style="font-weight: 600;">Reimprimir Checklist</div>
+                            <small style="font-size: 0.7rem; opacity: 0.8;">Descargar PDF guardado</small>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Generar Checklist -->
+                <div class="col-12">
+                    <a href="{{ url_for('documents.generar_checklist', pedido=pedido.pedido) }}" class="btn btn-lg w-100"
+                        style="background: linear-gradient(135deg, rgba(10, 132, 255, 0.2) 0%, rgba(10, 132, 255, 0.1) 100%);
+                              border: 2px solid #0a84ff; color: var(--text-main); font-weight: 600; padding: 1.5rem;">
+                        <i class="bi bi-clipboard-{% if pedido.pdf_checklist_url %}check{% else %}plus{% endif %} me-2"
+                            style="font-size: 1.5rem;"></i>
+                        <div>
+                            <div style="font-size: 1.1rem;">{% if pedido.pdf_checklist_url %}Regenerar{% else
+                                %}Generar{% endif %} Checklist de Instalación</div>
+                            <small style="font-size: 0.75rem; opacity: 0.7;">Llenar datos del cliente e imprimir</small>
                         </div>
                     </a>
                 </div>
@@ -496,23 +293,53 @@
     <!-- Modal: Nuevo Proyecto -->
     <div class="modal fade" id="modalNuevoProyecto" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content" style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+            <div class="modal-content"
+                style="background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title text-danger fw-bold">
                         <i class="bi bi-plus-circle me-2"></i>Registrar Nuevo Proyecto
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ url_for('main.dashboard') }}">
+                <form method="POST" action="{{ url_for('dashboard.dashboard') }}">
                     <input type="hidden" name="accion" value="crear_proyecto">
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-md-12">
                                 <label class="form-label">Número de Pedido / OC</label>
                                 <input type="text" class="form-control" name="pedido" id="input_pedido_modal"
-                                       placeholder="Ej: OC-2024-001"
-                                       value="{{ pedido_buscado if pedido_buscado and not pedido else '' }}"
-                                       required>
+                                    placeholder="Ej: OC-2024-001"
+                                    value="{{ pedido_buscado if pedido_buscado and not pedido else '' }}" required>
+                            </div>
+                            <!-- NUEVOS CAMPOS: Requerimientos del Cliente -->
+                            <div class="col-md-4">
+                                <label class="form-label">Potencia (kVA)</label>
+                                <input type="number" step="0.1" class="form-control" name="potencia_kva"
+                                    placeholder="kVA">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Voltaje Entrada</label>
+                                <select class="form-select" name="voltaje_entrada">
+                                    <option value="" selected>-- Sel --</option>
+                                    <option value="120">120V</option>
+                                    <option value="127">127V</option>
+                                    <option value="208">208V</option>
+                                    <option value="220">220V</option>
+                                    <option value="440">440V</option>
+                                    <option value="480">480V</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Voltaje Salida</label>
+                                <select class="form-select" name="voltaje_salida">
+                                    <option value="" selected>-- Sel --</option>
+                                    <option value="120">120V</option>
+                                    <option value="127">127V</option>
+                                    <option value="208">208V</option>
+                                    <option value="220">220V</option>
+                                    <option value="440">440V</option>
+                                    <option value="480">480V</option>
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Cliente</label>
@@ -545,7 +372,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Cargar sucursales al seleccionar cliente
-        document.getElementById('sel_cliente_modal').addEventListener('change', function() {
+        document.getElementById('sel_cliente_modal').addEventListener('change', function () {
             const cliente = this.value;
             const sucursalSelect = document.getElementById('sel_sucursal_modal');
 
@@ -570,7 +397,7 @@
         // Búsqueda rápida con Enter
         const pedidoInput = document.querySelector('input[name="pedido_buscar"]');
         if (pedidoInput) {
-            pedidoInput.addEventListener('keypress', function(e) {
+            pedidoInput.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const btnBuscar = document.querySelector('button[type="submit"]');
@@ -580,4 +407,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -318,6 +318,42 @@ def guardar_imagen_proyecto(file, pedido):
     file.save(filepath)
     return filename_unico  # Retorna solo el nombre del archivo
 
+def guardar_pdf_proyecto(pdf_bytes, pedido, tipo='guia'):
+    """
+    Guarda un PDF permanentemente en la carpeta del proyecto
+
+    Args:
+        pdf_bytes: bytes del PDF a guardar
+        pedido: número de pedido
+        tipo: 'guia' o 'checklist'
+
+    Returns:
+        ruta relativa del PDF guardado (para almacenar en BD)
+    """
+    from datetime import datetime
+
+    # Crear carpeta del proyecto
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    proyecto_dir = os.path.join(base_dir, 'static', 'pdf', 'proyectos', str(pedido))
+    if not os.path.exists(proyecto_dir):
+        os.makedirs(proyecto_dir)
+
+    # Nombre del archivo con timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if tipo == 'guia':
+        filename = f"Guia_Instalacion_{pedido}_{timestamp}.pdf"
+    else:
+        filename = f"Checklist_{pedido}_{timestamp}.pdf"
+
+    filepath = os.path.join(proyecto_dir, filename)
+
+    # Guardar PDF
+    with open(filepath, 'wb') as f:
+        f.write(pdf_bytes)
+
+    # Retornar ruta relativa desde static
+    return f"pdf/proyectos/{pedido}/{filename}"
+
 def procesar_calculo_ups(db, form):
     """Maneja la lógica de cálculo y publicación del index"""
     accion = form.get('accion')

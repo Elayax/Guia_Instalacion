@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperación de Proyectos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --accent-red: #ff453a;
+            --accent-red-dim: #cf2e26;
+            --text-main: #f5f5f7;
+            --text-sec: #a1a1a6;
+            --bg-body: #1c1c1e;
+            --success-color: #30d158;
+            --warning-color: #ffd60a;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(60, 20, 20, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            gap: 2px;
+        }
+
+        .nav-link {
+            color: var(--text-sec) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 0.4rem 1.2rem;
+            border-radius: 20px;
+        }
+
+        .nav-link:hover {
+            color: var(--text-main) !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            color: var(--text-main) !important;
+            background: rgba(60, 60, 60, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-matrix {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .control-title {
+            color: var(--accent-red);
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: var(--text-main) !important;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15) !important;
+            border-color: var(--accent-red) !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .form-control.is-valid {
+            border-color: var(--success-color) !important;
+        }
+
+        .form-control.is-invalid {
+            border-color: var(--accent-red) !important;
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 10px 20px;
+        }
+
+        .btn-primary,
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dim));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2);
+        }
+
+        .btn-primary:hover,
+        .btn-success:hover {
+            background: linear-gradient(135deg, #ff5e55, #d63a30);
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-main);
+        }
+
+        .table {
+            color: #ffffff !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .table thead th {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #ffffff !important;
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .table td,
+        .table th {
+            background-color: transparent !important;
+            border-color: var(--glass-border) !important;
+            vertical-align: middle;
+            color: #ffffff !important;
+        }
+
+        .badge-warning {
+            background-color: var(--warning-color);
+            color: #000;
+        }
+
+        .badge-success {
+            background-color: var(--success-color);
+            color: #000;
+        }
+
+        .invalid-feedback,
+        .valid-feedback {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .status-incomplete {
+            background-color: rgba(255, 214, 10, 0.2);
+            color: var(--warning-color);
+            border: 1px solid var(--warning-color);
+        }
+
+        .status-complete {
+            background-color: rgba(48, 209, 88, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header class="app-header">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span
+                    style="color:var(--accent-red)">MANAGER</span></span>
+        </div>
+
+        <nav class="nav-links">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link">DASHBOARD</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link">CALCULADORA</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link">GESTIÓN BD</a>
+            <a href="{{ url_for('management.recuperacion_proyectos') }}" class="nav-link active">RECUPERACIÓN</a>
+        </nav>
+    </header>
+
+    <div class="container-fluid p-4">
+        {% if msg %}
+        <div class="alert alert-{{ msg_type if msg_type else 'info' }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <div class="tech-matrix">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="control-title mb-1"><i class="fas fa-heartbeat me-2"></i> RECUPERACIÓN DE PROYECTOS</h3>
+                    <p class="text-muted mb-0">Completa los datos faltantes de proyectos recuperados (voltaje, fases,
+                        longitud)</p>
+                </div>
+                <div>
+                    <span
+                        class="status-badge {% if proyectos_incompletos|length > 0 %}status-incomplete{% else %}status-complete{% endif %}">
+                        {{ proyectos_incompletos|length }} PROYECTOS PENDIENTES
+                    </span>
+                </div>
+            </div>
+
+            {% if proyectos_incompletos|length == 0 %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                ¡Excelente! Todos los proyectos tienen sus datos completos.
+            </div>
+            {% else %}
+            <div style="height: 600px; overflow-y: auto;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>UPS</th>
+                            <th>Voltaje</th>
+                            <th>Fases</th>
+                            <th>Longitud</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proyecto in proyectos_incompletos %}
+                        <tr>
+                            <td><strong>{{ proyecto.pedido }}</strong></td>
+                            <td>{{ proyecto.cliente_snap }}<br><small class="text-muted">{{ proyecto.sucursal_snap
+                                    }}</small></td>
+                            <td>{{ proyecto.modelo_snap }}<br><small class="text-muted">{{ proyecto.potencia_snap }}
+                                    kVA</small></td>
+                            <td>
+                                {% if proyecto.voltaje %}
+                                <span class="badge bg-success">{{ proyecto.voltaje }} V</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Faltante</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if proyecto.fases %}
+                                <span class="badge bg-success">{{ proyecto.fases }}F</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Faltante</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if proyecto.longitud %}
+                                <span class="badge bg-success">{{ proyecto.longitud }} m</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Faltante</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-primary"
+                                    onclick='editarProyecto("{{ proyecto.pedido }}", {{ proyecto|tojson }})'>
+                                    <i class="fas fa-edit me-1"></i> Completar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MODAL DE EDICIÓN -->
+    <div class="modal fade" id="modalEdicion" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content"
+                style="background-color: rgba(30, 30, 30, 0.95); color: var(--text-main); border: 1px solid var(--glass-border);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--glass-border);">
+                    <h5 class="modal-title">Completar Datos del Proyecto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formEdicion" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="pedido" id="edit_pedido">
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Pedido:</strong> <span id="display_pedido"></span></label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Cliente:</strong> <span
+                                    id="display_cliente"></span></label>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="edit_voltaje" class="form-label">Voltaje (V) *</label>
+                                <input type="number" class="form-control" id="edit_voltaje" name="voltaje" required>
+                                <div class="invalid-feedback">El voltaje debe ser un número positivo</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="edit_fases" class="form-label">Fases *</label>
+                                <select class="form-select" id="edit_fases" name="fases" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="1">1 Fase</option>
+                                    <option value="3">3 Fases</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione 1 o 3 fases</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="edit_longitud" class="form-label">Longitud (m) *</label>
+                                <input type="number" step="0.1" class="form-control" id="edit_longitud" name="longitud"
+                                    required>
+                                <div class="invalid-feedback">La longitud debe ser un número positivo</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label for="edit_tiempo_respaldo" class="form-label">Tiempo de Respaldo (min) <small
+                                        class="text-muted">(Opcional)</small></label>
+                                <input type="number" step="0.1" class="form-control" id="edit_tiempo_respaldo"
+                                    name="tiempo_respaldo">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid var(--glass-border);">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let modalEdicion;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            modalEdicion = new bootstrap.Modal(document.getElementById('modalEdicion'));
+
+            // Validación en tiempo real
+            const form = document.getElementById('formEdicion');
+            const voltajeInput = document.getElementById('edit_voltaje');
+            const fasesSelect = document.getElementById('edit_fases');
+            const longitudInput = document.getElementById('edit_longitud');
+
+            voltajeInput.addEventListener('input', function () {
+                const val = parseFloat(this.value);
+                if (isNaN(val) || val <= 0) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            longitudInput.addEventListener('input', function () {
+                const val = parseFloat(this.value);
+                if (isNaN(val) || val <= 0) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            fasesSelect.addEventListener('change', function () {
+                if (this.value === '' || (this.value !== '1' && this.value !== '3')) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+
+        function editarProyecto(pedido, datos) {
+            document.getElementById('edit_pedido').value = pedido;
+            document.getElementById('display_pedido').textContent = pedido;
+            document.getElementById('display_cliente').textContent = datos.cliente_snap + ' - ' + datos.sucursal_snap;
+
+            // Rellenar valores existentes
+            document.getElementById('edit_voltaje').value = datos.voltaje || '';
+            document.getElementById('edit_fases').value = datos.fases || '';
+            document.getElementById('edit_longitud').value = datos.longitud || '';
+            document.getElementById('edit_tiempo_respaldo').value = datos.tiempo_respaldo || '';
+
+            // Limpiar clases de validación
+            document.querySelectorAll('.form-control, .form-select').forEach(el => {
+                el.classList.remove('is-valid', 'is-invalid');
+            });
+
+            modalEdicion.show();
+        }
+    </script>
+</body>
+
+</html>
