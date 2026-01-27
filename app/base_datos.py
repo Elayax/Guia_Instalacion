@@ -261,6 +261,20 @@ class GestorDB:
             placeholders = ",".join(["?"] * 31)
             cursor.executemany(f"INSERT INTO baterias_modelos ({cols}) VALUES ({placeholders})", datos_ejemplo)
 
+        # 5. TABLA MONITOREO (NUEVO MODULO)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS monitoreo_config (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip TEXT NOT NULL,
+                port INTEGER DEFAULT 502,
+                slave_id INTEGER DEFAULT 1,
+                nombre TEXT,
+                estado TEXT DEFAULT 'inactivo',
+                fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(ip, port, slave_id)
+            )
+        ''')
+
         conn.commit()
         conn.close()
 
@@ -1344,3 +1358,31 @@ class GestorDB:
             return False
         finally:
             conn.close()
+
+    # --- GESTIÓN DE MONITOREO (NUEVO MÓDULO) ---
+    def agregar_monitoreo_ups(self, datos):
+        conn = self._conectar()
+        try:
+            conn.execute('''
+                INSERT INTO monitoreo_config (ip, port, slave_id, nombre)
+                VALUES (?, ?, ?, ?)
+            ''', (datos['ip'], int(datos.get('port', 502)), int(datos.get('slave_id', 1)), datos.get('nombre', 'UPS')))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error agregando dispositivo monitoreo: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def obtener_monitoreo_ups(self):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM monitoreo_config ORDER BY nombre").fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
+    def eliminar_monitoreo_ups(self, id_device):
+        conn = self._conectar()
+        conn.execute("DELETE FROM monitoreo_config WHERE id = ?", (id_device,))
+        conn.commit()
+        conn.close()

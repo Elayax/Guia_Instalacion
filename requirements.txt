@@ -12,3 +12,10 @@ MarkupSafe==3.0.3
 pillow==11.3.0
 Werkzeug==3.1.5
 zipp==3.23.0
+pymodbus==3.6.8
+influxdb-client==1.43.0
+flask-socketio==5.3.6
+eventlet==0.36.1
+pysnmp==5.0.34
+pyasn1==0.5.1
+

@@ -16,4 +16,10 @@ def create_app():
     app.register_blueprint(management_bp)
     app.register_blueprint(documents_bp)
 
+    from app.routes.monitoreo_routes import monitoreo_bp
+    app.register_blueprint(monitoreo_bp)
+
+    from app.extensions import socketio
+    socketio.init_app(app, async_mode='threading')
+
     return app
