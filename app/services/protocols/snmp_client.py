@@ -1,220 +1,122 @@
-"""
-Cliente SNMP para monitoreo de UPS usando pysnmp 5.x.
-
-Este módulo proporciona una interfaz simplificada para realizar consultas SNMP
-a dispositivos UPS remotos, con manejo robusto de errores, timeouts y logging detallado.
-
-Compatible con Python 3.14 usando pysnmp 5.x
-
-Autor: Sistema de Monitoreo UPS
-Fecha: 2026-01-26
-"""
-
 import logging
-from typing import Dict, List, Optional, Tuple, Any
-
-# Imports para pysnmp 5.x (compatible con Python 3.14)
-from pysnmp.hlapi.v1arch.asyncio import *
-from pysnmp.hlapi.asyncio import SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity, getCmd, nextCmd
 import asyncio
+from typing import Dict, Any, List, Union
 
-# Configurar logging
+# Importación moderna para PySNMP 7.x
+from pysnmp.hlapi.asyncio import (
+    SnmpEngine, CommunityData, UdpTransportTarget, ContextData,
+    ObjectType, ObjectIdentity, get_cmd
+)
+
 logger = logging.getLogger(__name__)
 
-
 class SNMPClientError(Exception):
-    """Excepción personalizada para errores del cliente SNMP."""
     pass
 
-
 class SNMPClient:
-    """
-    Cliente SNMP para comunicación con dispositivos UPS.
-    
-    Usa pysnmp 5.x compatible con Python 3.14+.
-    Soporta SNMP v2c con timeouts configurables para redes VPN.
-    
-    Attributes:
-        host (str): Dirección IP o hostname del dispositivo
-        port (int): Puerto SNMP (default: 161, RUT956: 8161)
-        community (str): Community string SNMP (default: 'public')
-        timeout (int): Timeout en segundos para operaciones SNMP
-        retries (int): Número de reintentos en caso de fallo
-    
-    Example:
-        >>> client = SNMPClient('10.147.17.2', port=8161, community='public')
-        >>> voltage = client.get_oid('.1.3.6.1.4.1.56788.1.1.1.3.5.1')
-        >>> print(f"Voltaje batería: {voltage} V")
-    """
-    
-    def __init__(
-        self,
-        host: str,
-        port: int = 161,
-        community: str = 'public',
-        timeout: int = 5,
-        retries: int = 2
-    ):
-        """
-        Inicializa el cliente SNMP.
-        
-        Args:
-            host: Dirección IP del dispositivo UPS
-            port: Puerto SNMP (8161 para RUT956 con port forward)
-            community: Community string SNMP
-            timeout: Timeout en segundos (5s recomendado para VPN)
-            retries: Número de reintentos automáticos
-        """
-        self.host = host
-        self.port = port
+    def __init__(self, ip_address: str = None, port: int = 161, community: str = 'public', timeout: int = 2, retries: int = 1):
+        self.ip_address = ip_address
         self.community = community
+        self.port = port
         self.timeout = timeout
         self.retries = retries
-        
-        logger.info(
-            f"Cliente SNMP inicializado: {host}:{port} "
-            f"(community={community}, timeout={timeout}s, retries={retries})"
-        )
-    
-    def _run_async(self, coro):
-        """Helper para ejecutar corutinas asyncio de forma sincrónica."""
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        return loop.run_until_complete(coro)
-    
-    async def _get_oid_async(self, oid: str) -> Optional[Any]:
-        """Versión async de get_oid."""
-        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
-            SnmpEngine(),
-            CommunityData(self.community, mpModel=1),  # SNMPv2c
-            await UdpTransportTarget.create((self.host, self.port), timeout=self.timeout, retries=self.retries),
-            ContextData(),
-            ObjectType(ObjectIdentity(oid))
-        )
-        
-        if errorIndication:
-            raise SNMPClientError(f"Error de comunicación: {errorIndication}")
-        
-        if errorStatus:
-            raise SNMPClientError(f"{errorStatus.prettyPrint()} en posición {errorIndex}")
-        
-        for varBind in varBinds:
-            oid_result, value = varBind
-            return value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
-        
-        return None
-    
-    def get_oid(self, oid: str) -> Optional[Any]:
-        """
-        Lee el valor de un OID individual.
-        
-        Args:
-            oid: OID en formato string (ej: '.1.3.6.1.4.1.56788.1.1.1.3.5.1')
-        
-        Returns:
-            Valor del OID (int, str, float) o None si hay error
-        
-        Raises:
-            SNMPClientError: Si ocurre un error de comunicación SNMP
-        
-        Example:
-            >>> battery_voltage = client.get_oid('.1.3.6.1.4.1.56788.1.1.1.3.5.1')
-        """
-        logger.debug(f"Leyendo OID {oid} desde {self.host}:{self.port}")
-        
-        try:
-            value = self._run_async(self._get_oid_async(oid))
-            logger.debug(f"OID {oid} = {value}")
-            return value
-        except Exception as e:
-            logger.exception(f"Excepción al leer OID {oid}: {e}")
-            raise SNMPClientError(f"Error al leer OID {oid}: {e}")
-    
-    def get_multiple_oids(self, oids: List[str]) -> Dict[str, Any]:
-        """
-        Lee múltiples OIDs (uno por uno debido a limitaciones de la API).
-        
-        Args:
-            oids: Lista de OIDs a consultar
-        
-        Returns:
-            Diccionario {oid: valor} con los resultados
-        """
-        logger.debug(f"Leyendo {len(oids)} OIDs desde {self.host}:{self.port}")
-        
-        results = {}
-        for oid in oids:
-            try:
-                value = self.get_oid(oid)
-                results[oid] = value
-            except:
-                results[oid] = None
-        
-        logger.info(f"Lectura batch exitosa: {len(results)}/{len(oids)} OIDs")
-        return results
-    
-    def walk_oid(self, base_oid: str, max_results: int = 100) -> Dict[str, Any]:
-        """
-        Realiza un SNMP WALK para explorar un árbol de OIDs.
-        
-        Args:
-            base_oid: OID base desde donde comenzar el walk
-            max_results: Máximo número de resultados a retornar
-        
-        Returns:
-            Diccionario {oid: valor} con todos los OIDs descendientes
-        """
-        logger.debug(f"Iniciando WALK desde OID {base_oid}")
-        results = {}
-        count = 0
-        
-        # Implementación simplificada usando get iterativo
-        current_oid = base_oid
-        while count < max_results:
-            try:
-                value = self.get_oid(current_oid)
-                if value:
-                    results[current_oid] = value
-                    count += 1
-                else:
-                    break
-            except:
-                break
-        
-        logger.info(f"WALK completado: {count} OIDs encontrados")
-        return results
-    
-    def test_connection(self) -> Tuple[bool, str]:
-        """
-        Prueba la conectividad SNMP con el dispositivo.
-        
-        Returns:
-            Tupla (éxito: bool, mensaje: str)
-        """
-        logger.info(f"Probando conectividad SNMP a {self.host}:{self.port}")
-        
-        try:
-            sys_descr_oid = '.1.3.6.1.2.1.1.1.0'
-            value = self.get_oid(sys_descr_oid)
+        self.engine = SnmpEngine()
+        # Diccionario de OIDs específicos para tu NetAgent/Dragon Power
+        self.oids_map = {
+            "ups_model": "1.3.6.1.4.1.935.1.1.1.1.1.2.0",
+            "battery_voltage": "1.3.6.1.4.1.935.1.1.1.2.2.2.0",
+            "battery_capacity": "1.3.6.1.4.1.935.1.1.1.2.2.1.0",
+            "input_voltage": "1.3.6.1.4.1.935.1.1.1.3.2.1.0",
+            "output_voltage": "1.3.6.1.4.1.935.1.1.1.4.2.1.0",
+            "output_load": "1.3.6.1.4.1.935.1.1.1.4.2.3.0",
+            "temperature": "1.3.6.1.4.1.935.1.1.1.2.2.3.0"
+        }
+
+    async def get_ups_data(self, ip_address: str = None) -> Dict[str, Any]:
+        """Consulta todos los datos del UPS y los devuelve formateados"""
+        target_ip = ip_address or self.ip_address
+        if not target_ip:
+            return {}
             
-            if value:
-                msg = f"Conexión exitosa. Device: {value}"
-                logger.info(msg)
-                return True, msg
-            else:
-                msg = "Conexión establecida pero sin respuesta válida"
-                logger.warning(msg)
-                return False, msg
-        
-        except SNMPClientError as e:
-            msg = f"Error de conexión: {e}"
-            logger.error(msg)
-            return False, msg
+        try:
+            transport = await UdpTransportTarget.create((target_ip, self.port), timeout=self.timeout, retries=self.retries)
+            objetos = [ObjectType(ObjectIdentity(oid)) for oid in self.oids_map.values()]
+
+            errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
+                self.engine,
+                CommunityData(self.community, mpModel=1),
+                transport,
+                ContextData(),
+                *objetos
+            )
+
+            if errorIndication or errorStatus:
+                logger.error(f"Error SNMP en {target_ip}: {errorIndication or errorStatus}")
+                return {}
+
+            # Mapear y formatear resultados
+            raw_data = {list(self.oids_map.keys())[i]: var[1].prettyPrint() for i, var in enumerate(varBinds)}
+            
+            return self._format_data(raw_data)
+
         except Exception as e:
-            msg = f"Error inesperado: {e}"
-            logger.exception(msg)
-            return False, msg
+            logger.exception(f"Fallo crítico consultando UPS {target_ip}: {e}")
+            return {}
+            
+    # --- Métodos de compatibilidad para test_snmp_routes ---
+    
+    def test_connection(self):
+        """Simula test de conexión síncrono"""
+        try:
+            # Probamos obtener solo el modelo, usando asyncio.run
+            res = asyncio.run(self.get_oid_async(self.oids_map['ups_model']))
+            if res:
+                return True, "Conexión exitosa"
+            else:
+                return False, "No se recibió respuesta"
+        except Exception as e:
+            return False, str(e)
+
+    def get_oid(self, oid):
+        """Wrapper síncrono para obtener un OID"""
+        return asyncio.run(self.get_oid_async(oid))
+
+    async def get_oid_async(self, oid: str, ip_address: str = None):
+        target_ip = ip_address or self.ip_address
+        if not target_ip:
+            raise SNMPClientError("IP no especificada")
+            
+        try:
+            transport = await UdpTransportTarget.create((target_ip, self.port), timeout=self.timeout, retries=self.retries)
+            errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
+                self.engine,
+                CommunityData(self.community, mpModel=1),
+                transport,
+                ContextData(),
+                ObjectType(ObjectIdentity(oid))
+            )
+            
+            if errorIndication:
+                raise SNMPClientError(f"Error SNMP: {errorIndication}")
+            if errorStatus:
+                raise SNMPClientError(f"Error Estado SNMP: {errorStatus.prettyPrint()}")
+                
+            return varBinds[0][1].prettyPrint()
+        except Exception as e:
+            logger.error(f"Error get_oid: {e}")
+            return None
+
+    def _format_data(self, data: Dict[str, str]) -> Dict[str, Any]:
+        """Limpia y escala los valores recibidos"""
+        formatted = {}
+        for key, val in data.items():
+            if val.isdigit() or (val.replace('.','',1).isdigit()):
+                num_val = float(val)
+                # Dividir por 10 los valores que vienen escalados (voltajes y temperatura)
+                if key in ["battery_voltage", "input_voltage", "output_voltage", "temperature"]:
+                    formatted[key] = num_val / 10
+                else:
+                    formatted[key] = num_val
+            else:
+                formatted[key] = val
+        return formatted

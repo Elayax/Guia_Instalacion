@@ -117,19 +117,19 @@
 
                     <!-- Métricas Principales -->
                     <div class="row g-3 mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="device-card text-center p-3">
                                 <div class="metric-label">VOLTAJE ENTRADA</div>
                                 <div class="metric-value"><span id="val_vin">--</span> V</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="device-card text-center p-3">
                                 <div class="metric-label">VOLTAJE SALIDA</div>
                                 <div class="metric-value"><span id="val_vout">--</span> V</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="device-card text-center p-3">
                                 <div class="metric-label">CARGA</div>
                                 <div class="metric-value"><span id="val_load">--</span> %</div>
@@ -138,13 +138,25 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="device-card text-center p-3">
                                 <div class="metric-label">BATERÍA</div>
                                 <div class="metric-value"><span id="val_bat">--</span> %</div>
                                 <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.1);">
                                     <div id="prog_bat" class="progress-bar bg-success" style="width: 0%"></div>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="device-card text-center p-3">
+                                <div class="metric-label">TEMPERATURA</div>
+                                <div class="metric-value"><span id="val_temp">--</span> °C</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="device-card text-center p-3">
+                                <div class="metric-label">VOLTAJE BATERÍA</div>
+                                <div class="metric-value"><span id="val_vbat">--</span> V</div>
                             </div>
                         </div>
                     </div>
@@ -407,6 +419,8 @@
                 document.getElementById('val_vout').textContent = data.data.voltaje_out || '--';
                 document.getElementById('val_load').textContent = data.data.carga_pct || '--';
                 document.getElementById('val_bat').textContent = data.data.bateria_pct || '--';
+                document.getElementById('val_temp').textContent = data.data.temperatura || '--';
+                document.getElementById('val_vbat').textContent = data.data.voltaje_bateria || '--';
 
                 const bPct = data.data.bateria_pct || 0;
                 const lPct = data.data.carga_pct || 0;
