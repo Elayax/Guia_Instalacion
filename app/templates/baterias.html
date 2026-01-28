@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Baterías</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --accent-red: #ff453a;
+            --accent-red-dim: #cf2e26;
+            --text-main: #f5f5f7;
+            --text-sec: #a1a1a6;
+            --bg-body: #1c1c1e;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(60, 20, 20, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Header Glass */
+        .app-header {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            gap: 2px;
+        }
+
+        .nav-link {
+            color: var(--text-sec) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 0.4rem 1.2rem;
+            border-radius: 20px;
+        }
+        .nav-link:hover {
+            color: var(--text-main) !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link.active {
+            color: var(--text-main) !important;
+            background: rgba(60, 60, 60, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Matriz / Tarjetas */
+        .tech-matrix {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .control-title {
+            color: var(--accent-red);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            opacity: 0.9;
+        }
+
+        /* Inputs Modernos */
+        .form-select, .form-control {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: var(--text-main) !important;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            padding: 10px 12px;
+            transition: all 0.2s;
+        }
+        .form-select:focus, .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15) !important;
+            border-color: var(--accent-red) !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+        .form-control::placeholder { color: rgba(255,255,255,0.2); }
+
+        /* Botones */
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 10px 20px;
+        }
+        .btn-primary, .btn-success {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dim));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.2);
+        }
+        .btn-primary:hover, .btn-success:hover {
+            background: linear-gradient(135deg, #ff5e55, #d63a30);
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
+        .btn-secondary, .btn-dark, .btn-warning, .btn-info, .btn-light {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+        .btn-secondary:hover, .btn-dark:hover, .btn-warning:hover, .btn-info:hover, .btn-light:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-main);
+        }
+
+        /* Text Colors overrides */
+        .text-muted { color: var(--text-sec) !important; }
+        .text-primary { color: var(--accent-red) !important; }
+        
+        /* Tablas */
+        .table {
+            color: var(--text-main) !important;
+            border-color: var(--glass-border) !important;
+        }
+        .table-hover tbody tr:hover {
+            color: var(--text-main);
+            background-color: rgba(255,255,255,0.05);
+        }
+        .table thead th {
+            background-color: rgba(0,0,0,0.3);
+            color: var(--text-sec);
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        .table td, .table th {
+            background-color: transparent !important;
+            border-color: var(--glass-border) !important;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span style="color:var(--accent-red)">MANAGER</span></span>
+        </div>
+        <nav class="nav-links">
+            <a href="{{ url_for('main.index') }}" class="nav-link">CALCULADORA</a>
+            <a href="{{ url_for('main.equipos') }}" class="nav-link">EDICIÓN EQUIPOS</a>
+            <a href="{{ url_for('main.baterias') }}" class="nav-link active">BATERÍAS</a>
+            <a href="{{ url_for('main.gestion') }}" class="nav-link">GESTIÓN BD</a>
+        ader>
+
+    <div class="container mt-4">
+        <h2 class="fw-bold mb-4">🔋 Gestión de Baterías</h2>
+        
+        {% if msg %}
+        <div class="alert alert-info">{{ msg }}</div>
+        {% endif %}
+
+        {% if error_logs %}
+        <div class="alert alert-danger">
+            <strong>Detalles del error de carga:</strong>
+            <ul>
+                {% for log in error_logs %}
+                <li>{{ log }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="tech-matrix mb-4">
+            <div class="control-title">Seleccionar Batería para Editar</div>
+            <div>
+                <form method="POST" class="row g-3">
+                    <input type="hidden" name="accion" value="buscar">
+                    <div class="col-md-10">
+                        <select name="id_bateria_buscar" class="form-select form-select-sm">
+                            <option value="">-- Seleccione un Modelo --</option>
+                            {% for b in baterias_lista %}
+                            <option value="{{ b.id }}" {% if bateria and bateria.id == b.id %}selected{% endif %}>
+                                {{ b.modelo }} ({{ b.capacidad_nominal_ah }}Ah / {{ b.voltaje_nominal }}V)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Cargar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if bateria %}
+        <div class="row">
+            <!-- Formulario de Edición -->
+            <div class="col-md-5">
+                <div class="tech-matrix">
+                    <div class="control-title">Ficha Técnica: {{ bateria.modelo }}</div>
+                    <div>
+                        <form method="POST">
+                            <input type="hidden" name="accion" value="guardar">
+                            <input type="hidden" name="id" value="{{ bateria.id }}">
+                            
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Modelo</label>
+                                    <input type="text" name="modelo" class="form-control" value="{{ bateria.modelo }}" required>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Serie</label>
+                                    <input type="text" name="serie" class="form-control" value="{{ bateria.serie }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Voltaje (V)</label>
+                                    <input type="number" step="0.1" name="voltaje_nominal" class="form-control" value="{{ bateria.voltaje_nominal }}">
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Capacidad (Ah)</label>
+                                    <input type="number" step="0.1" name="capacidad_nominal_ah" class="form-control" value="{{ bateria.capacidad_nominal_ah }}">
+                                </div>
+                            </div>
+                            
+                            <div class="control-title mt-3" style="font-size: 0.7rem;">Dimensiones y Peso</div>
+                            <div class="row">
+                                <div class="col-3 mb-2">
+                                    <label class="small text-muted">Largo</label>
+                                    <input type="number" step="1" name="largo_mm" class="form-control" value="{{ bateria.largo_mm }}">
+                                </div>
+                                <div class="col-3 mb-2">
+                                    <label class="small text-muted">Ancho</label>
+                                    <input type="number" step="1" name="ancho_mm" class="form-control" value="{{ bateria.ancho_mm }}">
+                                </div>
+                                <div class="col-3 mb-2">
+                                    <label class="small text-muted">Alto Tot</label>
+                                    <input type="number" step="1" name="alto_total_mm" class="form-control" value="{{ bateria.alto_total_mm }}">
+                                </div>
+                                <div class="col-3 mb-2">
+                                    <label class="small text-muted">Peso (kg)</label>
+                                    <input type="number" step="0.1" name="peso_kg" class="form-control" value="{{ bateria.peso_kg }}">
+                                </div>
+                            </div>
+
+                            <div class="control-title mt-3" style="font-size: 0.7rem;">Características</div>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Terminal</label>
+                                    <input type="text" name="tipo_terminal" class="form-control" value="{{ bateria.tipo_terminal }}">
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Material</label>
+                                    <input type="text" name="material_contenedor" class="form-control" value="{{ bateria.material_contenedor }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Resistencia (mΩ)</label>
+                                    <input type="number" step="0.1" name="resistencia_interna_mohm" class="form-control" value="{{ bateria.resistencia_interna_mohm }}">
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <label class="small text-muted">Max Descarga (5s)</label>
+                                    <input type="number" step="0.1" name="max_corriente_descarga_5s_a" class="form-control" value="{{ bateria.max_corriente_descarga_5s_a }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="small text-muted">Autodescarga (Meses)</label>
+                                <input type="number" name="autodescarga_meses_max" class="form-control" value="{{ bateria.autodescarga_meses_max }}">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100 mt-2">Guardar Cambios</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Curvas -->
+            <div class="col-md-7">
+                <div class="tech-matrix">
+                    <div class="control-title d-flex justify-content-between align-items-center">
+                        <span>Curvas de Descarga (Watts/Celda)</span>
+                        <a href="{{ url_for('main.descargar_plantilla', tipo='baterias_curvas') }}" class="btn btn-sm btn-light" style="font-size: 0.7rem;">Descargar Plantilla CSV</a>
+                    </div>
+                    <div class="p-0" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-sm mb-0 text-center" style="font-size: 0.85rem;">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th>Tiempo (min)</th>
+                                    {% if pivot_data %}
+                                        {% for v in pivot_data.headers %}
+                                        <th>{{ v }} V</th>
+                                        {% endfor %}
+                                    {% else %}
+                                        <th>Sin Datos</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if pivot_data %}
+                                    {% for row in pivot_data.data %}
+                                    <tr>
+                                        <td class="fw-bold">{{ row.tiempo }}</td>
+                                        {% for v in pivot_data.headers %}
+                                        <td>{{ row[v] if row[v] else '-' }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center py-3">Seleccione una batería o cargue datos.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 pt-3 border-top border-secondary">
+                        <form method="POST" enctype="multipart/form-data" class="row g-2 align-items-center">
+                            <input type="hidden" name="accion" value="subir_curvas">
+                            <input type="hidden" name="id" value="{{ bateria.id }}">
+                            <div class="col-auto">
+                                <label class="small text-muted">Carga Masiva (CSV):</label>
+                            </div>
+                            <div class="col">
+                                <input type="file" name="archivo_csv" class="form-control form-control-sm" required accept=".csv">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-warning btn-sm">Subir</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
