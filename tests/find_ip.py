@@ -1,6 +1,18 @@
 import asyncio
 import socket
-from pysnmp.hlapi.asyncio import *
+import sys
+import os
+
+# Add project root to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    from pysnmp.hlapi.asyncio import (
+        SnmpEngine, CommunityData, UdpTransportTarget, ContextData,
+        ObjectType, ObjectIdentity, get_cmd
+    )
+except ImportError:
+    from pysnmp.hlapi.asyncio import *
 
 async def check_ip(ip):
     try:
@@ -18,24 +30,25 @@ async def check_ip(ip):
 
         if not errorIndication and not errorStatus:
             desc = varBinds[0][1].prettyPrint()
-            print(f"✅ ¡ENCONTRADO! IP: {ip} ==> {desc}")
+            print(f"ENCONTRADO! IP: {ip} ==> {desc}")
             return True
-    except:
+    except Exception:
         pass
     return False
 
 async def barrido_red():
-    # Asumiendo que la red es 10.138.22.x (basado en la IP del router)
-    base_ip = "10.138.22." 
-    print(f"📡 Escaneando red {base_ip}1 a {base_ip}254...")
+    subnets = ["10.138.22.", "10.10.10."]
     
     tasks = []
-    for i in range(1, 255):
-        ip = f"{base_ip}{i}"
-        tasks.append(check_ip(ip))
+    print(f"Iniciando escaneo en subredes: {', '.join([s+'x' for s in subnets])}...")
+    
+    for base_ip in subnets:
+        for i in range(1, 255):
+            ip = f"{base_ip}{i}"
+            tasks.append(check_ip(ip))
     
     await asyncio.gather(*tasks)
-    print("🏁 Fin del barrido.")
+    print("Fin del barrido.")
 
 if __name__ == "__main__":
     asyncio.run(barrido_red())

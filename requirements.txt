@@ -16,6 +16,6 @@ pymodbus==3.6.8
 influxdb-client==1.43.0
 flask-socketio==5.3.6
 eventlet==0.36.1
-pysnmp==5.0.34
-pyasn1==0.5.1
+pysnmp>=7.1.0
+pyasn1
 
