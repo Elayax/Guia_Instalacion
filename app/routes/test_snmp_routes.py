@@ -89,8 +89,8 @@ def test_snmp_connection():
         
         # Leer datos de batería (críticos)
         battery_data = {}
-        battery_oids = UPS_OIDS['battery']
-        
+        battery_oids = UPS_OIDS['data_battery']
+
         try:
             # Voltaje batería (con escala)
             voltage_raw = client.get_oid(battery_oids['voltage'])
@@ -98,20 +98,20 @@ def test_snmp_connection():
                 voltage = float(voltage_raw) * 0.1  # Factor de escala
                 battery_data['voltage'] = f"{voltage:.1f}"
                 battery_data['voltage_unit'] = "V"
-            
+
             # Carga batería
-            charge = client.get_oid(battery_oids['charge_percent'])
+            charge = client.get_oid(battery_oids['capacity'])
             if charge:
                 battery_data['charge_percent'] = charge
-            
+
             # Temperatura
             temp = client.get_oid(battery_oids['temperature'])
             if temp:
                 battery_data['temperature'] = temp
                 battery_data['temperature_unit'] = "°C"
-            
+
             # Tiempo restante
-            runtime = client.get_oid(battery_oids['runtime_remaining'])
+            runtime = client.get_oid(battery_oids['remain_time'])
             if runtime:
                 battery_data['runtime_remaining'] = runtime
                 battery_data['runtime_unit'] = "min"
@@ -146,23 +146,22 @@ def test_snmp_connection():
         electrical_data = {}
         
         try:
-            input_oids = UPS_OIDS['input']
-            output_oids = UPS_OIDS['output']
-            
+            input_oids = UPS_OIDS['data_input']
+            output_oids = UPS_OIDS['data_output']
+
             input_voltage = client.get_oid(input_oids['voltage_a'])
             if input_voltage:
                 electrical_data['input_voltage'] = input_voltage
-            
+
             output_voltage = client.get_oid(output_oids['voltage_a'])
             if output_voltage:
                 electrical_data['output_voltage'] = output_voltage
-            
-            # Potencia activa total (con escala)
-            power_raw = client.get_oid(output_oids['active_power_total'])
-            if power_raw:
-                power = float(power_raw) * 0.1  # kW
-                electrical_data['active_power'] = f"{power:.1f}"
-                electrical_data['power_unit'] = "kW"
+
+            # Carga salida fase A
+            load_raw = client.get_oid(output_oids['load_a'])
+            if load_raw:
+                electrical_data['output_load'] = load_raw
+                electrical_data['load_unit'] = "%"
         except Exception as e:
             logger.warning(f"Error leyendo datos eléctricos: {e}")
         

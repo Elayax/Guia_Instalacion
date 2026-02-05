@@ -266,14 +266,20 @@ class GestorDB:
             CREATE TABLE IF NOT EXISTS monitoreo_config (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ip TEXT NOT NULL,
-                port INTEGER DEFAULT 502,
+                port INTEGER DEFAULT 161,
                 slave_id INTEGER DEFAULT 1,
                 nombre TEXT,
+                community TEXT DEFAULT 'public',
                 estado TEXT DEFAULT 'inactivo',
                 fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(ip, port, slave_id)
             )
         ''')
+        # Migración: agregar columna community si no existe
+        cursor.execute("PRAGMA table_info(monitoreo_config)")
+        mon_columns = [row[1] for row in cursor.fetchall()]
+        if 'community' not in mon_columns:
+            cursor.execute("ALTER TABLE monitoreo_config ADD COLUMN community TEXT DEFAULT 'public'")
 
         conn.commit()
         conn.close()
@@ -1364,9 +1370,10 @@ class GestorDB:
         conn = self._conectar()
         try:
             conn.execute('''
-                INSERT INTO monitoreo_config (ip, port, slave_id, nombre)
-                VALUES (?, ?, ?, ?)
-            ''', (datos['ip'], int(datos.get('port', 502)), int(datos.get('slave_id', 1)), datos.get('nombre', 'UPS')))
+                INSERT INTO monitoreo_config (ip, port, slave_id, nombre, community)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (datos['ip'], int(datos.get('port', 161)), int(datos.get('slave_id', 1)),
+                  datos.get('nombre', 'UPS'), datos.get('community', 'public')))
             conn.commit()
             return True
         except Exception as e:

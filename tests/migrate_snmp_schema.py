@@ -44,6 +44,7 @@ def create_snmp_tables(conn):
             name TEXT NOT NULL UNIQUE,
             ip_address TEXT NOT NULL,
             port INTEGER DEFAULT 8161,
+            profile TEXT NOT NULL DEFAULT 'default_invt',
             community TEXT DEFAULT 'public',
             enabled BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

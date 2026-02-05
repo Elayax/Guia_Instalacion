@@ -46,14 +46,225 @@
         }
 
         .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            transition: color 0.3s ease;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-unit {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-left: 2px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.online {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+
+        .status-badge.offline {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+            50% { opacity: 0.7; box-shadow: 0 0 0 6px transparent; }
+        }
+
+        /* Power Flow */
+        .power-flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 1.5rem 1rem;
+        }
+
+        .power-node {
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+            min-width: 150px;
+            position: relative;
+        }
+
+        .power-node .pf-icon {
             font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .power-node.input-node {
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .power-node.input-node .pf-icon {
+            color: #3498db;
+        }
+
+        .power-node.ups-node {
+            border-color: rgba(255, 69, 58, 0.3);
+        }
+
+        .power-node.ups-node .pf-icon {
+            color: var(--accent-red);
+        }
+
+        .power-node.output-node {
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+
+        .power-node.output-node .pf-icon {
+            color: #2ecc71;
+        }
+
+        .pf-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 2px;
+            margin-bottom: 0.3rem;
+        }
+
+        .pf-value {
+            font-size: 1.2rem;
             font-weight: 700;
             color: #fff;
         }
 
-        .metric-label {
+        .pf-sub {
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .power-arrow {
+            width: 60px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .arrow-flow {
+            position: absolute;
+            height: 100%;
+            width: 20px;
+            background: linear-gradient(90deg, transparent, var(--accent-red), transparent);
+            animation: flowRight 1.5s linear infinite;
+        }
+
+        @keyframes flowRight {
+            0% { left: -20px; }
+            100% { left: 100%; }
+        }
+
+        /* Phase Cards */
+        .phase-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phase-header {
+            color: var(--accent-red);
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .phase-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        .phase-metric {
+            padding: 0.3rem 0;
+        }
+
+        /* Alarm Items */
+        .alarm-item {
+            animation: fadeInAlarm 0.3s ease;
+        }
+
+        @keyframes fadeInAlarm {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header i {
+            color: var(--accent-red);
+        }
+
+        /* Scrollable alarms */
+        .alarms-scroll {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        /* Device info bar */
+        .device-info-bar {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .info-chip {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .info-chip span {
+            color: #fff;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -70,8 +281,8 @@
                 DASHBOARD</a>
             <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i>
                 CALCULADORA</a>
-            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> GESTIÓN
-                BD</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i>
+                GESTION BD</a>
             <a href="{{ url_for('monitoreo.index') }}" class="nav-link active"><i class="bi bi-activity me-1"></i>
                 MONITOREO</a>
         </nav>
@@ -89,7 +300,6 @@
                     </button>
                 </div>
                 <div id="deviceList">
-                    <!-- Cards de dispositivos se inyectarán aquí -->
                     <div class="text-center text-muted mt-5">
                         <div class="spinner-border text-secondary" role="status"></div>
                         <p class="mt-2">Cargando...</p>
@@ -97,7 +307,7 @@
                 </div>
             </div>
 
-            <!-- Main: Detalles y Gráficas -->
+            <!-- Main: Dashboard -->
             <div class="col-md-9">
                 <div id="dashboardView" class="text-center text-muted mt-5 fade-in">
                     <i class="bi bi-activity" style="font-size: 4rem; opacity: 0.2;"></i>
@@ -106,73 +316,189 @@
                 </div>
 
                 <div id="monitorPanel" style="display:none;">
-                    <div
-                        class="d-flex justify-content-between align-items-end mb-4 border-bottom border-secondary pb-2">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <h2 class="text-white mb-0" id="currentDevName">UPS Principal</h2>
+                            <h2 class="text-white mb-1" id="currentDevName">UPS Principal</h2>
                             <small class="text-muted" id="currentDevIp">192.168.1.100</small>
+                            <div class="device-info-bar mt-2" id="deviceInfoBar"></div>
                         </div>
-                        <div id="currentDevStatus" class="badge bg-success">ONLINE</div>
+                        <div class="status-badge online" id="statusBadge">
+                            <span class="status-pulse"></span>
+                            <span class="status-text" id="statusText">ONLINE</span>
+                        </div>
                     </div>
 
-                    <!-- Métricas Principales -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="device-card text-center p-3">
-                                <div class="metric-label">VOLTAJE ENTRADA</div>
-                                <div class="metric-value"><span id="val_vin">--</span> V</div>
+                    <!-- Power Flow -->
+                    <div class="device-card mb-3 p-2">
+                        <div class="power-flow-container">
+                            <div class="power-node input-node">
+                                <div class="pf-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+                                <div class="pf-label">ENTRADA</div>
+                                <div class="pf-value"><span id="pf_vin">--</span> <span class="pf-sub">V</span></div>
+                                <div class="pf-sub"><span id="pf_freq_in">--</span> Hz</div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="device-card text-center p-3">
-                                <div class="metric-label">VOLTAJE SALIDA</div>
-                                <div class="metric-value"><span id="val_vout">--</span> V</div>
+                            <div class="power-arrow"><div class="arrow-flow"></div></div>
+                            <div class="power-node ups-node">
+                                <div class="pf-icon"><i class="bi bi-shield-check"></i></div>
+                                <div class="pf-label">UPS</div>
+                                <div class="pf-value" id="pf_source">--</div>
+                                <div class="pf-sub"><i class="bi bi-battery-half me-1"></i><span id="pf_bat">--</span>%</div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="device-card text-center p-3">
-                                <div class="metric-label">CARGA</div>
-                                <div class="metric-value"><span id="val_load">--</span> %</div>
-                                <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.1);">
-                                    <div id="prog_load" class="progress-bar bg-info" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="device-card text-center p-3">
-                                <div class="metric-label">BATERÍA</div>
-                                <div class="metric-value"><span id="val_bat">--</span> %</div>
-                                <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.1);">
-                                    <div id="prog_bat" class="progress-bar bg-success" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="device-card text-center p-3">
-                                <div class="metric-label">TEMPERATURA</div>
-                                <div class="metric-value"><span id="val_temp">--</span> °C</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="device-card text-center p-3">
-                                <div class="metric-label">VOLTAJE BATERÍA</div>
-                                <div class="metric-value"><span id="val_vbat">--</span> V</div>
+                            <div class="power-arrow"><div class="arrow-flow"></div></div>
+                            <div class="power-node output-node">
+                                <div class="pf-icon"><i class="bi bi-plug-fill"></i></div>
+                                <div class="pf-label">SALIDA</div>
+                                <div class="pf-value"><span id="pf_vout">--</span> <span class="pf-sub">V</span></div>
+                                <div class="pf-sub"><i class="bi bi-speedometer me-1"></i><span id="pf_load">--</span>%</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Gráficas -->
+                    <!-- Phase Detail -->
+                    <div class="section-header"><i class="bi bi-diagram-3"></i> DETALLE POR FASE</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="device-card phase-card p-3">
+                                <div class="phase-header">FASE A</div>
+                                <div class="phase-grid">
+                                    <div class="phase-metric">
+                                        <div class="metric-label">V. Entrada</div>
+                                        <div class="metric-value"><span id="in_v_a">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">V. Salida</div>
+                                        <div class="metric-value"><span id="out_v_a">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">Corriente</div>
+                                        <div class="metric-value"><span id="out_i_a">--</span><span class="metric-unit">A</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">Carga</div>
+                                        <div class="metric-value"><span id="load_a">--</span><span class="metric-unit">%</span></div>
+                                        <div class="progress mt-1" style="height:3px; background: rgba(255,255,255,0.05);">
+                                            <div class="progress-bar bg-info" id="prog_load_a" style="width:0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="device-card phase-card p-3">
+                                <div class="phase-header">FASE B</div>
+                                <div class="phase-grid">
+                                    <div class="phase-metric">
+                                        <div class="metric-label">V. Entrada</div>
+                                        <div class="metric-value"><span id="in_v_b">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">V. Salida</div>
+                                        <div class="metric-value"><span id="out_v_b">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">Corriente</div>
+                                        <div class="metric-value"><span id="out_i_b">--</span><span class="metric-unit">A</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">Carga</div>
+                                        <div class="metric-value"><span id="load_b">--</span><span class="metric-unit">%</span></div>
+                                        <div class="progress mt-1" style="height:3px; background: rgba(255,255,255,0.05);">
+                                            <div class="progress-bar bg-info" id="prog_load_b" style="width:0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="device-card phase-card p-3">
+                                <div class="phase-header">FASE C</div>
+                                <div class="phase-grid">
+                                    <div class="phase-metric">
+                                        <div class="metric-label">V. Entrada</div>
+                                        <div class="metric-value"><span id="in_v_c">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">V. Salida</div>
+                                        <div class="metric-value"><span id="out_v_c">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">Corriente</div>
+                                        <div class="metric-value"><span id="out_i_c">--</span><span class="metric-unit">A</span></div>
+                                    </div>
+                                    <div class="phase-metric">
+                                        <div class="metric-label">Carga</div>
+                                        <div class="metric-value"><span id="load_c">--</span><span class="metric-unit">%</span></div>
+                                        <div class="progress mt-1" style="height:3px; background: rgba(255,255,255,0.05);">
+                                            <div class="progress-bar bg-info" id="prog_load_c" style="width:0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Battery + Alarms -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="device-card p-3">
+                                <div class="section-header mb-2"><i class="bi bi-battery-charging"></i> BATERIA</div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="metric-label">Voltaje</div>
+                                        <div class="metric-value"><span id="bat_v">--</span><span class="metric-unit">V</span></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-label">Corriente</div>
+                                        <div class="metric-value"><span id="bat_i">--</span><span class="metric-unit">A</span></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-label">Capacidad</div>
+                                        <div class="metric-value"><span id="bat_cap">--</span><span class="metric-unit">%</span></div>
+                                        <div class="progress mt-1" style="height:4px; background: rgba(255,255,255,0.05);">
+                                            <div class="progress-bar bg-success" id="prog_bat" style="width:0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-label">Autonomia</div>
+                                        <div class="metric-value"><span id="bat_time">--</span><span class="metric-unit">min</span></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-label">Temperatura</div>
+                                        <div class="metric-value"><span id="bat_temp">--</span><span class="metric-unit">&deg;C</span></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-label">Temp. Interna UPS</div>
+                                        <div class="metric-value"><span id="internal_temp">--</span><span class="metric-unit">&deg;C</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="device-card p-3">
+                                <div class="section-header mb-2"><i class="bi bi-exclamation-triangle"></i> ALARMAS ACTIVAS</div>
+                                <div class="alarms-scroll" id="alarmsList">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="bi bi-check-circle" style="font-size:2rem; color: #2ecc71;"></i>
+                                        <p class="mt-2 mb-0 small">Sin alarmas activas</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <div class="device-card h-100">
-                                <h6 class="text-muted mb-3">Histórico de Voltaje (Últimos 10 min)</h6>
+                            <div class="device-card h-100 p-3">
+                                <div class="section-header"><i class="bi bi-graph-up"></i> VOLTAJE EN TIEMPO REAL</div>
                                 <canvas id="chartVoltaje"></canvas>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="device-card h-100">
-                                <h6 class="text-muted mb-3">Estado de Batería</h6>
-                                <canvas id="chartBateria"></canvas>
+                            <div class="device-card h-100 p-3">
+                                <div class="section-header"><i class="bi bi-bar-chart"></i> CARGA POR FASE</div>
+                                <canvas id="chartLoad"></canvas>
                             </div>
                         </div>
                     </div>
@@ -181,7 +507,7 @@
         </div>
     </div>
 
-    <!-- Modal Agregar Dispositivo (Rediseñado) -->
+    <!-- Modal Agregar Dispositivo -->
     <div class="modal fade" id="addDeviceModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content"
@@ -193,9 +519,8 @@
                 </div>
                 <div class="modal-body p-4">
                     <form id="addDeviceForm">
-                        <!-- Sección Identificación -->
                         <div class="mb-4">
-                            <label class="form-label text-white-50 small text-uppercase fw-bold">Identificación del
+                            <label class="form-label text-white-50 small text-uppercase fw-bold">Identificacion del
                                 Equipo</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-dark border-secondary text-secondary"><i
@@ -207,10 +532,9 @@
                                 en el dashboard.</div>
                         </div>
 
-                        <!-- Sección Conexión -->
                         <div class="mb-2">
-                            <label class="form-label text-white-50 small text-uppercase fw-bold">Parámetros de Conexión
-                                (Modbus TCP)</label>
+                            <label class="form-label text-white-50 small text-uppercase fw-bold">Parametros de Conexion
+                                (SNMP)</label>
                         </div>
 
                         <div class="row g-3">
@@ -224,22 +548,22 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label text-white-50 small">Puerto TCP</label>
+                                <label class="form-label text-white-50 small">Puerto SNMP</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-dark border-secondary text-secondary"><i
                                             class="bi bi-door-open"></i></span>
                                     <input type="number" class="form-control bg-dark text-white border-secondary"
-                                        id="devPort" value="502">
+                                        id="devPort" value="161">
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label text-white-50 small">Modbus Slave ID</label>
+                                <label class="form-label text-white-50 small">SNMP Community</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-dark border-secondary text-secondary"><i
-                                            class="bi bi-person-badge"></i></span>
-                                    <input type="number" class="form-control bg-dark text-white border-secondary"
-                                        id="devSlave" value="1">
+                                            class="bi bi-key"></i></span>
+                                    <input type="text" class="form-control bg-dark text-white border-secondary"
+                                        id="devCommunity" value="public">
                                 </div>
                             </div>
                         </div>
@@ -247,7 +571,7 @@
                         <div class="alert alert-dark border-secondary mt-4 d-flex align-items-center" role="alert">
                             <i class="bi bi-info-circle-fill text-info me-3 fs-4"></i>
                             <div class="small text-muted">
-                                Asegúrate de que el dispositivo esté accesible en la red ZeroTier o Local antes de
+                                Asegurate de que el dispositivo este accesible en la red ZeroTier o Local antes de
                                 guardar.
                             </div>
                         </div>
@@ -266,10 +590,25 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const socket = io();
-        let devices = {}; // Store device data
+        let devices = {};
         let currentDevId = null;
         let chartV = null;
-        let chartB = null;
+        let chartLoad = null;
+
+        // Power source decoder
+        const POWER_SOURCES = { 0: 'Ninguna', 1: 'UPS Normal', 2: 'Bypass' };
+        const BATTERY_STATUSES = { 0: 'No Conectada', 1: 'No Operativa', 2: 'Flotante', 3: 'Carga Rapida', 4: 'Descargando' };
+
+        // Helper: set text value safely
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = (val !== undefined && val !== null && val !== 0) ? val : '--';
+        }
+
+        function setProgress(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.style.width = `${val || 0}%`;
+        }
 
         // Init Charts
         function initCharts() {
@@ -278,37 +617,55 @@
                 type: 'line',
                 data: {
                     labels: [],
+                    datasets: [
+                        { label: 'Entrada A', borderColor: '#3498db', data: [], tension: 0.4, borderWidth: 2, pointRadius: 0 },
+                        { label: 'Entrada B', borderColor: '#2980b9', data: [], tension: 0.4, borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0 },
+                        { label: 'Entrada C', borderColor: '#1abc9c', data: [], tension: 0.4, borderWidth: 1.5, borderDash: [2, 2], pointRadius: 0 },
+                        { label: 'Salida A', borderColor: '#2ecc71', data: [], tension: 0.4, borderWidth: 2, pointRadius: 0 },
+                        { label: 'Salida B', borderColor: '#27ae60', data: [], tension: 0.4, borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0 },
+                        { label: 'Salida C', borderColor: '#e67e22', data: [], tension: 0.4, borderWidth: 1.5, borderDash: [2, 2], pointRadius: 0 },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.4)' } },
+                        x: { display: false }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'rgba(255,255,255,0.6)', boxWidth: 12, font: { size: 10 } } }
+                    }
+                }
+            });
+
+            const ctxL = document.getElementById('chartLoad').getContext('2d');
+            chartLoad = new Chart(ctxL, {
+                type: 'bar',
+                data: {
+                    labels: ['Fase A', 'Fase B', 'Fase C'],
                     datasets: [{
-                        label: 'Entrada (V)',
-                        borderColor: '#3498db',
-                        data: [],
-                        tension: 0.4
-                    }, {
-                        label: 'Salida (V)',
-                        borderColor: '#2ecc71',
-                        data: [],
-                        tension: 0.4
+                        label: 'Carga %',
+                        data: [0, 0, 0],
+                        backgroundColor: ['rgba(52,152,219,0.7)', 'rgba(46,204,113,0.7)', 'rgba(230,126,34,0.7)'],
+                        borderColor: ['#3498db', '#2ecc71', '#e67e22'],
+                        borderWidth: 1,
+                        borderRadius: 6,
                     }]
                 },
                 options: {
                     responsive: true,
-                    scales: { y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { display: false } },
-                    plugins: { legend: { labels: { color: '#fff' } } }
+                    animation: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true, max: 100,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.4)' }
+                        },
+                        x: { ticks: { color: 'rgba(255,255,255,0.4)' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
                 }
-            });
-
-            const ctxB = document.getElementById('chartBateria').getContext('2d');
-            chartB = new Chart(ctxB, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Carga', 'Descarga'],
-                    datasets: [{
-                        data: [100, 0],
-                        backgroundColor: ['#2ecc71', '#e74c3c'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { cutout: '70%', plugins: { legend: { display: false } } }
             });
         }
 
@@ -319,14 +676,13 @@
                 const container = document.getElementById('deviceList');
                 container.innerHTML = '';
                 data.forEach(dev => {
-                    devices[dev.id] = dev; // Init cache
+                    devices[dev.id] = dev;
                     renderDeviceCard(dev);
                 });
             });
 
         function renderDeviceCard(dev) {
             const container = document.getElementById('deviceList');
-            // Check if exists
             let card = document.getElementById(`card-${dev.id}`);
             if (!card) {
                 card = document.createElement('div');
@@ -341,7 +697,7 @@
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="fw-bold text-white mb-1">${dev.nombre || dev.name}</div>
+                        <div class="fw-bold text-white mb-1">${dev.nombre || dev.name || 'UPS'}</div>
                         <div class="small text-muted">${dev.ip}</div>
                     </div>
                     <div>
@@ -357,7 +713,7 @@
                 nombre: document.getElementById('devName').value,
                 ip: document.getElementById('devIp').value,
                 port: document.getElementById('devPort').value,
-                slave_id: document.getElementById('devSlave').value
+                community: document.getElementById('devCommunity').value
             };
 
             fetch('/api/monitoreo/add', {
@@ -372,7 +728,7 @@
 
         function deleteDevice(id, e) {
             e.stopPropagation();
-            if (confirm('¿Eliminar dispositivo?')) {
+            if (confirm('Eliminar dispositivo?')) {
                 fetch(`/api/monitoreo/delete/${id}`, { method: 'DELETE' })
                     .then(r => {
                         const card = document.getElementById(`card-${id}`);
@@ -388,64 +744,163 @@
 
             const dev = devices[id];
             if (dev) {
-                document.getElementById('currentDevName').textContent = dev.nombre || dev.name;
+                document.getElementById('currentDevName').textContent = dev.nombre || dev.name || 'UPS';
                 document.getElementById('currentDevIp').textContent = dev.ip;
-                // Clear charts or load history if implemented
+                // Reset charts
                 if (chartV) {
                     chartV.data.labels = [];
-                    chartV.data.datasets.forEach(bs => bs.data = []);
+                    chartV.data.datasets.forEach(ds => ds.data = []);
                     chartV.update();
                 }
             }
         }
 
+        // --- Update functions ---
+        function updateStatusBadge(status, statusData) {
+            const badge = document.getElementById('statusBadge');
+            const text = document.getElementById('statusText');
+            if (status === 'online') {
+                badge.className = 'status-badge online';
+                const ps = statusData ? (POWER_SOURCES[statusData.power_source] || 'Online') : 'ONLINE';
+                text.textContent = ps.toUpperCase();
+            } else {
+                badge.className = 'status-badge offline';
+                text.textContent = 'OFFLINE';
+            }
+        }
+
+        function updateDeviceInfo(info) {
+            const bar = document.getElementById('deviceInfoBar');
+            if (!info || Object.keys(info).length === 0) return;
+            let html = '';
+            if (info.model) html += `<div class="info-chip">Modelo: <span>${info.model}</span></div>`;
+            if (info.serial_number) html += `<div class="info-chip">Serie: <span>${info.serial_number}</span></div>`;
+            if (info.rated_power) html += `<div class="info-chip">Potencia: <span>${info.rated_power} VA</span></div>`;
+            bar.innerHTML = html;
+        }
+
+        function updatePowerFlow(fd) {
+            const inp = fd.data_input || {};
+            const out = fd.data_output || {};
+            const bat = fd.data_battery || {};
+            const st = fd.status || {};
+
+            setVal('pf_vin', inp.voltage_a);
+            setVal('pf_freq_in', inp.frequency);
+            setVal('pf_vout', out.voltage_a);
+            setVal('pf_load', out.load_a);
+            setVal('pf_bat', bat.capacity);
+            document.getElementById('pf_source').textContent = POWER_SOURCES[st.power_source] || '--';
+        }
+
+        function updatePhaseCards(fd) {
+            const inp = fd.data_input || {};
+            const out = fd.data_output || {};
+
+            // Phase A
+            setVal('in_v_a', inp.voltage_a);
+            setVal('out_v_a', out.voltage_a);
+            setVal('out_i_a', out.current_a);
+            setVal('load_a', out.load_a);
+            setProgress('prog_load_a', out.load_a);
+
+            // Phase B
+            setVal('in_v_b', inp.voltage_b);
+            setVal('out_v_b', out.voltage_b);
+            setVal('out_i_b', out.current_b);
+            setVal('load_b', out.load_b);
+            setProgress('prog_load_b', out.load_b);
+
+            // Phase C
+            setVal('in_v_c', inp.voltage_c);
+            setVal('out_v_c', out.voltage_c);
+            setVal('out_i_c', out.current_c);
+            setVal('load_c', out.load_c);
+            setProgress('prog_load_c', out.load_c);
+        }
+
+        function updateBattery(fd) {
+            const bat = fd.data_battery || {};
+            const internal = fd.internal || {};
+            setVal('bat_v', bat.voltage);
+            setVal('bat_i', bat.current);
+            setVal('bat_cap', bat.capacity);
+            setVal('bat_time', bat.remain_time);
+            setVal('bat_temp', bat.temperature);
+            setVal('internal_temp', internal.temperature);
+            setProgress('prog_bat', bat.capacity);
+        }
+
+        function updateAlarms(alarms) {
+            const container = document.getElementById('alarmsList');
+            if (!alarms || alarms.length === 0) {
+                container.innerHTML = `<div class="text-center text-muted py-3">
+                    <i class="bi bi-check-circle" style="font-size:2rem; color: #2ecc71;"></i>
+                    <p class="mt-2 mb-0 small">Sin alarmas activas</p>
+                </div>`;
+                return;
+            }
+            container.innerHTML = alarms.map(a => `
+                <div class="alarm-item d-flex align-items-center gap-2 mb-2 p-2"
+                     style="background:rgba(255,69,58,0.1); border-radius:8px; border-left:3px solid #ff453a;">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                    <span class="text-white small">${a.label}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateCharts(fd) {
+            const inp = fd.data_input || {};
+            const out = fd.data_output || {};
+
+            if (chartV) {
+                const now = new Date().toLocaleTimeString();
+                if (chartV.data.labels.length > 60) {
+                    chartV.data.labels.shift();
+                    chartV.data.datasets.forEach(ds => ds.data.shift());
+                }
+                chartV.data.labels.push(now);
+                chartV.data.datasets[0].data.push(inp.voltage_a || null);
+                chartV.data.datasets[1].data.push(inp.voltage_b || null);
+                chartV.data.datasets[2].data.push(inp.voltage_c || null);
+                chartV.data.datasets[3].data.push(out.voltage_a || null);
+                chartV.data.datasets[4].data.push(out.voltage_b || null);
+                chartV.data.datasets[5].data.push(out.voltage_c || null);
+                chartV.update('none');
+            }
+
+            if (chartLoad) {
+                chartLoad.data.datasets[0].data = [
+                    out.load_a || 0,
+                    out.load_b || 0,
+                    out.load_c || 0
+                ];
+                chartLoad.update('none');
+            }
+        }
+
         // Socket IO Events
-        socket.on('ups_update', (data) => {
+        socket.on('ups_update', (payload) => {
             // Update device list status
-            const cardStatus = document.getElementById(`status-${data.id}`);
+            const cardStatus = document.getElementById(`status-${payload.id}`);
             if (cardStatus) {
-                cardStatus.className = `status-dot ${data.status === 'online' ? 'status-online' : 'status-offline'}`;
+                cardStatus.className = `status-dot ${payload.status === 'online' ? 'status-online' : 'status-offline'}`;
             }
 
             // Cache data
-            devices[data.id] = { ...devices[data.id], ...data };
+            devices[payload.id] = { ...devices[payload.id], ...payload };
 
-            // Update details if selected
-            if (currentDevId === data.id && data.data) {
-                document.getElementById('currentDevStatus').textContent = data.status.toUpperCase();
-                document.getElementById('currentDevStatus').className = `badge bg-${data.status === 'online' ? 'success' : 'danger'}`;
+            // Update details if this device is selected
+            if (currentDevId === payload.id) {
+                const fd = payload.full_data || {};
 
-                document.getElementById('val_vin').textContent = data.data.voltaje_in || '--';
-                document.getElementById('val_vout').textContent = data.data.voltaje_out || '--';
-                document.getElementById('val_load').textContent = data.data.carga_pct || '--';
-                document.getElementById('val_bat').textContent = data.data.bateria_pct || '--';
-                document.getElementById('val_temp').textContent = data.data.temperatura || '--';
-                document.getElementById('val_vbat').textContent = data.data.voltaje_bateria || '--';
-
-                const bPct = data.data.bateria_pct || 0;
-                const lPct = data.data.carga_pct || 0;
-
-                document.getElementById('prog_bat').style.width = `${bPct}%`;
-                document.getElementById('prog_load').style.width = `${lPct}%`;
-
-                // Update Chart
-                if (chartV) {
-                    const now = new Date().toLocaleTimeString();
-                    if (chartV.data.labels.length > 20) {
-                        chartV.data.labels.shift();
-                        chartV.data.datasets[0].data.shift();
-                        chartV.data.datasets[1].data.shift();
-                    }
-                    chartV.data.labels.push(now);
-                    chartV.data.datasets[0].data.push(data.data.voltaje_in);
-                    chartV.data.datasets[1].data.push(data.data.voltaje_out);
-                    chartV.update('none'); // Perf mode
-                }
-
-                if (chartB) {
-                    chartB.data.datasets[0].data = [bPct, 100 - bPct];
-                    chartB.update();
-                }
+                updateStatusBadge(payload.status, fd.status);
+                updateDeviceInfo(payload.device_info);
+                updatePowerFlow(fd);
+                updatePhaseCards(fd);
+                updateBattery(fd);
+                updateAlarms(payload.alarms);
+                updateCharts(fd);
             }
         });
 
