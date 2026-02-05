@@ -24,12 +24,23 @@ class SNMPClient:
         # Diccionario de OIDs específicos para tu NetAgent/Dragon Power
         self.oids_map = {
             "ups_model": "1.3.6.1.4.1.935.1.1.1.1.1.2.0",
+            # Batería
             "battery_voltage": "1.3.6.1.4.1.935.1.1.1.2.2.2.0",
             "battery_capacity": "1.3.6.1.4.1.935.1.1.1.2.2.1.0",
-            "input_voltage": "1.3.6.1.4.1.935.1.1.1.3.2.1.0",
-            "output_voltage": "1.3.6.1.4.1.935.1.1.1.4.2.1.0",
+            "battery_current": "1.3.6.1.4.1.935.1.1.1.2.2.6.0",
+            "temperature": "1.3.6.1.4.1.935.1.1.1.2.2.3.0",
+            # Entrada - Voltajes por fase
+            "input_voltage_l1": "1.3.6.1.4.1.935.1.1.1.3.2.1.0",
+            "input_voltage_l2": "1.3.6.1.4.1.935.1.1.1.3.2.2.0",
+            "input_voltage_l3": "1.3.6.1.4.1.935.1.1.1.3.2.3.0",
+            "input_frequency": "1.3.6.1.4.1.935.1.1.1.3.2.4.0",
+            # Salida - Voltajes por fase
+            "output_voltage_l1": "1.3.6.1.4.1.935.1.1.1.4.2.1.0",
+            "output_voltage_l2": "1.3.6.1.4.1.935.1.1.1.4.2.2.0",
+            "output_voltage_l3": "1.3.6.1.4.1.935.1.1.1.4.2.3.0",
+            "output_frequency": "1.3.6.1.4.1.935.1.1.1.4.2.4.0",
+            "output_current": "1.3.6.1.4.1.935.1.1.1.4.2.4.0",
             "output_load": "1.3.6.1.4.1.935.1.1.1.4.2.3.0",
-            "temperature": "1.3.6.1.4.1.935.1.1.1.2.2.3.0"
         }
 
     async def get_ups_data(self, ip_address: str = None) -> Dict[str, Any]:
@@ -108,12 +119,18 @@ class SNMPClient:
 
     def _format_data(self, data: Dict[str, str]) -> Dict[str, Any]:
         """Limpia y escala los valores recibidos"""
+        # Campos que vienen escalados x10 (voltajes, temperatura, frecuencia)
+        scaled_fields = [
+            "battery_voltage", "temperature",
+            "input_voltage_l1", "input_voltage_l2", "input_voltage_l3", "input_frequency",
+            "output_voltage_l1", "output_voltage_l2", "output_voltage_l3", "output_frequency",
+            "output_current", "battery_current",
+        ]
         formatted = {}
         for key, val in data.items():
-            if val.isdigit() or (val.replace('.','',1).isdigit()):
+            if val.isdigit() or (val.replace('.', '', 1).isdigit()):
                 num_val = float(val)
-                # Dividir por 10 los valores que vienen escalados (voltajes y temperatura)
-                if key in ["battery_voltage", "input_voltage", "output_voltage", "temperature"]:
+                if key in scaled_fields:
                     formatted[key] = num_val / 10
                 else:
                     formatted[key] = num_val

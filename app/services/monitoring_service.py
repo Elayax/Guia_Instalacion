@@ -66,12 +66,25 @@ class MonitoringService(threading.Thread):
             if data:
                 status = 'online'
                 mapped_data = {
-                    'voltaje_in': data.get('input_voltage', 0),
-                    'voltaje_out': data.get('output_voltage', 0),
+                    # Voltajes de entrada por fase
+                    'voltaje_in_l1': data.get('input_voltage_l1', 0),
+                    'voltaje_in_l2': data.get('input_voltage_l2', 0),
+                    'voltaje_in_l3': data.get('input_voltage_l3', 0),
+                    'frecuencia_in': data.get('input_frequency', 0),
+                    # Voltajes de salida por fase
+                    'voltaje_out_l1': data.get('output_voltage_l1', 0),
+                    'voltaje_out_l2': data.get('output_voltage_l2', 0),
+                    'voltaje_out_l3': data.get('output_voltage_l3', 0),
+                    'frecuencia_out': data.get('output_frequency', 0),
+                    'corriente_out': data.get('output_current', 0),
+                    # Carga
                     'carga_pct': data.get('output_load', 0),
+                    # Batería
                     'bateria_pct': data.get('battery_capacity', 0),
+                    'voltaje_bateria': data.get('battery_voltage', 0),
+                    'corriente_bateria': data.get('battery_current', 0),
+                    # Temperatura
                     'temperatura': data.get('temperature', 0),
-                    'voltaje_bateria': data.get('battery_voltage', 0)
                 }
             else:
                 status = 'offline'

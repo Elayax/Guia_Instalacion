@@ -58,11 +58,31 @@ class ModbusMonitor:
                 rr = client.read_holding_registers(0, 10, slave=slave)
                 
                 if not rr.isError():
-                    data['voltaje_in'] = float(rr.registers[0])
-                    data['voltaje_out'] = float(rr.registers[1])
-                    data['frecuencia'] = float(rr.registers[2]) / 10.0
-                    data['carga_pct'] = float(rr.registers[3])
-                    data['bateria_pct'] = float(rr.registers[4])
+                    regs = rr.registers
+                    # Entrada: registros 0-3 (V_L1, V_L2, V_L3, Freq_in)
+                    data['voltaje_in_l1'] = float(regs[0])
+                    data['voltaje_in_l2'] = float(regs[1])
+                    data['voltaje_in_l3'] = float(regs[2])
+                    data['frecuencia_in'] = float(regs[3]) / 10.0
+                    # Salida: registros 4-8 (V_L1, V_L2, V_L3, Freq_out, Current)
+                    data['voltaje_out_l1'] = float(regs[4])
+                    data['voltaje_out_l2'] = float(regs[5]) if len(regs) > 5 else float(regs[4])
+                    data['voltaje_out_l3'] = float(regs[6]) if len(regs) > 6 else float(regs[4])
+                    data['frecuencia_out'] = float(regs[7]) / 10.0 if len(regs) > 7 else data['frecuencia_in']
+                    data['corriente_out'] = float(regs[8]) / 10.0 if len(regs) > 8 else 0
+                    data['carga_pct'] = float(regs[9]) if len(regs) > 9 else 0
+                    # Batería: leer segundo bloque
+                    rr2 = client.read_holding_registers(10, 5, slave=slave)
+                    if not rr2.isError():
+                        data['bateria_pct'] = float(rr2.registers[0])
+                        data['voltaje_bateria'] = float(rr2.registers[1]) / 10.0
+                        data['corriente_bateria'] = float(rr2.registers[2]) / 10.0
+                        data['temperatura'] = float(rr2.registers[3]) / 10.0
+                    else:
+                        data['bateria_pct'] = 0
+                        data['voltaje_bateria'] = 0
+                        data['corriente_bateria'] = 0
+                        data['temperatura'] = 0
                     status = 'online'
                     
                     # Escribir a Influx

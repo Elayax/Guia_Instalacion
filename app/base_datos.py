@@ -269,11 +269,21 @@ class GestorDB:
                 port INTEGER DEFAULT 502,
                 slave_id INTEGER DEFAULT 1,
                 nombre TEXT,
+                protocolo TEXT DEFAULT 'modbus',
+                snmp_community TEXT DEFAULT 'public',
+                snmp_port INTEGER DEFAULT 161,
                 estado TEXT DEFAULT 'inactivo',
                 fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(ip, port, slave_id)
             )
         ''')
+
+        # MIGRACION: Agregar columnas protocolo/snmp si no existen
+        for col, default in [('protocolo', "'modbus'"), ('snmp_community', "'public'"), ('snmp_port', '161')]:
+            try:
+                cursor.execute(f"SELECT {col} FROM monitoreo_config LIMIT 1")
+            except:
+                cursor.execute(f"ALTER TABLE monitoreo_config ADD COLUMN {col} TEXT DEFAULT {default}")
 
         conn.commit()
         conn.close()
@@ -1364,9 +1374,17 @@ class GestorDB:
         conn = self._conectar()
         try:
             conn.execute('''
-                INSERT INTO monitoreo_config (ip, port, slave_id, nombre)
-                VALUES (?, ?, ?, ?)
-            ''', (datos['ip'], int(datos.get('port', 502)), int(datos.get('slave_id', 1)), datos.get('nombre', 'UPS')))
+                INSERT INTO monitoreo_config (ip, port, slave_id, nombre, protocolo, snmp_community, snmp_port)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                datos['ip'],
+                int(datos.get('port', 502)),
+                int(datos.get('slave_id', 1)),
+                datos.get('nombre', 'UPS'),
+                datos.get('protocolo', 'modbus'),
+                datos.get('snmp_community', 'public'),
+                int(datos.get('snmp_port', 161))
+            ))
             conn.commit()
             return True
         except Exception as e:
