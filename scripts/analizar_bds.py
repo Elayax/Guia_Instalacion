@@ -115,7 +115,7 @@ print("DIAGNOSTICO COMPLETO DE BASES DE DATOS")
 print("="*60)
 
 analizar_base_datos('app/Equipos.db', 'EQUIPOS.DB (Base Principal)')
-analizar_base_datos('app/sistema_ups_master.db', 'SISTEMA_UPS_MASTER.DB (Base Secundaria?)')
+
 
 print("\n" + "="*60)
 print("ANALISIS COMPLETADO")
