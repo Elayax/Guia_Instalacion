@@ -76,7 +76,18 @@ class MonitoringService(threading.Thread):
                     'voltaje_out_l2': data.get('output_voltage_l2', 0),
                     'voltaje_out_l3': data.get('output_voltage_l3', 0),
                     'frecuencia_out': data.get('output_frequency', 0),
-                    'corriente_out': data.get('output_current', 0),
+                    'corriente_out': data.get('output_current', 0), # Total/L1 (Legacy)
+                    
+                    # Corrientes por fase (Trifasico)
+                    'corriente_out_l1': data.get('output_current_l1', 0),
+                    'corriente_out_l2': data.get('output_current_l2', 0),
+                    'corriente_out_l3': data.get('output_current_l3', 0),
+                    
+                    # Potencia
+                    'power_factor': data.get('power_factor', 0),
+                    'active_power': data.get('active_power', 0),
+                    'apparent_power': data.get('apparent_power', 0),
+                    
                     # Carga
                     'carga_pct': data.get('output_load', 0),
                     # Batería
@@ -85,6 +96,8 @@ class MonitoringService(threading.Thread):
                     'corriente_bateria': data.get('battery_current', 0),
                     # Temperatura
                     'temperatura': data.get('temperature', 0),
+                    # Metadatos
+                    'phases': data.get('_phases', 1),
                 }
             else:
                 status = 'offline'

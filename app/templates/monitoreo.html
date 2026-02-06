@@ -86,9 +86,17 @@
             margin-right: 4px;
         }
 
-        .phase-l1 { background-color: #e74c3c; }
-        .phase-l2 { background-color: #f39c12; }
-        .phase-l3 { background-color: #3498db; }
+        .phase-l1 {
+            background-color: #e74c3c;
+        }
+
+        .phase-l2 {
+            background-color: #f39c12;
+        }
+
+        .phase-l3 {
+            background-color: #3498db;
+        }
 
         .metric-mini {
             font-size: 1rem;
@@ -106,7 +114,7 @@
             height: 6px;
             border-radius: 3px;
             flex: 1;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             overflow: hidden;
         }
 
@@ -166,7 +174,8 @@
 
                 <div id="monitorPanel" style="display:none;">
                     <!-- Header del dispositivo -->
-                    <div class="d-flex justify-content-between align-items-end mb-3 border-bottom border-secondary pb-2">
+                    <div
+                        class="d-flex justify-content-between align-items-end mb-3 border-bottom border-secondary pb-2">
                         <div>
                             <h2 class="text-white mb-0" id="currentDevName">UPS Principal</h2>
                             <small class="text-muted" id="currentDevIp">192.168.1.100</small>
@@ -182,31 +191,36 @@
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><span class="phase-badge phase-l1"></span>L1</div>
-                                <div class="metric-value"><span id="val_vin_l1">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vin_l1">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><span class="phase-badge phase-l2"></span>L2</div>
-                                <div class="metric-value"><span id="val_vin_l2">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vin_l2">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><span class="phase-badge phase-l3"></span>L3</div>
-                                <div class="metric-value"><span id="val_vin_l3">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vin_l3">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><i class="bi bi-activity me-1"></i>FRECUENCIA ENTRADA</div>
-                                <div class="metric-value"><span id="val_freq_in">--</span> <span class="metric-unit">Hz</span></div>
+                                <div class="metric-value"><span id="val_freq_in">--</span> <span
+                                        class="metric-unit">Hz</span></div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><i class="bi bi-lightning me-1"></i>CARGA</div>
-                                <div class="metric-value"><span id="val_load">--</span> <span class="metric-unit">%</span></div>
+                                <div class="metric-value"><span id="val_load">--</span> <span
+                                        class="metric-unit">%</span></div>
                                 <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.1);">
                                     <div id="prog_load" class="progress-bar bg-info" style="width: 0%"></div>
                                 </div>
@@ -222,31 +236,88 @@
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><span class="phase-badge phase-l1"></span>L1</div>
-                                <div class="metric-value"><span id="val_vout_l1">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vout_l1">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><span class="phase-badge phase-l2"></span>L2</div>
-                                <div class="metric-value"><span id="val_vout_l2">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vout_l2">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><span class="phase-badge phase-l3"></span>L3</div>
-                                <div class="metric-value"><span id="val_vout_l3">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vout_l3">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><i class="bi bi-activity me-1"></i>FRECUENCIA SALIDA</div>
-                                <div class="metric-value"><span id="val_freq_out">--</span> <span class="metric-unit">Hz</span></div>
+                                <div class="metric-value"><span id="val_freq_out">--</span> <span
+                                        class="metric-unit">Hz</span></div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-arrow-right-circle me-1"></i>CORRIENTE SALIDA</div>
-                                <div class="metric-value"><span id="val_iout">--</span> <span class="metric-unit">A</span></div>
+                                <div class="metric-label"><i class="bi bi-activity me-1"></i>FRECUENCIA SALIDA</div>
+                                <div class="metric-value"><span id="val_freq_out">--</span> <span
+                                        class="metric-unit">Hz</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!-- SECCION: POTENCIA Y CORRIENTES               -->
+                    <!-- ============================================ -->
+                    <div class="section-title text-primary"><i class="bi bi-lightning-charge"></i>POTENCIA & CORRIENTE
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <!-- Corrientes por fase -->
+                        <div class="col-md-2">
+                            <div class="device-card text-center p-2">
+                                <div class="metric-label"><span class="phase-badge phase-l1"></span>I-L1</div>
+                                <div class="metric-value"><span id="val_iout_l1">--</span> <span
+                                        class="metric-unit">A</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="device-card text-center p-2">
+                                <div class="metric-label"><span class="phase-badge phase-l2"></span>I-L2</div>
+                                <div class="metric-value"><span id="val_iout_l2">--</span> <span
+                                        class="metric-unit">A</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="device-card text-center p-2">
+                                <div class="metric-label"><span class="phase-badge phase-l3"></span>I-L3</div>
+                                <div class="metric-value"><span id="val_iout_l3">--</span> <span
+                                        class="metric-unit">A</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Potencia -->
+                        <div class="col-md-2">
+                            <div class="device-card text-center p-2">
+                                <div class="metric-label">FACTOR POT.</div>
+                                <div class="metric-value"><span id="val_pf">--</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="device-card text-center p-2">
+                                <div class="metric-label">POT. ACTIVA</div>
+                                <div class="metric-value"><span id="val_pwr_active">--</span> <span
+                                        class="metric-unit">kW</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="device-card text-center p-2">
+                                <div class="metric-label">POT. APARENTE</div>
+                                <div class="metric-value"><span id="val_pwr_apparent">--</span> <span
+                                        class="metric-unit">kVA</span></div>
                             </div>
                         </div>
                     </div>
@@ -254,12 +325,14 @@
                     <!-- ============================================ -->
                     <!-- SECCION: BATERIA Y TEMPERATURA               -->
                     <!-- ============================================ -->
-                    <div class="section-title text-warning"><i class="bi bi-battery-charging"></i>BATERIA & TEMPERATURA</div>
+                    <div class="section-title text-warning"><i class="bi bi-battery-charging"></i>BATERIA & TEMPERATURA
+                    </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-3">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><i class="bi bi-battery-full me-1"></i>CAPACIDAD</div>
-                                <div class="metric-value"><span id="val_bat">--</span> <span class="metric-unit">%</span></div>
+                                <div class="metric-value"><span id="val_bat">--</span> <span
+                                        class="metric-unit">%</span></div>
                                 <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.1);">
                                     <div id="prog_bat" class="progress-bar bg-success" style="width: 0%"></div>
                                 </div>
@@ -268,22 +341,27 @@
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><i class="bi bi-lightning-charge me-1"></i>VOLTAJE BAT</div>
-                                <div class="metric-value"><span id="val_vbat">--</span> <span class="metric-unit">V</span></div>
+                                <div class="metric-value"><span id="val_vbat">--</span> <span
+                                        class="metric-unit">V</span></div>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="device-card text-center p-2">
                                 <div class="metric-label"><i class="bi bi-arrow-down-up me-1"></i>CORRIENTE BAT</div>
-                                <div class="metric-value"><span id="val_ibat">--</span> <span class="metric-unit">A</span></div>
+                                <div class="metric-value"><span id="val_ibat">--</span> <span
+                                        class="metric-unit">A</span></div>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="device-card p-2">
-                                <div class="metric-label mb-1"><i class="bi bi-thermometer-half me-1"></i>TEMPERATURA INTERNA</div>
+                                <div class="metric-label mb-1"><i class="bi bi-thermometer-half me-1"></i>TEMPERATURA
+                                    INTERNA</div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="metric-value"><span id="val_temp">--</span> <span class="metric-unit">&deg;C</span></div>
+                                    <div class="metric-value"><span id="val_temp">--</span> <span
+                                            class="metric-unit">&deg;C</span></div>
                                     <div class="temp-bar flex-grow-1">
-                                        <div id="temp_bar_fill" class="temp-bar-fill" style="width: 0%; background: #2ecc71;"></div>
+                                        <div id="temp_bar_fill" class="temp-bar-fill"
+                                            style="width: 0%; background: #2ecc71;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -297,14 +375,16 @@
                         <!-- Grafica: Voltaje de Entrada por Fase -->
                         <div class="col-md-6">
                             <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-graph-up me-1"></i>Voltaje Entrada por Fase</h6>
+                                <h6 class="text-muted mb-2"><i class="bi bi-graph-up me-1"></i>Voltaje Entrada por Fase
+                                </h6>
                                 <canvas id="chartVoltajeIn"></canvas>
                             </div>
                         </div>
                         <!-- Grafica: Voltaje de Salida por Fase -->
                         <div class="col-md-6">
                             <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-graph-up me-1"></i>Voltaje Salida por Fase</h6>
+                                <h6 class="text-muted mb-2"><i class="bi bi-graph-up me-1"></i>Voltaje Salida por Fase
+                                </h6>
                                 <canvas id="chartVoltajeOut"></canvas>
                             </div>
                         </div>
@@ -314,7 +394,8 @@
                         <!-- Grafica: Estado de Bateria (Doughnut) -->
                         <div class="col-md-4">
                             <div class="device-card h-100 text-center">
-                                <h6 class="text-muted mb-2"><i class="bi bi-battery-charging me-1"></i>Estado de Bateria</h6>
+                                <h6 class="text-muted mb-2"><i class="bi bi-battery-charging me-1"></i>Estado de Bateria
+                                </h6>
                                 <canvas id="chartBateria"></canvas>
                                 <div class="mt-2">
                                     <span class="metric-mini" id="bat_center_label">--%</span>
@@ -331,7 +412,8 @@
                         <!-- Grafica: Temperatura -->
                         <div class="col-md-4">
                             <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-thermometer-half me-1"></i>Temperatura Interna</h6>
+                                <h6 class="text-muted mb-2"><i class="bi bi-thermometer-half me-1"></i>Temperatura
+                                    Interna</h6>
                                 <canvas id="chartTemp"></canvas>
                             </div>
                         </div>
@@ -663,7 +745,24 @@
                 document.getElementById('val_vout_l2').textContent = d.voltaje_out_l2 || '--';
                 document.getElementById('val_vout_l3').textContent = d.voltaje_out_l3 || '--';
                 document.getElementById('val_freq_out').textContent = d.frecuencia_out || '--';
-                document.getElementById('val_iout').textContent = d.corriente_out || '--';
+                document.getElementById('val_freq_out').textContent = d.frecuencia_out || '--';
+
+                // --- POTENCIA & CORRIENTES ---
+                // Si es monofasico, val_iout sigue siendo valido o se puede mapeam a L1
+                // Si es trifasico, usamos los individuales
+
+                // Mapeo inteligente: Si corriente_out_l1 > 0, usar eso. Si no, usar corriente_out (legacy/1ph)
+                const iL1 = d.corriente_out_l1 || d.corriente_out || 0;
+                const iL2 = d.corriente_out_l2 || 0;
+                const iL3 = d.corriente_out_l3 || 0;
+
+                document.getElementById('val_iout_l1').textContent = iL1;
+                document.getElementById('val_iout_l2').textContent = iL2;
+                document.getElementById('val_iout_l3').textContent = iL3;
+
+                document.getElementById('val_pf').textContent = d.power_factor || '--';
+                document.getElementById('val_pwr_active').textContent = d.active_power || '--';
+                document.getElementById('val_pwr_apparent').textContent = d.apparent_power || '--';
 
                 // --- BATERIA & TEMPERATURA ---
                 const bPct = d.bateria_pct || 0;
