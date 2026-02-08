@@ -1,116 +1,83 @@
+"""
+Cliente SNMP async para UPS INVT.
+Usa los OIDs del Enterprise .1.3.6.1.4.1.56788 (INVT).
+Compatible con PySNMP 7.x async API.
+"""
+
 import logging
 import asyncio
-from typing import Dict, Any, List, Union
+from typing import Dict, Any
 
-# Importación moderna para PySNMP 7.x
 from pysnmp.hlapi.asyncio import (
     SnmpEngine, CommunityData, UdpTransportTarget, ContextData,
     ObjectType, ObjectIdentity, get_cmd
 )
 
+from app.utils.ups_oids import (
+    UPS_BASE_OID, ENTERPRISE_OID,
+    UPS_INFO_OIDS, UPS_STATUS_OIDS, UPS_BYPASS_OIDS,
+    UPS_INPUT_OIDS, UPS_OUTPUT_OIDS, UPS_LOAD_OIDS,
+    UPS_BATTERY_OIDS, SCALE_FACTORS, DECODERS,
+    CRITICAL_OIDS,
+)
+
 logger = logging.getLogger(__name__)
+
 
 class SNMPClientError(Exception):
     pass
 
+
 class SNMPClient:
-    def __init__(self, ip_address: str = None, port: int = 161, community: str = 'public', timeout: int = 2, retries: int = 1):
+    def __init__(self, ip_address: str = None, port: int = 161,
+                 community: str = 'public', timeout: int = 2, retries: int = 1):
         self.ip_address = ip_address
         self.community = community
         self.port = port
         self.timeout = timeout
         self.retries = retries
         self.engine = SnmpEngine()
-        
-        # OIDs Comunes (Batería, Info, etc)
-        self.oids_common = {
-            "ups_model": "1.3.6.1.4.1.935.1.1.1.1.1.2.0",
-            "battery_voltage": "1.3.6.1.4.1.935.1.1.1.2.2.2.0",
-            "battery_capacity": "1.3.6.1.4.1.935.1.1.1.2.2.1.0",
-            "battery_current": "1.3.6.1.4.1.935.1.1.1.2.2.6.0",
-            "temperature": "1.3.6.1.4.1.935.1.1.1.2.2.3.0",
-        }
-
-        # --- MAPAS DE ENTRADA ---
-        self.oids_input_1ph = {
-            "input_voltage_l1": "1.3.6.1.4.1.935.1.1.1.3.2.1.0",
-            "input_frequency": "1.3.6.1.4.1.935.1.1.1.3.2.2.0",
-        }
-        self.oids_input_3ph = {
-            "input_voltage_l1": "1.3.6.1.4.1.935.1.1.1.3.2.1.0",
-            "input_voltage_l2": "1.3.6.1.4.1.935.1.1.1.3.2.2.0",
-            "input_voltage_l3": "1.3.6.1.4.1.935.1.1.1.3.2.3.0",
-            "input_frequency": "1.3.6.1.4.1.935.1.1.1.3.2.4.0",
-        }
-
-        # --- MAPAS DE SALIDA ---
-        self.oids_output_1ph = {
-            "output_voltage_l1": "1.3.6.1.4.1.935.1.1.1.4.2.1.0",
-            "output_frequency": "1.3.6.1.4.1.935.1.1.1.4.2.2.0",
-            "output_load": "1.3.6.1.4.1.935.1.1.1.4.2.3.0",
-             # En 1Ph, corriente suele ser el siguiente. Si falla, asumimos 0.
-            "output_current": "1.3.6.1.4.1.935.1.1.1.4.2.4.0", 
-        }
-        self.oids_output_3ph = {
-            "output_voltage_l1": "1.3.6.1.4.1.935.1.1.1.4.2.1.0",
-            "output_voltage_l2": "1.3.6.1.4.1.935.1.1.1.4.2.2.0",
-            "output_voltage_l3": "1.3.6.1.4.1.935.1.1.1.4.2.3.0",
-            "output_frequency": "1.3.6.1.4.1.935.1.1.1.4.2.4.0",
-            
-            # Corrientes Salida
-            "output_current_l1": "1.3.6.1.4.1.935.1.1.1.4.2.5.0",
-            "output_current_l2": "1.3.6.1.4.1.935.1.1.1.4.2.6.0",
-            "output_current_l3": "1.3.6.1.4.1.935.1.1.1.4.2.7.0",
-            
-            # Potencia
-            "output_load": "1.3.6.1.4.1.935.1.1.1.4.2.12.0",    
-            "active_power": "1.3.6.1.4.1.935.1.1.1.4.2.13.0",   
-            "apparent_power": "1.3.6.1.4.1.935.1.1.1.4.2.14.0", 
-            "power_factor": "1.3.6.1.4.1.935.1.1.1.4.2.15.0",   
-        }
-
-    async def _detect_phase_mode(self, ip_address: str, oid_check: str) -> int:
-        """Helper para heurística: >800 -> 3Ph, <=800 -> 1Ph"""
-        try:
-            val_str = await self.get_oid_async(oid_check, ip_address)
-            if val_str and val_str.isdigit():
-                val = float(val_str)
-                if val > 800: return 3
-                return 1
-        except Exception:
-            pass
-        return 1
 
     async def get_ups_data(self, ip_address: str = None) -> Dict[str, Any]:
-        """Consulta datos detectando Entry/Exit phases independientemente"""
+        """Consulta completa del UPS via SNMP usando OIDs INVT (56788)."""
         target_ip = ip_address or self.ip_address
-        if not target_ip: return {}
-            
-        try:
-            # 1. Detectar Fases Independientes
-            # Input: Checar 3.2.2.0 (L2 vs Freq)
-            in_phases = await self._detect_phase_mode(target_ip, "1.3.6.1.4.1.935.1.1.1.3.2.2.0")
-            
-            # Output: Checar 4.2.2.0 (L2 vs Freq)
-            out_phases = await self._detect_phase_mode(target_ip, "1.3.6.1.4.1.935.1.1.1.4.2.2.0")
-            
-            # 2. Construir Mapa Dinámico
-            oids_map = self.oids_common.copy()
-            
-            # INPUT
-            if in_phases == 3:
-                oids_map.update(self.oids_input_3ph)
-            else:
-                oids_map.update(self.oids_input_1ph)
-                
-            # OUTPUT
-            if out_phases == 3:
-                oids_map.update(self.oids_output_3ph)
-            else:
-                oids_map.update(self.oids_output_1ph)
+        if not target_ip:
+            return {}
 
-            # 3. Consulta SNMP Standard
-            transport = await UdpTransportTarget.create((target_ip, self.port), timeout=self.timeout, retries=self.retries)
+        try:
+            # Construir mapa de OIDs a consultar
+            oids_map = {}
+
+            # Status (critico - siempre)
+            for key, oid in UPS_STATUS_OIDS.items():
+                oids_map[f'status_{key}'] = oid
+
+            # Input
+            for key, oid in UPS_INPUT_OIDS.items():
+                oids_map[f'input_{key}'] = oid
+
+            # Output
+            for key, oid in UPS_OUTPUT_OIDS.items():
+                oids_map[f'output_{key}'] = oid
+
+            # Load
+            for key, oid in UPS_LOAD_OIDS.items():
+                oids_map[f'load_{key}'] = oid
+
+            # Battery
+            for key, oid in UPS_BATTERY_OIDS.items():
+                oids_map[f'battery_{key}'] = oid
+
+            # Bypass
+            for key, oid in UPS_BYPASS_OIDS.items():
+                oids_map[f'bypass_{key}'] = oid
+
+            # Consulta SNMP
+            transport = await UdpTransportTarget.create(
+                (target_ip, self.port),
+                timeout=self.timeout,
+                retries=self.retries
+            )
             objetos = [ObjectType(ObjectIdentity(oid)) for oid in oids_map.values()]
 
             errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
@@ -125,46 +92,115 @@ class SNMPClient:
                 logger.error(f"Error SNMP en {target_ip}: {errorIndication or errorStatus}")
                 return {}
 
+            # Mapear respuestas
             keys = list(oids_map.keys())
-            raw_data = {keys[i]: var[1].prettyPrint() for i, var in enumerate(varBinds)}
-            
-            # Agregar metadatos
-            data = self._format_data(raw_data)
+            oid_list = list(oids_map.values())
+            raw_data = {}
+            for i, var in enumerate(varBinds):
+                raw_data[keys[i]] = var[1].prettyPrint()
+
+            # Formatear y escalar
+            data = self._format_data(raw_data, oid_list, keys)
+
+            # Detectar fases por heuristica de valores
+            in_phases = 3 if data.get('input_voltage_b', 0) > 50 else 1
+            out_phases = 3 if data.get('output_voltage_b', 0) > 50 else 1
             data['_phases_in'] = in_phases
             data['_phases_out'] = out_phases
-            data['_phases'] = out_phases # Legacy compatibility
-            
+            data['_phases'] = out_phases
+
             return data
 
         except Exception as e:
-            logger.exception(f"Fallo crítico {target_ip}: {e}")
+            logger.exception(f"Fallo critico SNMP {target_ip}: {e}")
             return {}
-            
-    # --- Métodos de compatibilidad para test_snmp_routes ---
-    
+
+    def _format_data(self, raw_data: Dict[str, str], oid_list: list, keys: list) -> Dict[str, Any]:
+        """Escala valores segun SCALE_FACTORS y decodifica enums."""
+        formatted = {}
+
+        for i, (key, val_str) in enumerate(raw_data.items()):
+            oid = oid_list[i]
+            scale = SCALE_FACTORS.get(oid, None)
+
+            # Intentar convertir a numero
+            try:
+                num_val = float(val_str)
+
+                if scale:
+                    formatted[key] = round(num_val * scale, 2)
+                else:
+                    formatted[key] = num_val
+            except (ValueError, TypeError):
+                formatted[key] = val_str
+
+        # Mapear a nombres amigables para el frontend
+        result = {}
+
+        # Input
+        result['input_voltage_l1'] = formatted.get('input_voltage_a', 0)
+        result['input_voltage_l2'] = formatted.get('input_voltage_b', 0)
+        result['input_voltage_l3'] = formatted.get('input_voltage_c', 0)
+        result['input_frequency'] = formatted.get('input_frequency_a', 0)
+
+        # Output
+        result['output_voltage_l1'] = formatted.get('output_voltage_a', 0)
+        result['output_voltage_l2'] = formatted.get('output_voltage_b', 0)
+        result['output_voltage_l3'] = formatted.get('output_voltage_c', 0)
+        result['output_frequency'] = formatted.get('output_frequency_a', 0)
+        result['output_current'] = formatted.get('output_current_a', 0)
+        result['output_current_l1'] = formatted.get('output_current_a', 0)
+        result['output_current_l2'] = formatted.get('output_current_b', 0)
+        result['output_current_l3'] = formatted.get('output_current_c', 0)
+        result['output_load'] = formatted.get('load_percent_a', 0)
+        result['active_power'] = formatted.get('output_active_power_total', 0)
+        result['apparent_power'] = formatted.get('output_apparent_power_total', 0)
+        result['power_factor'] = formatted.get('output_power_factor_a', 0)
+
+        # Battery
+        result['battery_voltage'] = formatted.get('battery_voltage', 0)
+        result['battery_current'] = formatted.get('battery_current', 0)
+        result['battery_capacity'] = formatted.get('battery_charge_percent', 0)
+        result['battery_runtime'] = formatted.get('battery_runtime_remaining', 0)
+        result['temperature'] = formatted.get('battery_temperature', 0)
+
+        # Status (decodificar enums)
+        ps_raw = formatted.get('status_power_source', 0)
+        result['power_source'] = DECODERS['power_source'].get(int(ps_raw), str(ps_raw))
+
+        bs_raw = formatted.get('status_battery_status', 0)
+        result['battery_status'] = DECODERS['battery_status'].get(int(bs_raw), str(bs_raw))
+
+        return result
+
+    # --- Metodos de compatibilidad ---
+
     def test_connection(self):
-        """Simula test de conexión síncrono"""
+        """Test de conexion sincrono."""
         try:
-            # Probamos obtener solo el modelo, usando asyncio.run
-            res = asyncio.run(self.get_oid_async(self.oids_common['ups_model']))
+            res = asyncio.run(self.get_oid_async(UPS_INFO_OIDS['model']))
             if res:
-                return True, "Conexión exitosa"
+                return True, "Conexion exitosa"
             else:
-                return False, "No se recibió respuesta"
+                return False, "No se recibio respuesta"
         except Exception as e:
             return False, str(e)
 
     def get_oid(self, oid):
-        """Wrapper síncrono para obtener un OID"""
+        """Wrapper sincrono para obtener un OID."""
         return asyncio.run(self.get_oid_async(oid))
 
     async def get_oid_async(self, oid: str, ip_address: str = None):
         target_ip = ip_address or self.ip_address
         if not target_ip:
             raise SNMPClientError("IP no especificada")
-            
+
         try:
-            transport = await UdpTransportTarget.create((target_ip, self.port), timeout=self.timeout, retries=self.retries)
+            transport = await UdpTransportTarget.create(
+                (target_ip, self.port),
+                timeout=self.timeout,
+                retries=self.retries
+            )
             errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
                 self.engine,
                 CommunityData(self.community, mpModel=1),
@@ -172,42 +208,15 @@ class SNMPClient:
                 ContextData(),
                 ObjectType(ObjectIdentity(oid))
             )
-            
+
             if errorIndication:
                 raise SNMPClientError(f"Error SNMP: {errorIndication}")
             if errorStatus:
                 raise SNMPClientError(f"Error Estado SNMP: {errorStatus.prettyPrint()}")
-                
+
             return varBinds[0][1].prettyPrint()
+        except SNMPClientError:
+            raise
         except Exception as e:
             logger.error(f"Error get_oid: {e}")
             return None
-
-    def _format_data(self, data: Dict[str, str]) -> Dict[str, Any]:
-        """Limpia y escala los valores recibidos"""
-        # Campos que vienen escalados x10 (voltajes, temperatura, frecuencia, corrientes, potencias)
-        scaled_fields_x10 = [
-            "battery_voltage", "temperature",
-            "input_voltage_l1", "input_voltage_l2", "input_voltage_l3", "input_frequency",
-            "output_voltage_l1", "output_voltage_l2", "output_voltage_l3", "output_frequency",
-            "output_current", "output_current_l1", "output_current_l2", "output_current_l3", 
-            "battery_current",
-            "active_power", "apparent_power"
-        ]
-        
-        # Campos escalados x100 (Factor de potencia)
-        scaled_fields_x100 = ["power_factor"]
-
-        formatted = {}
-        for key, val in data.items():
-            if val.isdigit() or (val.replace('.', '', 1).isdigit()):
-                num_val = float(val)
-                if key in scaled_fields_x10:
-                    formatted[key] = num_val / 10
-                elif key in scaled_fields_x100:
-                    formatted[key] = num_val / 100
-                else:
-                    formatted[key] = num_val
-            else:
-                formatted[key] = val
-        return formatted
