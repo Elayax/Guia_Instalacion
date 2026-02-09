@@ -8,97 +8,30 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <style>
-        .test-card {
-            background: rgba(30, 30, 30, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 2rem;
-        }
 
-        .result-box {
-            background: rgba(20, 20, 20, 0.6);
-            border-left: 3px solid var(--accent-red);
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
-
-        .success-box {
-            border-left-color: #2ecc71;
-        }
-
-        .error-box {
-            border-left-color: #e74c3c;
-        }
-
-        .metric-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .metric-label {
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 600;
-        }
-
-        .metric-value {
-            color: #fff;
-            font-weight: 700;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .badge-success {
-            background: rgba(46, 204, 113, 0.2);
-            color: #2ecc71;
-            border: 1px solid #2ecc71;
-        }
-
-        .badge-error {
-            background: rgba(231, 76, 60, 0.2);
-            color: #e74c3c;
-            border: 1px solid #e74c3c;
-        }
-
-        .spinner-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-    </style>
 </head>
 
 <body>
-    <header class="app-header">
+    <header class="app-header d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-3">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span
-                    style="color:var(--accent-red)">MANAGER</span></span>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+            </div>
         </div>
-        <nav class="nav-links">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>
-                DASHBOARD</a>
-            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i>
-                CALCULADORA</a>
-            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> GESTIÓN
-                BD</a>
-            <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i>
-                MONITOREO</a>
-            <a href="{{ url_for('test_snmp.snmp_test_page') }}" class="nav-link active"><i
-                    class="bi bi-lightning-charge me-1"></i> TEST SNMP</a>
+        <nav class="d-flex gap-4">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
         </nav>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+        </div>
     </header>
 
     <div class="container-fluid p-4">
@@ -400,6 +333,7 @@
             }
         });
     </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 
 </html>

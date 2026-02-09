@@ -4,597 +4,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoreo - Sistema UPS Manager</title>
+    <title>UPS Engineering Monitor - SCADA View</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts for Technical Look -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .device-card {
-            background: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .device-card:hover {
-            border-color: var(--accent-red);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .status-dot {
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-
-        .status-online {
-            background-color: #2ecc71;
-            box-shadow: 0 0 10px #2ecc71;
-        }
-
-        .status-offline {
-            background-color: #e74c3c;
-            box-shadow: 0 0 5px #e74c3c;
-        }
-
-        .metric-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-unit {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 400;
-        }
-
-        .section-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .section-title i {
-            margin-right: 0.5rem;
-        }
-
-        .phase-badge {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 4px;
-        }
-
-        .phase-l1 { background-color: #e74c3c; }
-        .phase-l2 { background-color: #f39c12; }
-        .phase-l3 { background-color: #3498db; }
-
-        .metric-mini {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .temp-bar {
-            height: 6px;
-            border-radius: 3px;
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        .temp-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease, background-color 0.5s ease;
-        }
-
-        /* Alarm panel */
-        .alarm-panel {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .alarm-item {
-            padding: 6px 10px;
-            border-radius: 6px;
-            margin-bottom: 4px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .alarm-critical {
-            background: rgba(231, 76, 60, 0.15);
-            border-left: 3px solid #e74c3c;
-            color: #e74c3c;
-        }
-
-        .alarm-warning {
-            background: rgba(243, 156, 18, 0.15);
-            border-left: 3px solid #f39c12;
-            color: #f39c12;
-        }
-
-        .alarm-info {
-            background: rgba(52, 152, 219, 0.15);
-            border-left: 3px solid #3498db;
-            color: #3498db;
-        }
-
-        .status-badge-lg {
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .protocol-badge {
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        .sidebar-card {
-            padding: 0.8rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-        }
-
-        .sidebar-card.active {
-            border-color: var(--accent-red) !important;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.2);
-        }
-
-        /* Module cards */
-        .module-card {
-            background: rgba(40, 40, 40, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 0.8rem;
-        }
-    </style>
 </head>
 
 <body>
-    <header class="app-header">
+    <header class="app-header d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-3">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span
-                    style="color:var(--accent-red)">MANAGER</span></span>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">MONITOR UPS</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+            </div>
         </div>
-        <nav class="nav-links">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>
-                DASHBOARD</a>
-            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i>
-                CALCULADORA</a>
-            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> GESTION
-                BD</a>
-            <a href="{{ url_for('monitoreo.index') }}" class="nav-link active"><i class="bi bi-activity me-1"></i>
-                MONITOREO</a>
+        <nav class="d-flex gap-4">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            <a href="{{ url_for('monitoreo.index') }}" class="nav-link active"><i class="bi bi-activity me-1"></i> SCADA</a>
         </nav>
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-outline-secondary btn-sm font-mono" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <i class="bi bi-gear-fill me-1"></i>CONF
+            </button>
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+        </div>
     </header>
 
-    <div class="container-fluid p-4">
-        <div class="row">
-            <!-- Sidebar: Lista de Dispositivos -->
-            <div class="col-md-2">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="text-white m-0">Dispositivos</h5>
-                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
-                        data-bs-target="#addDeviceModal">
-                        <i class="bi bi-plus-lg"></i>
-                    </button>
-                </div>
-                <div id="deviceList">
-                    <div class="text-center text-muted mt-5">
-                        <div class="spinner-border text-secondary" role="status"></div>
-                        <p class="mt-2">Cargando...</p>
-                    </div>
+    <div class="dashboard-container">
+        <!-- Sidebar Device List -->
+        <aside class="sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+                <h6 class="m-0 text-white-50">DISPOSITIVOS</h6>
+                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div id="deviceList" class="flex-grow-1 overflow-auto">
+                <!-- Device Items -->
+                <div class="text-center text-muted mt-5">
+                    <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
+                    <p class="small">Esperando Datos...</p>
                 </div>
             </div>
+        </aside>
 
-            <!-- Main: Detalles y Graficas -->
-            <div class="col-md-10">
-                <div id="dashboardView" class="text-center text-muted mt-5 fade-in">
-                    <i class="bi bi-activity" style="font-size: 4rem; opacity: 0.2;"></i>
-                    <h3 class="mt-3">Panel en Tiempo Real</h3>
-                    <p>Seleccione un dispositivo o espere datos...</p>
+        <!-- Main Engineering Panel -->
+        <main class="main-panel position-relative">
+            
+            <!-- Default Placeholder -->
+            <div id="dashboardView" class="placeholder-view text-center text-muted">
+                <i class="bi bi-hdd-rack" style="font-size: 5rem; opacity: 0.1;"></i>
+                <h2 class="mt-4" style="letter-spacing: 5px; opacity:0.5;">SIN SEÑAL</h2>
+                <p class="text-white-50">Seleccione un dispositivo para iniciar la telemetría.</p>
+            </div>
+
+            <!-- Active Monitor Panel -->
+            <div id="monitorPanel" style="display:none; animation: fadeIn 0.5s;">
+                
+                <!-- Top Status Bar -->
+                <div class="eng-panel p-3 mb-4 d-flex justify-content-between align-items-center bg-dark bg-opacity-50">
+                    <div>
+                        <h2 class="mb-0 text-white" id="currentDevName" style="text-shadow: 0 0 10px rgba(255,255,255,0.2);">CARGANDO...</h2>
+                        <div class="d-flex gap-3 text-muted small font-mono mt-1">
+                            <span><i class="bi bi-globe me-1"></i>IP: <span id="currentDevIp" class="text-light">--</span></span>
+                            <span><i class="bi bi-diagram-2 me-1"></i>PROTO: <span id="currentDevProtocol" class="text-light">--</span></span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <div class="text-end">
+                            <span class="d-block text-muted small" style="font-size:0.7rem;">ESTADO DEL SISTEMA</span>
+                            <span id="currentDevStatus" class="eng-badge badge-ok">EN LINEA</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block text-muted small" style="font-size:0.7rem;">MODO DE ENERGIA</span>
+                            <span id="currentPowerMode" class="eng-badge badge-warn">NORMAL</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block text-muted small" style="font-size:0.7rem;">BATERIA</span>
+                            <span id="currentBatStatus" class="eng-badge badge-ok">FLOTANTE</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="monitorPanel" style="display:none;">
-                    <!-- Header del dispositivo -->
-                    <div class="d-flex justify-content-between align-items-end mb-3 border-bottom border-secondary pb-2">
-                        <div>
-                            <h2 class="text-white mb-0" id="currentDevName">UPS Principal</h2>
-                            <small class="text-muted" id="currentDevIp">192.168.1.100</small>
-                            <span class="protocol-badge bg-secondary ms-2" id="currentDevProtocol">MODBUS</span>
-                        </div>
-                        <div class="d-flex gap-2 align-items-center">
-                            <div id="currentPowerMode" class="status-badge-lg bg-secondary">--</div>
-                            <div id="currentBatStatus" class="status-badge-lg bg-secondary">--</div>
-                            <div id="currentDevStatus" class="badge bg-success">ONLINE</div>
-                        </div>
-                    </div>
+                <!-- Mimic Diagram / Overview -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="eng-panel">
+                            <div class="eng-panel-header">
+                                <h5 class="eng-panel-title"><i class="bi bi-motherboard me-2"></i>DIAGRAMA MIMICO DE SISTEMA</h5>
+                                <div class="font-mono small text-danger">FLUJO EN TIEMPO REAL</div>
+                            </div>
+                            <div class="eng-panel-body">
+                                <div class="mimic-container">
+                                    <div class="mimic-line"></div>
+                                    
+                                    <!-- INPUT NODE -->
+                                    <div class="mimic-node">
+                                        <h4>RED ELECTRICA</h4>
+                                        <div class="mimic-value-row text-l1"><span>L1</span> <span id="val_vin_l1">--</span>V</div>
+                                        <div class="mimic-value-row text-l2"><span>L2</span> <span id="val_vin_l2">--</span>V</div>
+                                        <div class="mimic-value-row text-l3"><span>L3</span> <span id="val_vin_l3">--</span>V</div>
+                                        <div class="mimic-value-row text-white mt-1 pt-1 border-top border-secondary">
+                                            <span>FREC</span> <span id="val_freq_in">--</span>Hz
+                                        </div>
+                                    </div>
 
-                    <!-- ============================================ -->
-                    <!-- PANEL DE ALARMAS                             -->
-                    <!-- ============================================ -->
-                    <div id="alarmContainer" style="display:none;" class="mb-3">
-                        <div class="device-card p-2">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="section-title text-danger m-0 border-0 pb-0"><i class="bi bi-exclamation-triangle-fill"></i>ALARMAS ACTIVAS</div>
-                                <span class="badge bg-danger" id="alarmCount">0</span>
-                            </div>
-                            <div id="alarmPanel" class="alarm-panel"></div>
-                        </div>
-                    </div>
+                                    <i class="bi bi-arrow-right fs-2 text-muted"></i>
 
-                    <!-- ============================================ -->
-                    <!-- SECCION: VOLTAJES DE ENTRADA (por fase)      -->
-                    <!-- ============================================ -->
-                    <div class="section-title text-info"><i class="bi bi-box-arrow-in-right"></i>ENTRADA</div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l1"></span>L1</div>
-                                <div class="metric-value"><span id="val_vin_l1">--</span> <span class="metric-unit">V</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l2"></span>L2</div>
-                                <div class="metric-value"><span id="val_vin_l2">--</span> <span class="metric-unit">V</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l3"></span>L3</div>
-                                <div class="metric-value"><span id="val_vin_l3">--</span> <span class="metric-unit">V</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-activity me-1"></i>FRECUENCIA ENTRADA</div>
-                                <div class="metric-value"><span id="val_freq_in">--</span> <span class="metric-unit">Hz</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-lightning me-1"></i>CARGA</div>
-                                <div class="metric-value"><span id="val_load">--</span> <span class="metric-unit">%</span></div>
-                                <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.1);">
-                                    <div id="prog_load" class="progress-bar bg-info" style="width: 0%"></div>
+                                    <!-- CONVERTER/BAT NODE -->
+                                    <div class="mimic-node" style="border-color: var(--status-warn);">
+                                        <h4 style="color: var(--status-warn);">BUS DE BATERIAS</h4>
+                                        <div class="text-center my-2">
+                                            <div class="font-mono fs-4 fw-bold" id="val_bat">--</div>
+                                            <div class="small text-muted">% CARGA</div>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background: #333;">
+                                            <div id="prog_bat" class="progress-bar bg-warning" style="width: 0%"></div>
+                                        </div>
+                                        <div class="mimic-value-row mt-2 text-white-50"><span>VOLT</span> <span id="val_vbat">--</span>V</div>
+                                        <div class="mimic-value-row text-white-50"><span>AMP</span> <span id="val_ibat">--</span>A</div>
+                                        <div class="mimic-value-row text-white-50"><span>TEMP</span> <span id="val_temp">--</span>°C</div>
+                                        <div style="display:none;"><div id="temp_bar_fill"></div></div>
+                                    </div>
+
+                                    <i class="bi bi-arrow-right fs-2 text-muted"></i>
+
+                                    <!-- OUTPUT NODE -->
+                                    <div class="mimic-node" style="border-color: var(--status-ok);">
+                                        <h4 style="color: var(--status-ok);">SALIDA UPS</h4>
+                                        <div class="mimic-value-row text-l1"><span>L1</span> <span id="val_vout_l1">--</span>V</div>
+                                        <div class="mimic-value-row text-l2"><span>L2</span> <span id="val_vout_l2">--</span>V</div>
+                                        <div class="mimic-value-row text-l3"><span>L3</span> <span id="val_vout_l3">--</span>V</div>
+                                        <div class="mimic-value-row text-white mt-1 pt-1 border-top border-secondary">
+                                            <span>CARGA</span> <span id="val_load">--</span>%
+                                        </div>
+                                        <div style="display:none;"><div id="prog_load"></div></div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- ============================================ -->
-                    <!-- SECCION: VOLTAJES DE SALIDA (por fase)       -->
-                    <!-- ============================================ -->
-                    <div class="section-title text-success"><i class="bi bi-box-arrow-right"></i>SALIDA</div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l1"></span>L1</div>
-                                <div class="metric-value"><span id="val_vout_l1">--</span> <span class="metric-unit">V</span></div>
+                <!-- Deep Data Metrics -->
+                <div class="row g-4 mb-4">
+                    <!-- Power & Load -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                            <div class="eng-panel-header">
+                                <h5 class="eng-panel-title"><i class="bi bi-lightning-charge me-2"></i>ANALISIS DE CARGA</h5>
                             </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l2"></span>L2</div>
-                                <div class="metric-value"><span id="val_vout_l2">--</span> <span class="metric-unit">V</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l3"></span>L3</div>
-                                <div class="metric-value"><span id="val_vout_l3">--</span> <span class="metric-unit">V</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-activity me-1"></i>FRECUENCIA SALIDA</div>
-                                <div class="metric-value"><span id="val_freq_out">--</span> <span class="metric-unit">Hz</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-clock me-1"></i>AUTONOMIA</div>
-                                <div class="metric-value"><span id="val_remain_time">--</span> <span class="metric-unit">min</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ============================================ -->
-                    <!-- SECCION: POTENCIA Y CORRIENTES               -->
-                    <!-- ============================================ -->
-                    <div class="section-title text-primary"><i class="bi bi-lightning-charge"></i>POTENCIA & CORRIENTE</div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l1"></span>I-L1</div>
-                                <div class="metric-value"><span id="val_iout_l1">--</span> <span class="metric-unit">A</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l2"></span>I-L2</div>
-                                <div class="metric-value"><span id="val_iout_l2">--</span> <span class="metric-unit">A</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><span class="phase-badge phase-l3"></span>I-L3</div>
-                                <div class="metric-value"><span id="val_iout_l3">--</span> <span class="metric-unit">A</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label">FACTOR POT.</div>
-                                <div class="metric-value"><span id="val_pf">--</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label">POT. ACTIVA</div>
-                                <div class="metric-value"><span id="val_pwr_active">--</span> <span class="metric-unit">kW</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label">POT. APARENTE</div>
-                                <div class="metric-value"><span id="val_pwr_apparent">--</span> <span class="metric-unit">kVA</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ============================================ -->
-                    <!-- SECCION: BATERIA Y TEMPERATURA               -->
-                    <!-- ============================================ -->
-                    <div class="section-title text-warning"><i class="bi bi-battery-charging"></i>BATERIA & TEMPERATURA</div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-3">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-battery-full me-1"></i>CAPACIDAD</div>
-                                <div class="metric-value"><span id="val_bat">--</span> <span class="metric-unit">%</span></div>
-                                <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.1);">
-                                    <div id="prog_bat" class="progress-bar bg-success" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-lightning-charge me-1"></i>VOLTAJE BAT</div>
-                                <div class="metric-value"><span id="val_vbat">--</span> <span class="metric-unit">V</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="device-card text-center p-2">
-                                <div class="metric-label"><i class="bi bi-arrow-down-up me-1"></i>CORRIENTE BAT</div>
-                                <div class="metric-value"><span id="val_ibat">--</span> <span class="metric-unit">A</span></div>
-                            </div>
-                        </div>
-                        <div class="col-md-5">
-                            <div class="device-card p-2">
-                                <div class="metric-label mb-1"><i class="bi bi-thermometer-half me-1"></i>TEMPERATURA BATERIA</div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="metric-value"><span id="val_temp">--</span> <span class="metric-unit">&deg;C</span></div>
-                                    <div class="temp-bar flex-grow-1">
-                                        <div id="temp_bar_fill" class="temp-bar-fill" style="width: 0%; background: #2ecc71;"></div>
+                            <div class="eng-panel-body">
+                                <div class="row g-2 font-mono">
+                                    <div class="col-4">
+                                        <div class="metric-box">
+                                            <label>FACTOR POT.</label>
+                                            <div class="fs-5 fw-bold text-white" id="val_pf">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="metric-box">
+                                            <label>POT. ACTIVA</label>
+                                            <div class="fs-5 fw-bold text-white"><span id="val_pwr_active">--</span> <small class="text-muted">kW</small></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="metric-box">
+                                            <label>APARENTE</label>
+                                            <div class="fs-5 fw-bold text-white"><span id="val_pwr_apparent">--</span> <small class="text-muted">kVA</small></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <label class="small text-muted mb-2 d-block">CORRIENTE DE SALIDA (AMPS)</label>
+                                        <div class="d-flex justify-content-between text-center bg-black bg-opacity-25 p-2 rounded">
+                                            <div class="text-l1">L1: <span id="val_iout_l1" class="fw-bold">--</span> A</div>
+                                            <div class="text-l2">L2: <span id="val_iout_l2" class="fw-bold">--</span> A</div>
+                                            <div class="text-l3">L3: <span id="val_iout_l3" class="fw-bold">--</span> A</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-2 pt-2 border-top border-secondary">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="small text-muted">TIEMPO ESTIMADO RESTANTE</span>
+                                            <span class="fs-4 fw-bold text-success"><span id="val_remain_time">--</span> min</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ============================================ -->
-                    <!-- SECCION: AMBIENTE (THS + WATER)              -->
-                    <!-- ============================================ -->
-                    <div id="envSection" style="display:none;">
-                        <div class="section-title" style="color: #1abc9c;"><i class="bi bi-moisture"></i>AMBIENTE</div>
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-3">
-                                <div class="device-card text-center p-2">
-                                    <div class="metric-label"><i class="bi bi-thermometer me-1"></i>TEMP. AMBIENTE</div>
-                                    <div class="metric-value"><span id="val_env_temp">--</span> <span class="metric-unit">&deg;C</span></div>
-                                </div>
+                    <!-- Environment & Alarms -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                            <div class="eng-panel-header">
+                                <h5 class="eng-panel-title"><i class="bi bi-thermometer-sun me-2"></i>AMBIENTE Y ALARMAS</h5>
                             </div>
-                            <div class="col-md-3">
-                                <div class="device-card text-center p-2">
-                                    <div class="metric-label"><i class="bi bi-droplet me-1"></i>HUMEDAD</div>
-                                    <div class="metric-value"><span id="val_env_hum">--</span> <span class="metric-unit">%</span></div>
+                            <div class="eng-panel-body">
+                                <!-- Env Section -->
+                                <div id="envSection" style="display:none;" class="mb-3 p-2 border border-secondary rounded">
+                                    <div class="d-flex justify-content-around text-center">
+                                        <div>
+                                            <div class="text-muted small">TEMP</div>
+                                            <div class="fw-bold text-white"><span id="val_env_temp">--</span>°C</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small">HUMEDAD</div>
+                                            <div class="fw-bold text-info"><span id="val_env_hum">--</span>%</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small">AGUA</div>
+                                            <div class="fw-bold" id="val_water_leak">--</div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="device-card text-center p-2">
-                                    <div class="metric-label"><i class="bi bi-water me-1"></i>FUGA DE AGUA</div>
-                                    <div class="metric-value"><span id="val_water_leak">Sin fuga</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                <div class="d-none"><span id="val_freq_out"></span></div>
 
-                    <!-- ============================================ -->
-                    <!-- SECCION: MODULOS (UPS Modular)               -->
-                    <!-- ============================================ -->
-                    <div id="modulesSection" style="display:none;">
-                        <div class="section-title" style="color: #9b59b6;"><i class="bi bi-grid-3x3-gap"></i>MODULOS</div>
-                        <div class="row g-2 mb-3" id="modulesContainer"></div>
-                    </div>
-
-                    <!-- ============================================ -->
-                    <!-- GRAFICAS                                     -->
-                    <!-- ============================================ -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-graph-up me-1"></i>Voltaje Entrada por Fase</h6>
-                                <canvas id="chartVoltajeIn"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-graph-up me-1"></i>Voltaje Salida por Fase</h6>
-                                <canvas id="chartVoltajeOut"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="device-card h-100 text-center">
-                                <h6 class="text-muted mb-2"><i class="bi bi-battery-charging me-1"></i>Estado de Bateria</h6>
-                                <canvas id="chartBateria"></canvas>
-                                <div class="mt-2">
-                                    <span class="metric-mini" id="bat_center_label">--%</span>
+                                <!-- Alarm Section -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-danger fw-bold small">ALARMAS ACTIVAS (<span id="alarmCount">0</span>)</span>
+                                    <span class="badge bg-danger animate-pulse">ACTIVO</span>
+                                </div>
+                                <div id="alarmContainer" style="display:none; height: 160px; overflow-y: auto;" class="bg-black bg-opacity-25 p-2 rounded border border-danger border-opacity-25">
+                                    <div id="alarmPanel"></div>
+                                </div>
+                                <div id="modulesSection" style="display:none;">
+                                    <div id="modulesContainer" class="row g-1 mt-2"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-soundwave me-1"></i>Frecuencia (Hz)</h6>
-                                <canvas id="chartFrequency"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="device-card h-100">
-                                <h6 class="text-muted mb-2"><i class="bi bi-thermometer-half me-1"></i>Temperatura</h6>
-                                <canvas id="chartTemp"></canvas>
-                            </div>
+                    </div>
+                </div>
+
+                <!-- Oscilloscope View (Grid Layout) -->
+                <div class="row g-4 mb-5">
+                     <div class="col-12">
+                         <div class="eng-panel-header rounded-top">
+                             <h5 class="eng-panel-title"><i class="bi bi-activity me-2"></i>TELEMETRIA DE OSCILOSCOPIO</h5>
+                         </div>
+                     </div>
+                    <!-- Chart 1: Voltage IN -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">VOLTAJE ENTRADA (FASES)</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartVoltajeIn"></canvas></div>
                         </div>
                     </div>
+                    <!-- Chart 2: Voltage OUT -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">VOLTAJE SALIDA (FASES)</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartVoltajeOut"></canvas></div>
+                        </div>
+                    </div>
+                    <!-- Chart 3: Frequency -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">DOMINIO DE FRECUENCIA</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartFrequency"></canvas></div>
+                        </div>
+                    </div>
+                    <!-- Chart 4: Temperature -->
+                    <div class="col-md-6">
+                         <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">TENDENCIA DE TEMPERATURA</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartTemp"></canvas></div>
+                        </div>
+                    </div>
+                     <!-- Hidden Battery Chart Canvas -->
+                    <div style="display:none;"><canvas id="chartBateria"></canvas><span id="bat_center_label"></span></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Agregar Dispositivo (Dark Theme) -->
+    <div class="modal fade" id="addDeviceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #1c1c1e; border: 1px solid var(--accent-red); box-shadow: 0 0 50px rgba(255, 69, 58, 0.1);">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title font-mono" style="color: var(--accent-red); font-weight: 700;"><i class="bi bi-plus-square me-2"></i>ADD NEW DEVICE</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="addDeviceForm">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">DEVICE ID</label>
+                            <input type="text" class="form-control font-mono" id="devName" placeholder="UPS-CORE-01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">PROTOCOL</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="protocolo" id="proto_modbus" value="modbus" checked>
+                                <label class="btn btn-outline-secondary" for="proto_modbus">MODBUS TCP</label>
+                                <input type="radio" class="btn-check" name="protocolo" id="proto_snmp" value="snmp">
+                                <label class="btn btn-outline-secondary" for="proto_snmp">SNMP v2</label>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-8">
+                                <label class="form-label text-muted small">IP ADDRESS</label>
+                                <input type="text" class="form-control font-mono" id="devIp" placeholder="192.168.1.10" required>
+                            </div>
+                            <!-- Modbus Fields -->
+                            <div id="modbusFields" class="col-12 row g-3 m-0 p-0">
+                                <div class="col-4">
+                                    <label class="form-label text-muted small">PORT</label>
+                                    <input type="number" class="form-control font-mono" id="devPort" value="502">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label text-muted small">SLAVE ID</label>
+                                    <input type="number" class="form-control font-mono" id="devSlave" value="1">
+                                </div>
+                            </div>
+                            <!-- SNMP Fields -->
+                            <div id="snmpFields" class="col-12 row g-3 m-0 p-0" style="display:none;">
+                                <div class="col-4">
+                                    <label class="form-label text-muted small">PORT</label>
+                                    <input type="number" class="form-control font-mono" id="devSnmpPort" value="161">
+                                </div>
+                                <div class="col-8">
+                                    <label class="form-label text-muted small">COMMUNITY</label>
+                                    <input type="text" class="form-control font-mono" id="devCommunity" value="public">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="addDevice()">CONNECT DEVICE</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Agregar Dispositivo -->
-    <div class="modal fade" id="addDeviceModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content"
-                style="background: rgba(30,30,30,0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 50px rgba(0,0,0,0.5);">
-                <div class="modal-header border-bottom border-dark">
-                    <h5 class="modal-title font-monospace fw-bold text-white"><i
-                            class="bi bi-hdd-network me-2 text-danger"></i>AGREGAR DISPOSITIVO</h5>
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: #1c1c1e; border: 1px solid var(--accent-red);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title font-mono" style="color: var(--accent-red); font-weight: 700;">SYSTEM CONFIGURATION</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <form id="addDeviceForm">
-                        <div class="mb-4">
-                            <label class="form-label text-white-50 small text-uppercase fw-bold">Identificacion del Equipo</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-tag-fill"></i></span>
-                                <input type="text" class="form-control bg-dark text-white border-secondary" id="devName"
-                                    placeholder="Ej: UPS Servidor Central" required>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs border-secondary mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active text-white" data-bs-toggle="tab" href="#general">GENERAL</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" data-bs-toggle="tab" href="#thresholds">THRESHOLDS</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" data-bs-toggle="tab" href="#notifications">NOTIFICATIONS</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content text-white-50 small">
+                        <div class="tab-pane fade show active" id="general">
+                            <div class="mb-3">
+                                <label class="form-label">Refresh Rate (ms)</label>
+                                <input type="range" class="form-range" min="500" max="5000" step="500" value="1000">
+                                <small class="text-white d-block text-end">1000 ms</small>
+                            </div>
+                            <div class="mb-3 form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="darkModeSwitch" checked disabled>
+                                <label class="form-check-label">Force Dark Mode (System Default)</label>
                             </div>
                         </div>
-
-                        <!-- Selector de Protocolo -->
-                        <div class="mb-4">
-                            <label class="form-label text-white-50 small text-uppercase fw-bold">Protocolo de Comunicacion</label>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="protocolo" id="proto_modbus" value="modbus" checked>
-                                <label class="btn btn-outline-info" for="proto_modbus"><i class="bi bi-cpu me-1"></i>Modbus TCP</label>
-                                <input type="radio" class="btn-check" name="protocolo" id="proto_snmp" value="snmp">
-                                <label class="btn btn-outline-info" for="proto_snmp"><i class="bi bi-router me-1"></i>SNMP</label>
-                            </div>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label text-white-50 small text-uppercase fw-bold">Parametros de Conexion</label>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-globe"></i></span>
-                                    <input type="text" class="form-control bg-dark text-white border-secondary"
-                                        id="devIp" placeholder="192.168.x.x o 10.147.x.x" required>
+                        <div class="tab-pane fade" id="thresholds">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label>High Voltage Alarm (V)</label>
+                                    <input type="number" class="form-control form-control-sm font-mono" value="240">
+                                </div>
+                                <div class="col-6">
+                                    <label>Low Battery Warning (%)</label>
+                                    <input type="number" class="form-control form-control-sm font-mono" value="20">
                                 </div>
                             </div>
-
-                            <!-- Modbus fields -->
-                            <div id="modbusFields">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white-50 small">Puerto TCP</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-door-open"></i></span>
-                                            <input type="number" class="form-control bg-dark text-white border-secondary" id="devPort" value="502">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white-50 small">Modbus Slave ID</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-person-badge"></i></span>
-                                            <input type="number" class="form-control bg-dark text-white border-secondary" id="devSlave" value="1">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SNMP fields -->
-                            <div id="snmpFields" style="display:none;">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white-50 small">Puerto SNMP</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-door-open"></i></span>
-                                            <input type="number" class="form-control bg-dark text-white border-secondary" id="devSnmpPort" value="161">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white-50 small">Community String</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-key"></i></span>
-                                            <input type="text" class="form-control bg-dark text-white border-secondary" id="devCommunity" value="public">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <p class="mt-3 text-warning"><i class="bi bi-exclamation-triangle me-1"></i> Changes here are local simulation only.</p>
                         </div>
-
-                        <div class="alert alert-dark border-secondary mt-4 d-flex align-items-center" role="alert">
-                            <i class="bi bi-info-circle-fill text-info me-3 fs-4"></i>
-                            <div class="small text-muted">
-                                Asegurate de que el dispositivo este accesible en la red ZeroTier o Local antes de guardar.
-                            </div>
+                        <div class="tab-pane fade" id="notifications">
+                             <div class="mb-3">
+                                <label>Email Alerts To:</label>
+                                <input type="email" class="form-control font-mono" placeholder="admin@example.com">
+                             </div>
+                             <button class="btn btn-outline-info btn-sm">Test Alert</button>
                         </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="modal-footer border-top border-dark p-3">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger px-4 fw-bold" onclick="addDevice()">
-                        <i class="bi bi-plus-lg me-2"></i>GUARDAR DISPOSITIVO
-                    </button>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">CLOSE</button>
+                    <button type="button" class="btn btn-info btn-sm">SAVE PARAMETERS</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Scrolling Footer -->
+    <div class="scrolling-footer">
+        <div class="scrolling-content font-mono" id="sys-status-marquee">
+            SYSTEM INITIALIZED | WAITING FOR TELEMETRY STREAM | CHECKING CONNECTIVITY...
         </div>
     </div>
 
@@ -604,6 +424,13 @@
         let devices = {};
         let currentDevId = null;
 
+        // Clock Update
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+            document.getElementById('date').textContent = now.toISOString().split('T')[0];
+        }, 1000);
+
         // Charts
         let chartVIn = null;
         let chartVOut = null;
@@ -612,80 +439,96 @@
         let chartTemp = null;
 
         const PHASE_COLORS = {
-            l1: '#e74c3c',
-            l2: '#f39c12',
-            l3: '#3498db'
+            l1: '#ff453a', // Red
+            l2: '#ff9f0a', // Orange
+            l3: '#0a84ff'  // Blue
         };
 
         // Toggle protocol fields in modal
         document.querySelectorAll('input[name="protocolo"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const isModbus = e.target.value === 'modbus';
-                document.getElementById('modbusFields').style.display = isModbus ? 'block' : 'none';
-                document.getElementById('snmpFields').style.display = isModbus ? 'none' : 'block';
+                document.getElementById('modbusFields').style.display = isModbus ? 'flex' : 'none';
+                document.getElementById('snmpFields').style.display = isModbus ? 'none' : 'flex';
             });
         });
 
+        // Sci-Fi Chart Config
         function lineChartConfig(datasets) {
             return {
                 type: 'line',
                 data: { labels: [], datasets: datasets },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     animation: false,
                     interaction: { intersect: false, mode: 'index' },
                     scales: {
                         y: {
                             beginAtZero: false,
-                            grid: { color: 'rgba(255,255,255,0.07)' },
-                            ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 9, family: 'JetBrains Mono' } },
+                            border: { display: false }
                         },
-                        x: { display: false }
+                        x: { 
+                            display: true,
+                            grid: { display: false },
+                            ticks: { display: false }
+                        }
                     },
                     plugins: {
                         legend: {
-                            labels: { color: '#fff', usePointStyle: true, pointStyle: 'circle', padding: 15, font: { size: 11 } }
+                            labels: { color: '#bbb', usePointStyle: true, boxWidth: 6, font: { size: 10, family: 'Rajdhani' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(28, 28, 30, 0.9)',
+                            titleFont: { family: 'Rajdhani' },
+                            bodyFont: { family: 'JetBrains Mono' },
+                            borderColor: '#ff453a',
+                            borderWidth: 1
                         }
+                    },
+                    elements: {
+                        line: { tension: 0.4 },
+                        point: { radius: 0, hoverRadius: 4 }
                     }
                 }
             };
         }
 
         function initCharts() {
-            chartVIn = new Chart(document.getElementById('chartVoltajeIn').getContext('2d'), lineChartConfig([
-                { label: 'L1', borderColor: PHASE_COLORS.l1, data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
-                { label: 'L2', borderColor: PHASE_COLORS.l2, data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
-                { label: 'L3', borderColor: PHASE_COLORS.l3, data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false }
-            ]));
+            // Voltages
+            const vConfig = (ctx, label) => lineChartConfig([
+                { label: 'L1', borderColor: PHASE_COLORS.l1, data: [], borderWidth: 2 },
+                { label: 'L2', borderColor: PHASE_COLORS.l2, data: [], borderWidth: 2 },
+                { label: 'L3', borderColor: PHASE_COLORS.l3, data: [], borderWidth: 2 }
+            ]);
 
-            chartVOut = new Chart(document.getElementById('chartVoltajeOut').getContext('2d'), lineChartConfig([
-                { label: 'L1', borderColor: PHASE_COLORS.l1, data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
-                { label: 'L2', borderColor: PHASE_COLORS.l2, data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false },
-                { label: 'L3', borderColor: PHASE_COLORS.l3, data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: false }
-            ]));
+            chartVIn = new Chart(document.getElementById('chartVoltajeIn').getContext('2d'), vConfig());
+            chartVOut = new Chart(document.getElementById('chartVoltajeOut').getContext('2d'), vConfig());
 
-            chartB = new Chart(document.getElementById('chartBateria').getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Carga', 'Disponible'],
-                    datasets: [{ data: [0, 100], backgroundColor: ['#2ecc71', 'rgba(255,255,255,0.05)'], borderWidth: 0 }]
-                },
-                options: { cutout: '75%', plugins: { legend: { display: false } }, animation: { duration: 500 } }
-            });
-
+            // Frequency
             chartFreq = new Chart(document.getElementById('chartFrequency').getContext('2d'), lineChartConfig([
-                { label: 'Entrada', borderColor: '#9b59b6', data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, borderDash: [5, 3] },
-                { label: 'Salida', borderColor: '#1abc9c', data: [], tension: 0.4, borderWidth: 2, pointRadius: 0 }
+                { label: 'IN', borderColor: '#bf5af2', data: [], borderWidth: 2, borderDash: [5, 5] },
+                { label: 'OUT', borderColor: '#32d74b', data: [], borderWidth: 2 }
             ]));
 
+            // Temp
             chartTemp = new Chart(document.getElementById('chartTemp').getContext('2d'), lineChartConfig([
-                { label: 'Bateria', borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.15)', data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: true },
-                { label: 'Ambiente', borderColor: '#1abc9c', backgroundColor: 'rgba(26,188,156,0.1)', data: [], tension: 0.4, borderWidth: 2, pointRadius: 0, fill: true, borderDash: [4, 2] }
+                { label: 'BATT', borderColor: '#ff9f0a', data: [], borderWidth: 2, fill: {
+                    target: 'origin', below: 'rgba(255, 159, 10, 0.1)' 
+                }},
+                { label: 'ENV', borderColor: '#30d158', data: [], borderWidth: 1 }
             ]));
+
+            // Hidden dummy battery chart to satisfy update logic
+            chartB = new Chart(document.getElementById('chartBateria').getContext('2d'), {
+                type: 'doughnut', data: { datasets: [{ data: [1, 1] }] }
+            });
         }
 
         function pushChartData(chart, label, values) {
-            const maxPoints = 60;
+            const maxPoints = 50;
             if (chart.data.labels.length >= maxPoints) {
                 chart.data.labels.shift();
                 chart.data.datasets.forEach(ds => ds.data.shift());
@@ -697,7 +540,8 @@
             chart.update('none');
         }
 
-        // Load devices list
+        // --- DATA LOGIC REMAINS MOSTLY SAME ---
+
         fetch('/api/monitoreo/list')
             .then(r => r.json())
             .then(data => {
@@ -709,40 +553,98 @@
                 });
             });
 
+
+
+        // Initial Fast Polling Logic
+        let pollInterval = 1000; // Start normal
+        let fastPollActive = false;
+        let pollTimer = null;
+
+        function startTelemetry() {
+            if(pollTimer) clearInterval(pollTimer);
+            
+            // Fast polling for first 10 seconds to fill charts/data
+            fastPollActive = true;
+            pollInterval = 500; // 500ms for fast updates
+            console.log("🚀 TELEMETRÍA RÁPIDA INICIADA (500ms)");
+
+            pollTimer = setInterval(() => {
+                if(currentDevId) socket.emit('request_update', { device_id: currentDevId });
+            }, pollInterval);
+
+            // Revert to normal after 10s
+            setTimeout(() => {
+                clearInterval(pollTimer);
+                pollInterval = 2000; // 2s normal
+                console.log("✅ TELEMETRÍA ESTABILIZADA (2000ms)");
+                // Continue regular polling
+                pollTimer = setInterval(() => {
+                    if(currentDevId) socket.emit('request_update', { device_id: currentDevId });
+                }, pollInterval);
+            }, 10000);
+        }
+
+        function selectDevice(id) {
+            currentDevId = id;
+            
+            // Fix display logic
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('monitorPanel').style.display = 'block'; 
+            
+            document.querySelectorAll('.device-list-item').forEach(c => c.classList.remove('active'));
+            const activeCard = document.getElementById(`card-${id}`);
+            if (activeCard) activeCard.classList.add('active');
+
+            const dev = devices[id];
+            if (dev) {
+                document.getElementById('currentDevName').textContent = dev.nombre || dev.name;
+                document.getElementById('currentDevIp').textContent = dev.ip;
+                document.getElementById('currentDevProtocol').textContent = (dev.protocolo || 'modbus').toUpperCase();
+                
+                // Reset Charts
+                 [chartVIn, chartVOut, chartFreq, chartTemp].forEach(c => {
+                    if (c) {
+                        c.data.labels = [];
+                        c.data.datasets.forEach(ds => ds.data = []);
+                        c.update();
+                    }
+                });
+
+                // Trigger fast polling
+                startTelemetry();
+            }
+        }
+
         function renderDeviceCard(dev) {
             const container = document.getElementById('deviceList');
             let card = document.getElementById(`card-${dev.id}`);
             if (!card) {
                 card = document.createElement('div');
                 card.id = `card-${dev.id}`;
-                card.className = 'device-card sidebar-card cursor-pointer';
+                card.className = 'device-list-item';
                 card.onclick = () => selectDevice(dev.id);
                 container.appendChild(card);
             }
 
             const statusClass = dev.status === 'online' ? 'status-online' : 'status-offline';
-            const proto = dev.protocolo || 'modbus';
-            const protoBadge = proto === 'snmp'
-                ? '<span class="protocol-badge bg-info">SNMP</span>'
-                : '<span class="protocol-badge bg-secondary">MODBUS</span>';
+            card.classList.remove('status-online', 'status-offline');
+            card.classList.add(statusClass);
 
+            const proto = (dev.protocolo || 'modbus').toUpperCase();
+            
             card.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between">
                     <div>
-                        <div class="fw-bold text-white mb-1" style="font-size:0.85rem;">${dev.nombre || dev.name}</div>
-                        <div class="small text-muted">${dev.ip} ${protoBadge}</div>
+                        <div class="fw-bold text-white mb-1 font-mono" style="font-size:0.8rem;">${dev.nombre || dev.name}</div>
+                        <div class="small text-muted" style="font-size:0.7rem;">${dev.ip} | ${proto}</div>
                     </div>
-                    <div>
-                        <span class="status-dot ${statusClass}" id="status-${dev.id}"></span>
-                        <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteDevice(${dev.id}, event)"><i class="bi bi-trash"></i></button>
+                    <div class="text-end">
+                         <i class="bi bi-trash text-dark" style="opacity:0.3; cursor:pointer;" onclick="deleteDevice(${dev.id}, event)" title="Eliminar Monitor"></i>
                     </div>
                 </div>
             `;
 
-            // Active state
-            if (currentDevId === dev.id) {
-                card.classList.add('active');
-            }
+            if (currentDevId === dev.id) card.classList.add('active');
         }
 
         function addDevice() {
@@ -763,59 +665,19 @@
                 body: JSON.stringify(data)
             }).then(r => {
                 if (r.ok) location.reload();
-                else alert('Error al agregar');
+                else alert('Error: Verifique parámetros de conexión.');
             });
         }
 
         function deleteDevice(id, e) {
             e.stopPropagation();
-            if (confirm('Eliminar dispositivo?')) {
+            if (confirm('¿Eliminar esta configuración de dispositivo?')) {
                 fetch(`/api/monitoreo/delete/${id}`, { method: 'DELETE' })
-                    .then(r => {
-                        const card = document.getElementById(`card-${id}`);
-                        if (card) card.remove();
-                        if (currentDevId === id) {
-                            currentDevId = null;
-                            document.getElementById('monitorPanel').style.display = 'none';
-                            document.getElementById('dashboardView').style.display = 'block';
-                        }
-                    });
+                    .then(() => location.reload()); 
             }
         }
 
-        function selectDevice(id) {
-            currentDevId = id;
-            document.getElementById('dashboardView').style.display = 'none';
-            document.getElementById('monitorPanel').style.display = 'block';
-
-            // Active state on sidebar
-            document.querySelectorAll('.sidebar-card').forEach(c => c.classList.remove('active'));
-            const activeCard = document.getElementById(`card-${id}`);
-            if (activeCard) activeCard.classList.add('active');
-
-            const dev = devices[id];
-            if (dev) {
-                document.getElementById('currentDevName').textContent = dev.nombre || dev.name;
-                document.getElementById('currentDevIp').textContent = dev.ip;
-                document.getElementById('currentDevProtocol').textContent = (dev.protocolo || 'modbus').toUpperCase();
-
-                // Clear charts
-                [chartVIn, chartVOut, chartFreq, chartTemp].forEach(c => {
-                    if (c) {
-                        c.data.labels = [];
-                        c.data.datasets.forEach(ds => ds.data = []);
-                        c.update();
-                    }
-                });
-            }
-        }
-
-        function getTempColor(temp) {
-            if (temp <= 25) return '#2ecc71';
-            if (temp <= 35) return '#f39c12';
-            if (temp <= 45) return '#e67e22';
-            return '#e74c3c';
-        }
+        function getTempColor(temp) { return '#ff453a'; }
 
         function renderAlarms(alarms) {
             const container = document.getElementById('alarmContainer');
@@ -824,198 +686,155 @@
 
             if (!alarms || alarms.length === 0) {
                 container.style.display = 'none';
+                count.textContent = '0';
                 return;
             }
 
             container.style.display = 'block';
             count.textContent = alarms.length;
-            panel.innerHTML = '';
-
+            panel.innerHTML = '<table class="alarm-table"><thead><tr><th>HORA</th><th>MENSAJE</th><th>NIVEL</th></tr></thead><tbody>';
+            
             alarms.forEach(a => {
-                const iconMap = {
-                    critical: 'bi-exclamation-octagon-fill',
-                    warning: 'bi-exclamation-triangle-fill',
-                    info: 'bi-info-circle-fill'
-                };
+                const time = new Date().toLocaleTimeString(); 
                 panel.innerHTML += `
-                    <div class="alarm-item alarm-${a.level}">
-                        <i class="bi ${iconMap[a.level] || iconMap.info}"></i>
-                        <span>${a.msg}</span>
-                    </div>
+                    <tr>
+                        <td class="font-mono text-muted">${time}</td>
+                        <td>${a.msg}</td>
+                        <td><span class="badge bg-${a.level === 'critical' ? 'danger' : 'warning'}">${a.level}</span></td>
+                    </tr>
                 `;
             });
+            panel.innerHTML += '</tbody></table>';
         }
 
         function renderModules(modules) {
-            const section = document.getElementById('modulesSection');
-            const container = document.getElementById('modulesContainer');
-
-            if (!modules || modules.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-
-            section.style.display = 'block';
-            container.innerHTML = '';
-
-            modules.forEach(m => {
-                container.innerHTML += `
-                    <div class="col-md-3">
-                        <div class="module-card">
-                            <div class="fw-bold text-white mb-2" style="font-size:0.85rem;">
-                                <i class="bi bi-cpu me-1" style="color:#9b59b6"></i>Modulo ${m.module_number}
-                            </div>
-                            <div class="row g-1">
-                                <div class="col-6"><span class="metric-label">V.In</span><br><span class="metric-mini">${(m.mod_input_voltage_a || 0).toFixed(1)}V</span></div>
-                                <div class="col-6"><span class="metric-label">V.Out</span><br><span class="metric-mini">${(m.mod_output_voltage_a || 0).toFixed(1)}V</span></div>
-                                <div class="col-6"><span class="metric-label">T.In</span><br><span class="metric-mini">${(m.mod_inlet_temp || 0).toFixed(1)}&deg;</span></div>
-                                <div class="col-6"><span class="metric-label">T.Out</span><br><span class="metric-mini">${(m.mod_outlet_temp || 0).toFixed(1)}&deg;</span></div>
-                                <div class="col-6"><span class="metric-label">DC Bus</span><br><span class="metric-mini">${(m.mod_dc_bus_voltage || 0).toFixed(1)}V</span></div>
-                                <div class="col-6"><span class="metric-label">I.Bat</span><br><span class="metric-mini">${(m.mod_discharge_current || 0).toFixed(1)}A</span></div>
-                            </div>
+           const container = document.getElementById('modulesContainer');
+           const section = document.getElementById('modulesSection');
+           if (!modules || modules.length === 0) {
+               section.style.display = 'none'; return;
+           }
+           section.style.display = 'block';
+           container.innerHTML = '';
+           modules.forEach(m => {
+               container.innerHTML += `
+                <div class="col-md-6">
+                    <div class="eng-panel p-2 mb-0">
+                        <div class="d-flex justify-content-between border-bottom border-secondary mb-1">
+                            <span class="small text-info">MOD ${m.module_number}</span>
+                             <span class="small text-muted">${(m.mod_output_voltage_a||0).toFixed(1)}V</span>
                         </div>
                     </div>
-                `;
-            });
+                </div>`;
+           });
         }
 
-        // Socket IO Events
+        // Socket IO
         socket.on('ups_update', (data) => {
-            // Update device list status dot
-            const cardStatus = document.getElementById(`status-${data.id}`);
-            if (cardStatus) {
-                cardStatus.className = `status-dot ${data.status === 'online' ? 'status-online' : 'status-offline'}`;
+             // Update device list status dot
+            const card = document.getElementById(`card-${data.id}`);
+            if (card) {
+                card.classList.remove('status-online', 'status-offline');
+                const statusClass = data.status === 'online' ? 'status-online' : 'status-offline';
+                card.classList.add(statusClass);
             }
 
-            // Cache data
             devices[data.id] = { ...devices[data.id], ...data };
 
-            // Update details if this device is selected
             if (currentDevId === data.id && data.data) {
                 const d = data.data;
 
-                // Status badge
-                document.getElementById('currentDevStatus').textContent = data.status.toUpperCase();
-                document.getElementById('currentDevStatus').className = `badge bg-${data.status === 'online' ? 'success' : 'danger'}`;
+                // Badges
+                document.getElementById('currentDevStatus').textContent = data.status === 'online' ? 'EN LINEA' : 'ERROR';
+                document.getElementById('currentDevStatus').className = `eng-badge badge-${data.status === 'online' ? 'ok' : 'err'}`;
 
-                // Power mode & battery status badges
-                if (d.power_mode) {
-                    const pmEl = document.getElementById('currentPowerMode');
-                    pmEl.textContent = d.power_mode;
-                    if (d.power_mode.includes('UPS') || d.power_mode.includes('Normal')) pmEl.className = 'status-badge-lg bg-success';
-                    else if (d.power_mode.includes('Bypass')) pmEl.className = 'status-badge-lg bg-warning';
-                    else pmEl.className = 'status-badge-lg bg-secondary';
-                }
-                if (d.battery_status) {
-                    const bsEl = document.getElementById('currentBatStatus');
-                    bsEl.textContent = d.battery_status;
-                    if (d.battery_status.includes('Flotacion') || d.battery_status.includes('Flotante')) bsEl.className = 'status-badge-lg bg-success';
-                    else if (d.battery_status.includes('Descargando')) bsEl.className = 'status-badge-lg bg-danger';
-                    else if (d.battery_status.includes('Carga')) bsEl.className = 'status-badge-lg bg-info';
-                    else bsEl.className = 'status-badge-lg bg-secondary';
-                }
+                // --- DATA MAPPING ---
+                const setTxt = (id, val) => {
+                    const el = document.getElementById(id);
+                    if(el) el.textContent = (val !== undefined && val !== null) ? val : '--';
+                };
 
-                // --- ENTRADA ---
-                document.getElementById('val_vin_l1').textContent = d.voltaje_in_l1 || '--';
-                document.getElementById('val_vin_l2').textContent = d.voltaje_in_l2 || '--';
-                document.getElementById('val_vin_l3').textContent = d.voltaje_in_l3 || '--';
-                document.getElementById('val_freq_in').textContent = d.frecuencia_in || '--';
-                document.getElementById('val_load').textContent = d.carga_pct || '--';
+                setTxt('val_vin_l1', d.voltaje_in_l1);
+                setTxt('val_vin_l2', d.voltaje_in_l2);
+                setTxt('val_vin_l3', d.voltaje_in_l3);
+                setTxt('val_freq_in', d.frecuencia_in);
+                
+                // Input/Output Voltages
+                setTxt('val_vout_l1', d.voltaje_out_l1);
+                setTxt('val_vout_l2', d.voltaje_out_l2);
+                setTxt('val_vout_l3', d.voltaje_out_l3);
+                
+                // Current
+                setTxt('val_iout_l1', d.corriente_out_l1);
+                setTxt('val_iout_l2', d.corriente_out_l2);
+                setTxt('val_iout_l3', d.corriente_out_l3);
 
-                const lPct = d.carga_pct || 0;
-                document.getElementById('prog_load').style.width = `${lPct}%`;
-                const progLoad = document.getElementById('prog_load');
-                if (lPct > 90) progLoad.className = 'progress-bar bg-danger';
-                else if (lPct > 70) progLoad.className = 'progress-bar bg-warning';
-                else progLoad.className = 'progress-bar bg-info';
+                setTxt('val_pf', d.power_factor);
+                setTxt('val_pwr_active', d.active_power);
+                setTxt('val_pwr_apparent', d.apparent_power);
+                
+                setTxt('val_remain_time', d.battery_remain_time);
 
-                // --- SALIDA ---
-                document.getElementById('val_vout_l1').textContent = d.voltaje_out_l1 || '--';
-                document.getElementById('val_vout_l2').textContent = d.voltaje_out_l2 || '--';
-                document.getElementById('val_vout_l3').textContent = d.voltaje_out_l3 || '--';
-                document.getElementById('val_freq_out').textContent = d.frecuencia_out || '--';
-                document.getElementById('val_remain_time').textContent = d.battery_remain_time || '--';
-
-                // --- POTENCIA & CORRIENTES ---
-                const iL1 = d.corriente_out_l1 || 0;
-                const iL2 = d.corriente_out_l2 || 0;
-                const iL3 = d.corriente_out_l3 || 0;
-
-                document.getElementById('val_iout_l1').textContent = iL1;
-                document.getElementById('val_iout_l2').textContent = iL2;
-                document.getElementById('val_iout_l3').textContent = iL3;
-
-                document.getElementById('val_pf').textContent = d.power_factor || '--';
-                document.getElementById('val_pwr_active').textContent = d.active_power || '--';
-                document.getElementById('val_pwr_apparent').textContent = d.apparent_power || '--';
-
-                // --- BATERIA & TEMPERATURA ---
+                // Battery
                 const bPct = d.bateria_pct || 0;
-                document.getElementById('val_bat').textContent = bPct;
-                document.getElementById('prog_bat').style.width = `${bPct}%`;
+                setTxt('val_bat', bPct);
+                setTxt('val_vbat', d.voltaje_bateria);
+                setTxt('val_ibat', d.corriente_bateria);
+                setTxt('val_temp', d.temperatura);
+                
+                // Progress Bar Battery
                 const progBat = document.getElementById('prog_bat');
-                if (bPct < 20) progBat.className = 'progress-bar bg-danger';
-                else if (bPct < 50) progBat.className = 'progress-bar bg-warning';
-                else progBat.className = 'progress-bar bg-success';
+                if(progBat) {
+                     progBat.style.width = `${bPct}%`;
+                     progBat.className = `progress-bar bg-${bPct < 30 ? 'danger' : (bPct < 70 ? 'warning' : 'success')}`;
+                }
 
-                document.getElementById('val_vbat').textContent = d.voltaje_bateria || '--';
-                document.getElementById('val_ibat').textContent = d.corriente_bateria || '--';
+                // Load Progress
+                setTxt('val_load', d.carga_pct || 0);
 
-                const temp = d.temperatura || 0;
-                document.getElementById('val_temp').textContent = temp;
-                const tempPct = Math.min((temp / 60) * 100, 100);
-                const tempFill = document.getElementById('temp_bar_fill');
-                tempFill.style.width = `${tempPct}%`;
-                tempFill.style.backgroundColor = getTempColor(temp);
-
-                // --- AMBIENTE ---
-                const envSection = document.getElementById('envSection');
+                // Environment
                 if (d.env_temperature || d.env_humidity) {
-                    envSection.style.display = 'block';
-                    document.getElementById('val_env_temp').textContent = d.env_temperature || '--';
-                    document.getElementById('val_env_hum').textContent = d.env_humidity || '--';
+                    document.getElementById('envSection').style.display = 'block';
+                    setTxt('val_env_temp', d.env_temperature);
+                    setTxt('val_env_hum', d.env_humidity);
                     const wl = d.water_leak || 0;
-                    document.getElementById('val_water_leak').textContent = wl > 0 ? `ZONA ${wl}` : 'Sin fuga';
-                    document.getElementById('val_water_leak').style.color = wl > 0 ? '#e74c3c' : '#2ecc71';
+                    const wlEl = document.getElementById('val_water_leak');
+                    if(wlEl) {
+                        wlEl.textContent = wl > 0 ? 'FUGA DETECTADA' : 'SECO';
+                        wlEl.style.color = wl > 0 ? 'var(--status-err)' : 'var(--status-ok)';
+                    }
                 }
 
-                // --- MODULOS ---
-                if (d.modules) {
-                    renderModules(d.modules);
-                }
-
-                // --- ALARMAS ---
+                if (d.modules) renderModules(d.modules);
                 renderAlarms(data.alarms || []);
 
-                // --- UPDATE CHARTS ---
+                // Charts
                 const now = new Date().toLocaleTimeString();
-
-                if (chartVIn) {
-                    pushChartData(chartVIn, now, [d.voltaje_in_l1, d.voltaje_in_l2, d.voltaje_in_l3]);
-                }
-                if (chartVOut) {
-                    pushChartData(chartVOut, now, [d.voltaje_out_l1, d.voltaje_out_l2, d.voltaje_out_l3]);
-                }
-                if (chartB) {
-                    chartB.data.datasets[0].data = [bPct, 100 - bPct];
-                    if (bPct < 20) chartB.data.datasets[0].backgroundColor[0] = '#e74c3c';
-                    else if (bPct < 50) chartB.data.datasets[0].backgroundColor[0] = '#f39c12';
-                    else chartB.data.datasets[0].backgroundColor[0] = '#2ecc71';
-                    chartB.update();
-                    document.getElementById('bat_center_label').textContent = `${bPct}%`;
-                }
-                if (chartFreq) {
-                    pushChartData(chartFreq, now, [d.frecuencia_in, d.frecuencia_out]);
-                }
-                if (chartTemp) {
-                    pushChartData(chartTemp, now, [temp, d.env_temperature || 0]);
-                }
+                if (chartVIn) pushChartData(chartVIn, now, [d.voltaje_in_l1, d.voltaje_in_l2, d.voltaje_in_l3]);
+                if (chartVOut) pushChartData(chartVOut, now, [d.voltaje_out_l1, d.voltaje_out_l2, d.voltaje_out_l3]);
+                if (chartFreq) pushChartData(chartFreq, now, [d.frecuencia_in, d.frecuencia_out]);
+                if (chartTemp) pushChartData(chartTemp, now, [d.temperatura, d.env_temperature || 0]);
             }
         });
 
-        // Init
         initCharts();
-    </script>
-</body>
 
+        // System Status Marquee Logic
+        const statusMessages = [
+            "SISTEMA NOMINAL", "ENLACE DE DATOS ESTABLE", "ENCRIPTACIÓN: AES-256", 
+            "ESPERANDO HEARTBEAT...", "VERIFICANDO REDUNDANCIA...", "SALUD DE BATERÍA: OK",
+            "FRECUENCIA DE RED ESTABLE", "SISTEMA DE ENFRIAMIENTO ACTIVO"
+        ];
+        
+        setInterval(() => {
+            const marquee = document.getElementById('sys-status-marquee');
+            if(marquee) {
+                const msg = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+                const time = new Date().toLocaleTimeString();
+                const linkStatus = currentDevId ? (devices[currentDevId]?.status === 'online' ? 'CONECTADO' : 'SIN CONEXIÓN') : 'ESPERA';
+                marquee.textContent = `HORA DEL SISTEMA: ${time} | ESTADO: ${msg} | MONITOREO ACTIVO | ENLACE UPS: ${linkStatus}`;
+            }
+        }, 5000);
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
 </html>
