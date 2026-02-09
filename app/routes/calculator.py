@@ -1,5 +1,9 @@
-from flask import Blueprint, render_template, request, make_response, redirect, url_for
-from app.base_datos import GestorDB
+import logging
+import os
+import tempfile
+from flask import render_template, request, make_response, redirect, url_for, current_app
+from flask_login import login_required
+from werkzeug.datastructures import ImmutableMultiDict
 from app.reporte import ReportePDF
 from app.auxiliares import (
     procesar_calculo_ups,
@@ -7,16 +11,15 @@ from app.auxiliares import (
     guardar_pdf_proyecto,
     guardar_imagen_proyecto
 )
-import os
-import tempfile
-from werkzeug.datastructures import ImmutableMultiDict
 from . import calculator_bp
 
-db = GestorDB()
+logger = logging.getLogger(__name__)
+
 
 @calculator_bp.route('/calculadora', methods=['GET', 'POST'])
+@login_required
 def calculadora():
-    # 1. Cargar listas iniciales
+    db = current_app.db
     lista_clientes_unicos = db.obtener_clientes_unicos()
     lista_ups = db.obtener_ups_todos()
     lista_baterias = db.obtener_baterias_modelos(solo_con_curvas=True)
@@ -34,10 +37,9 @@ def calculadora():
         if datos_guardados:
             es_recalculo = True
             try:
-                # Mapeo de campos nuevos
                 voltaje_inicial = str(datos_guardados.get('voltaje') or datos_guardados.get('voltaje_salida') or '')
                 kva_inicial = str(datos_guardados.get('kva') or datos_guardados.get('potencia_kva') or '')
-                
+
                 form_data = {
                     'voltaje': voltaje_inicial,
                     'kva': kva_inicial,
@@ -50,8 +52,7 @@ def calculadora():
                 }
                 simulated_form = ImmutableMultiDict(form_data)
                 resultado, _ = procesar_calculo_ups(db, simulated_form)
-                
-                # Calcular baterías si existen
+
                 if resultado and datos_guardados.get('id_bateria') and datos_guardados.get('tiempo_respaldo'):
                     try:
                         ups_data = db.obtener_ups_id(datos_guardados['id_ups'])
@@ -71,25 +72,23 @@ def calculadora():
                             )
                             resultado.update(res_bat)
                     except Exception as e:
-                        print(f"Error calculando baterías en pre-carga: {e}")
-                        
+                        logger.warning("Error calculando baterias en pre-carga: %s", e)
+
             except Exception as e:
-                print(f"Error pre-cargando cálculo: {e}")
-                import traceback
-                traceback.print_exc()
+                logger.error("Error pre-cargando calculo: %s", e)
 
     if request.method == 'POST':
         accion = request.form.get('accion')
 
         if accion == 'calcular':
             resultado, mensaje = procesar_calculo_ups(db, request.form)
-            
+
             if resultado and pedido_actual:
                 datos_form = request.form.to_dict()
                 ups_data = None
                 if datos_form.get('id_ups'):
                     ups_data = db.obtener_ups_id(datos_form['id_ups'])
-                
+
                 datos_guardar = {
                     'voltaje': datos_form.get('voltaje'),
                     'fases': datos_form.get('fases'),
@@ -105,11 +104,11 @@ def calculadora():
                     'config_salida': resultado.get('config_salida'),
                     'calibre_tierra': resultado.get('calibre_tierra')
                 }
-                
+
                 if db.guardar_calculo(pedido_actual, datos_guardar):
                     es_recalculo = True
                     datos_guardados = db.obtener_calculo_por_pedido(pedido_actual)
-            
+
             if resultado:
                 datos = request.form.to_dict()
                 id_bateria = datos.get('id_bateria')
@@ -133,7 +132,7 @@ def calculadora():
                             resultado.update(res_bat)
                     except Exception as e:
                         resultado['bat_error'] = str(e)
-        
+
         elif accion in ['preview', 'publicar']:
             resultado, mensaje = procesar_calculo_ups(db, request.form)
             datos = request.form.to_dict()
@@ -145,9 +144,8 @@ def calculadora():
                     pedido = datos.get('pedido', 'temporal')
 
                     imagenes_temp = {}
-                    # Ajustar ruta base para imágenes: subir un nivel desde routes/
                     base_app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    
+
                     if es_publicar:
                         if 'imagen_unifilar_ac' in request.files:
                             file = request.files['imagen_unifilar_ac']
@@ -225,10 +223,10 @@ def calculadora():
                         }
                         if db.publicar_proyecto(resultado, save_data):
                             resultado['es_publicado'] = True
-                            mensaje = "✅ Proyecto publicado correctamente"
+                            mensaje = "Proyecto publicado correctamente"
                         else:
                             es_publicar = False
-                            mensaje = "⚠️ El proyecto fue actualizado"
+                            mensaje = "El proyecto fue actualizado"
 
                     pdf = ReportePDF()
                     pdf_bytes = pdf.generar_cuerpo(datos, resultado, ups=ups_data, bateria=bateria_info, es_publicado=es_publicar, imagenes_temp=imagenes_temp)
@@ -269,25 +267,28 @@ def calculadora():
                          datos_guardados=datos_guardados,
                          es_recalculo=es_recalculo)
 
+
 @calculator_bp.route('/generar-pdf-calculadora', methods=['POST'])
+@login_required
 def generar_pdf_calculadora():
+    db = current_app.db
     datos = request.form.to_dict()
-    
+
     if not datos.get('id_ups'):
         return "Error: ID de UPS no proporcionado.", 400
-    
+
     ups_data = db.obtener_ups_id(datos['id_ups'])
     if not ups_data:
         return "Error: UPS no encontrado.", 404
-    
+
     accion = datos.get('accion', 'preview')
     es_publicar = (accion == 'publicar')
     pedido = datos.get('pedido', 'temporal')
-    
+
     def to_float(val, default=0.0):
         try:
             return float(val) if val and str(val).strip() else default
-        except:
+        except (ValueError, TypeError):
             return default
 
     resultado = {
@@ -308,7 +309,7 @@ def generar_pdf_calculadora():
         'bat_series': to_float(datos.get('bat_series')),
         'bat_strings': to_float(datos.get('bat_strings')),
         'bat_total': to_float(datos.get('bat_total')),
-        'baterias_total': to_float(datos.get('bat_total')), 
+        'baterias_total': to_float(datos.get('bat_total')),
         'baterias_por_string': to_float(datos.get('baterias_por_string')),
         'numero_strings': to_float(datos.get('numero_strings')),
         'autonomia_calculada_min': to_float(datos.get('autonomia_calculada_min')),
@@ -322,56 +323,36 @@ def generar_pdf_calculadora():
         'peso': datos.get('peso', ''),
         'es_publicado': es_publicar
     }
-    
+
     imagenes_temp = {}
     base_app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
+
     if es_publicar:
-        if 'imagen_unifilar_ac' in request.files:
-            file = request.files['imagen_unifilar_ac']
-            if file and file.filename:
-                nombre = guardar_imagen_proyecto(file, pedido)
-                imagenes_temp['unifilar_ac'] = os.path.join(base_app_dir, 'static', 'img', 'proyectos', pedido, nombre)
-        
-        if 'imagen_baterias_dc' in request.files:
-            file = request.files['imagen_baterias_dc']
-            if file and file.filename:
-                nombre = guardar_imagen_proyecto(file, pedido)
-                imagenes_temp['baterias_dc'] = os.path.join(base_app_dir, 'static', 'img', 'proyectos', pedido, nombre)
-        
-        if 'imagen_layout_equipos' in request.files:
-            file = request.files['imagen_layout_equipos']
-            if file and file.filename:
-                nombre = guardar_imagen_proyecto(file, pedido)
-                imagenes_temp['layout_equipos'] = os.path.join(base_app_dir, 'static', 'img', 'proyectos', pedido, nombre)
+        for field_name, key in [('imagen_unifilar_ac', 'unifilar_ac'), ('imagen_baterias_dc', 'baterias_dc'), ('imagen_layout_equipos', 'layout_equipos')]:
+            if field_name in request.files:
+                file = request.files[field_name]
+                if file and file.filename:
+                    nombre = guardar_imagen_proyecto(file, pedido)
+                    imagenes_temp[key] = os.path.join(base_app_dir, 'static', 'img', 'proyectos', pedido, nombre)
     else:
-        if 'imagen_unifilar_ac' in request.files:
-            file = request.files['imagen_unifilar_ac']
-            if file and file.filename:
-                imagenes_temp['unifilar_ac'] = guardar_archivo_temporal(file)
-        
-        if 'imagen_baterias_dc' in request.files:
-            file = request.files['imagen_baterias_dc']
-            if file and file.filename:
-                imagenes_temp['baterias_dc'] = guardar_archivo_temporal(file)
-        
-        if 'imagen_layout_equipos' in request.files:
-            file = request.files['imagen_layout_equipos']
-            if file and file.filename:
-                imagenes_temp['layout_equipos'] = guardar_archivo_temporal(file)
-    
+        for field_name, key in [('imagen_unifilar_ac', 'unifilar_ac'), ('imagen_baterias_dc', 'baterias_dc'), ('imagen_layout_equipos', 'layout_equipos')]:
+            if field_name in request.files:
+                file = request.files[field_name]
+                if file and file.filename:
+                    imagenes_temp[key] = guardar_archivo_temporal(file)
+
     tipo_ventilacion_data = None
     if ups_data.get('tipo_ventilacion_id'):
         tipo_ventilacion_data = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
-    
+
     resultado['tipo_ventilacion'] = tipo_ventilacion_data.get('nombre') if tipo_ventilacion_data else None
     resultado['tipo_ventilacion_data'] = tipo_ventilacion_data
-    
+
     bateria_info = {}
     id_bateria = datos.get('id_bateria')
     if id_bateria:
         bateria_info = db.obtener_bateria_id(id_bateria) or {}
-    
+
     if es_publicar:
         save_data = {
             'pedido': pedido,
@@ -388,14 +369,14 @@ def generar_pdf_calculadora():
             resultado['es_publicado'] = True
         else:
             es_publicar = False
-    
+
     pdf = ReportePDF()
     pdf_bytes = pdf.generar_cuerpo(datos, resultado, ups=ups_data, bateria=bateria_info, es_publicado=es_publicar, imagenes_temp=imagenes_temp)
-    
+
     if es_publicar:
         pdf_url = guardar_pdf_proyecto(bytes(pdf_bytes), pedido, tipo='guia')
         db.actualizar_pdf_guia(pedido, pdf_url)
-    
+
     response = make_response(bytes(pdf_bytes))
     response.headers['Content-Type'] = 'application/pdf'
     nombre_seguro = str(pedido).replace(" ", "_")

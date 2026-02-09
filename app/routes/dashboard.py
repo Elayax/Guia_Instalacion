@@ -1,12 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for
-from app.base_datos import GestorDB
+import logging
 import os
+from flask import render_template, request, redirect, url_for, current_app
+from flask_login import login_required
 from . import dashboard_bp
 
-db = GestorDB()
+logger = logging.getLogger(__name__)
+
 
 @dashboard_bp.route('/', methods=['GET', 'POST'])
+@login_required
 def dashboard():
+    db = current_app.db
     pedido_data = None
     estado_pedido = None
     pedido_buscado = None
@@ -16,16 +20,13 @@ def dashboard():
         accion = request.form.get('accion')
 
         if accion == 'buscar_pedido':
-            # Buscar pedido específico
             pedido_num = request.form.get('pedido_buscar', '').strip()
             pedido_buscado = pedido_num
 
             if pedido_num:
-                # Buscar en base de datos
                 pedido_data = db.obtener_proyecto_por_pedido(pedido_num)
 
                 if pedido_data:
-                    # Determinar el estado del pedido
                     estado_pedido = {
                         'tiene_ups': False,
                         'tiene_calculos': False,
@@ -33,54 +34,46 @@ def dashboard():
                         'modelo_ups': None
                     }
 
-                    # Verificar si tiene UPS asignado (modelo_snap guardado)
                     if pedido_data.get('modelo_snap'):
                         estado_pedido['tiene_ups'] = True
                         estado_pedido['modelo_ups'] = pedido_data['modelo_snap']
 
-                    # Verificar si tiene cálculos publicados
                     if pedido_data.get('fecha_publicacion'):
                         estado_pedido['tiene_calculos'] = True
 
-                    # Verificar si tiene checklist/aviso generado
-                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # subir un nivel desde app/routes
+                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                     temp_dir = os.path.join(base_dir, 'static', 'temp')
                     if os.path.exists(temp_dir):
                         checklist_files = [f for f in os.listdir(temp_dir)
                                          if f.endswith('.pdf') and 'Checklist' in f and pedido_num in f]
                         if checklist_files:
                             estado_pedido['tiene_aviso'] = True
-        
+
         elif accion == 'crear_proyecto':
-            # Crear nuevo proyecto
             pedido = request.form.get('pedido')
             cliente_nombre = request.form.get('cliente_nombre')
             sucursal_nombre = request.form.get('sucursal_nombre')
-            
-            # Nuevos campos del dashboard
             potencia_kva = request.form.get('potencia_kva')
             voltaje_entrada = request.form.get('voltaje_entrada')
             voltaje_salida = request.form.get('voltaje_salida')
 
-            # Insertar proyecto en BD
             try:
-                # Nota: GestorDB maneja su propia conexión, pero aquí necesitamos raw cursor o un método específico.
-                # db._conectar() es interno. Deberíamos mover esto a un método de db o usarlo así.
-                # Para limpieza, usaremos db._conectar() aquí igual que antes.
-                conn = db._conectar()
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT INTO proyectos_publicados (pedido, cliente_snap, sucursal_snap, potencia_kva, voltaje_entrada, voltaje_salida)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (pedido, cliente_nombre, sucursal_nombre, potencia_kva, voltaje_entrada, voltaje_salida))
-                conn.commit()
-                conn.close()
+                datos_guardar = {
+                    'cliente_snap': cliente_nombre,
+                    'sucursal_snap': sucursal_nombre,
+                    'potencia_snap': potencia_kva,
+                    'voltaje_entrada': voltaje_entrada,
+                    'voltaje_salida': voltaje_salida,
+                }
+                # Filtrar None values
+                datos_guardar = {k: v for k, v in datos_guardar.items() if v is not None}
 
-                # Redirigir a calculadora
-                # IMPORTANTE: url_for necesita el nombre del blueprint. 'calculator.calculadora'
-                return redirect(url_for('calculator.calculadora') + f'?pedido={pedido}')
+                if db.guardar_calculo(pedido, datos_guardar):
+                    return redirect(url_for('calculator.calculadora') + f'?pedido={pedido}')
+                else:
+                    logger.error("Error al crear proyecto %s", pedido)
             except Exception as e:
-                print(f"Error al crear proyecto: {e}")
+                logger.error("Error al crear proyecto: %s", e)
                 return redirect(url_for('dashboard.dashboard'))
 
     return render_template('dashboard.html',

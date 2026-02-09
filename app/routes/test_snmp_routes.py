@@ -7,25 +7,26 @@ Fecha: 2026-01-27
 """
 
 from flask import Blueprint, render_template, request, jsonify
+from flask_login import login_required
 import logging
 
 from app.services.protocols.snmp_client import SNMPClient, SNMPClientError
 from app.utils.ups_oids import UPS_OIDS, SCALE_FACTORS, DECODERS
 
-# Configurar logging
 logger = logging.getLogger(__name__)
 
-# Crear Blueprint
 test_snmp_bp = Blueprint('test_snmp', __name__)
 
 
 @test_snmp_bp.route('/snmp-test')
+@login_required
 def snmp_test_page():
     """Renderiza la página de prueba SNMP."""
     return render_template('snmp_test.html')
 
 
 @test_snmp_bp.route('/api/snmp/test', methods=['POST'])
+@login_required
 def test_snmp_connection():
     """
     Prueba la conectividad SNMP con un dispositivo UPS.
@@ -194,6 +195,7 @@ def test_snmp_connection():
 
 
 @test_snmp_bp.route('/api/snmp/query-oid', methods=['POST'])
+@login_required
 def query_custom_oid():
     """
     Consulta un OID personalizado.

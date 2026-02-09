@@ -1,15 +1,16 @@
-from flask import Blueprint, render_template, request, make_response, send_file
-from app.checklist import ChecklistPDF
-from app.base_datos import GestorDB
-from app.auxiliares import guardar_pdf_proyecto
 import os
+from flask import render_template, request, make_response, send_file, current_app
+from flask_login import login_required
+from app.checklist import ChecklistPDF
+from app.auxiliares import guardar_pdf_proyecto
 from . import documents_bp
 
-db = GestorDB()
 
 @documents_bp.route('/reimprimir-guia/<pedido>')
+@login_required
 def reimprimir_guia(pedido):
-    """Reimprime la guía de instalación de un pedido ya publicado"""
+    """Reimprime la guía de instalación de un pedido ya publicado."""
+    db = current_app.db
     proyecto = db.obtener_proyecto_por_pedido(pedido)
 
     if not proyecto:
@@ -18,8 +19,6 @@ def reimprimir_guia(pedido):
     if not proyecto.get('pdf_guia_url'):
         return "No hay guía generada para este pedido", 404
 
-    # Verificar que el archivo existe
-    # Ruta base: subir desde app/routes
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     pdf_path = os.path.join(base_dir, 'static', proyecto['pdf_guia_url'])
 
@@ -33,19 +32,20 @@ def reimprimir_guia(pedido):
         mimetype='application/pdf'
     )
 
+
 @documents_bp.route('/generar-checklist/<pedido>', methods=['GET', 'POST'])
+@login_required
 def generar_checklist(pedido):
-    """Genera el checklist para un pedido"""
+    """Genera el checklist para un pedido."""
+    db = current_app.db
     proyecto = db.obtener_proyecto_por_pedido(pedido)
 
     if not proyecto:
         return "Pedido no encontrado", 404
 
     if request.method == 'GET':
-        # Mostrar formulario con datos para generar checklist
         return render_template('generar_checklist.html', proyecto=proyecto, pedido=pedido)
 
-    # POST: Generar el checklist
     datos_checklist = {
         'pedido': pedido,
         'cliente_nombre': proyecto.get('cliente_snap', ''),
@@ -62,23 +62,23 @@ def generar_checklist(pedido):
         'email_contacto': request.form.get('email_contacto', '')
     }
 
-    # Generar el checklist PDF
     checklist_pdf = ChecklistPDF()
     pdf_bytes = checklist_pdf.generar_checklist(datos_checklist)
 
-    # Guardar permanentemente
     pdf_url = guardar_pdf_proyecto(bytes(pdf_bytes), pedido, tipo='checklist')
     db.actualizar_pdf_checklist(pedido, pdf_url)
 
-    # Devolver el PDF para descarga
     response = make_response(bytes(pdf_bytes))
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=Checklist_{pedido}.pdf'
     return response
 
+
 @documents_bp.route('/reimprimir-checklist/<pedido>')
+@login_required
 def reimprimir_checklist(pedido):
-    """Reimprime el checklist de un pedido ya publicado"""
+    """Reimprime el checklist de un pedido ya publicado."""
+    db = current_app.db
     proyecto = db.obtener_proyecto_por_pedido(pedido)
 
     if not proyecto:
