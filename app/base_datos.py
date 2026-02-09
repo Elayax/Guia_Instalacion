@@ -278,6 +278,16 @@ class GestorDB:
             )
         ''')
 
+        # 6. TABLA PERSONAL (NUEVO MODULO)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS personal (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                puesto TEXT NOT NULL,
+                fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # MIGRACION: Agregar columnas protocolo/snmp si no existen
         for col, default in [('protocolo', "'modbus'"), ('snmp_community', "'public'"), ('snmp_port', '161')]:
             try:
@@ -697,6 +707,49 @@ class GestorDB:
         conn.execute("DELETE FROM baterias_modelos WHERE id = ?", (id_bateria,))
         conn.commit()
         conn.close()
+
+    # --- GESTIÓN DE PERSONAL (NUEVO) ---
+    def obtener_personal(self):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM personal ORDER BY nombre").fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
+    def agregar_personal(self, nombre, puesto):
+        conn = self._conectar()
+        try:
+            conn.execute("INSERT INTO personal (nombre, puesto) VALUES (?, ?)", (nombre, puesto))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error agregando personal: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def actualizar_personal(self, id_personal, nombre, puesto):
+        conn = self._conectar()
+        try:
+            conn.execute("UPDATE personal SET nombre = ?, puesto = ? WHERE id = ?", (nombre, puesto, id_personal))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando personal: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def eliminar_personal(self, id_personal):
+        conn = self._conectar()
+        try:
+            conn.execute("DELETE FROM personal WHERE id = ?", (id_personal,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error eliminando personal: {e}")
+            return False
+        finally:
+            conn.close()
 
     def cargar_curvas_baterias_masiva(self, ruta_csv):
         """Carga curvas para múltiples baterías desde un CSV, reportando errores detallados."""

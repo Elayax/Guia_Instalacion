@@ -452,7 +452,9 @@ def gestion():
         'bateria_seleccionada': None,
         'agregando_bateria': False,
         'pivot_data': None,
-        'unidad_curva': 'W'
+        'unidad_curva': 'W',
+        'personal_seleccionado': None,
+        'agregando_personal': False
     }
 
     if request.method == 'POST':
@@ -464,12 +466,15 @@ def gestion():
                            proyectos=db.obtener_proyectos(),
                            baterias=db.obtener_baterias_modelos(),
                            tipos_ventilacion=db.obtener_tipos_ventilacion(),
+                           personal=db.obtener_personal(),
                            msg=state['mensaje'],
                            error_logs=state['error_logs'],
                            ups_seleccionado=state['ups_seleccionado'],
                            agregando_ups=state['agregando_ups'],
                            bateria_seleccionada=state['bateria_seleccionada'],
                            agregando_bateria=state['agregando_bateria'],
+                           personal_seleccionado=state['personal_seleccionado'],
+                           agregando_personal=state['agregando_personal'],
                            unidad_curva=state['unidad_curva'],
                            pivot_data=state['pivot_data'],
                            active_tab=state['active_tab'],

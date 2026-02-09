@@ -18,13 +18,17 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
             <div>
                 <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
-                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE
+                    INGENIERÍA</small>
             </div>
         </div>
         <nav class="d-flex gap-4">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
-            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
-            <a href="{{ url_for('management.gestion') }}" class="nav-link active"><i class="bi bi-database me-1"></i> DATOS</a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>
+                TABLERO</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i>
+                CÁLCULOS</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link active"><i class="bi bi-database me-1"></i>
+                DATOS</a>
             <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
         </nav>
         <div class="d-flex align-items-center gap-3">
@@ -78,6 +82,9 @@
                     <button class="nav-link {% if active_tab == 'carga' %}active{% endif %}" id="v-pills-carga-tab"
                         data-bs-toggle="pill" data-bs-target="#v-pills-carga" type="button" role="tab"><i
                             class="fas fa-cloud-upload-alt"></i> CARGA MASIVA</button>
+                    <button class="nav-link {% if active_tab == 'personal' %}active{% endif %}"
+                        id="v-pills-personal-tab" data-bs-toggle="pill" data-bs-target="#v-pills-personal" type="button"
+                        role="tab"><i class="fas fa-user-tie"></i> PERSONAL</button>
                 </div>
             </div>
 
@@ -1117,6 +1124,113 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- PESTAÑA 6: PERSONAL -->
+                    <div class="tab-pane fade {% if active_tab == 'personal' %}show active{% endif %}"
+                        id="v-pills-personal" role="tabpanel">
+                        {% if personal_seleccionado or agregando_personal %}
+                        <!-- FORMULARIO EDICION/CREACION PERSONAL -->
+                        <div class="tech-matrix">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="m-0 fw-bold">
+                                    {% if personal_seleccionado %}
+                                    Editando: <span class="text-primary">{{ personal_seleccionado.nombre }}</span>
+                                    {% else %}
+                                    <span class="text-success"><i class="fas fa-plus-circle"></i> Nuevo Personal</span>
+                                    {% endif %}
+                                </h4>
+                                <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="accion" value="cancelar_edicion_personal">
+                                    <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i>
+                                        Volver</button>
+                                </form>
+                            </div>
+                            <form method="POST">
+                                <input type="hidden" name="accion" value="guardar_personal">
+                                {% if personal_seleccionado %}
+                                <input type="hidden" name="id" value="{{ personal_seleccionado.id }}">
+                                {% endif %}
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Nombre Completo</label>
+                                        <input type="text" name="nombre" class="form-control"
+                                            value="{{ personal_seleccionado.nombre if personal_seleccionado else '' }}"
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Puesto</label>
+                                        <input type="text" name="puesto" class="form-control"
+                                            value="{{ personal_seleccionado.puesto if personal_seleccionado else '' }}"
+                                            required>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="submit" class="btn btn-success fw-bold px-5"><i
+                                            class="fas fa-save"></i> GUARDAR</button>
+                                </div>
+                            </form>
+                        </div>
+                        {% else %}
+                        <!-- LISTA PERSONAL -->
+                        <div class="tech-matrix">
+                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-user-tie me-2"></i>
+                                    DIRECTORIO DE PERSONAL</div>
+                                <div>
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="accion" value="iniciar_agregar_personal">
+                                        <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
+                                            Agregar Personal</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div style="height: 600px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Puesto</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if personal %}
+                                        {% for p in personal %}
+                                        <tr>
+                                            <td>{{ p.nombre }}</td>
+                                            <td>{{ p.puesto }}</td>
+                                            <td class="text-center">
+                                                <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="accion" value="editar_personal">
+                                                    <input type="hidden" name="id_personal" value="{{ p.id }}">
+                                                    <button class="btn btn-warning btn-sm me-2" title="Editar"><i
+                                                            class="fas fa-edit"></i></button>
+                                                </form>
+                                                <form method="POST" style="display:inline;"
+                                                    onsubmit="return confirm('¿Eliminar personal?');">
+                                                    <input type="hidden" name="tipo" value="del_personal">
+                                                    <input type="hidden" name="id" value="{{ p.id }}">
+                                                    <button class="btn btn-danger btn-sm" title="Eliminar"><i
+                                                            class="fas fa-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">No hay personal registrado.
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -1213,8 +1327,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const ctx = document.getElementById('curvasChart').getContext('2d');
-            const headers = {{ pivot_data.headers | tojson }};
-            const dataRows = {{ pivot_data.data | tojson }};
+            const headers = {{ pivot_data.headers | tojson
+        }};
+        const dataRows = {{ pivot_data.data | tojson }};
 
         const labels = dataRows.map(row => row.tiempo);
 
