@@ -1,0 +1,297 @@
+##############################################################################
+# ESPECIFICACIÓN TÉCNICA DE FORMULARIO: REPORTE DE SERVICIO UPS (LBS) v3.1
+# ACTUALIZACIÓN: Inclusión de Reglas de Negocio A-R
+##############################################################################
+
+BLOQUE_01_ENCABEZADO_Y_METADATOS {
+    # [CAMBIO A] Identificador de Marca para lógica GE
+    Es_Equipo_GE                : [BOOL] 
+        >>> SI_ES_TRUE: Habilitar_Bloque_12 (Servicios GE)
+
+    Folio_Ticket                : [TXT_CORTO] (Autorelleno)
+    Fecha_Servicio              : [DATE]
+    
+    # Datos del Cliente
+    Nombre_Cliente              : [TXT_CORTO]
+    Sucursal_Sitio              : [TXT_CORTO]
+    
+    # [CAMBIO C] Capacitación
+    Tipo_De_Servicio            : [SELECT] { 
+                                    "Preventivo", 
+                                    "Correctivo", 
+                                    "Diagnóstico", 
+                                    "Arranque / Puesta en Marcha",
+                                    "Cambio de Baterías",
+                                    "Laboratorio"
+                                  } # [CAMBIO B] Se eliminó opción "Otros"
+    
+    Capacitacion_Impartida      : [BOOL] (Visible SOLO si Tipo_De_Servicio == "Arranque / Puesta en Marcha")
+
+    # Datos del Equipo
+    Marca_Equipo                : [TXT_CORTO]
+    Modelo_Equipo               : [TXT_CORTO]
+    
+    # [CAMBIO E] Arquitectura (Define seriales en Bloque 3)
+    Arquitectura_UPS            : [SELECT] { "Monolítico", "Modular" }
+
+    # [CAMBIO D] Tipo de Carga
+    Tipo_Carga_Conectada        : [SELECT] { "Lineal", "No Lineal" }
+
+    # [CAMBIO F] Sobrecargas (Solo GE)
+    Numero_Sobrecargas          : [INT] (Visible SOLO si Es_Equipo_GE == TRUE)
+}
+
+BLOQUE_02_LECTURAS_ENTRADA_SALIDA {
+    # [CAMBIO G] El número de fases controla los campos visibles abajo
+    Configuracion_Fases         : [SELECT] { "Monofásico", "Bifásico", "Trifásico" }
+
+    # [CAMBIO H] Punto de Medición (Se eliminó "Contacto Duplex")
+    Punto_Medicion              : [SELECT] { "Tablero", "Interruptor", "Bornes UPS", "Transformador" }
+
+    # [CAMBIO I] Capacidad condicionada a existencia del interruptor
+    Interruptor_Entrada_Existe  : [BOOL]
+        >>> SI_ES_TRUE: Capacidad_Int_Entrada : [INT] (Amperes)
+    
+    Interruptor_Salida_Existe   : [BOOL]
+        >>> SI_ES_TRUE: Capacidad_Int_Salida  : [INT] (Amperes)
+
+    # --- PARAMETROS DE ENTRADA ---
+    # Visibilidad controlada por [CAMBIO G]
+    V_Entrada_L1_L2             : [FLOAT] (Ocultar si es Monofásico)
+    V_Entrada_L2_L3             : [FLOAT] (Mostrar solo si Trifásico)
+    V_Entrada_L1_L3             : [FLOAT] (Mostrar solo si Trifásico)
+    V_Entrada_L1_N              : [FLOAT] (Siempre visible)
+    V_Entrada_L2_N              : [FLOAT] (Ocultar si es Monofásico)
+    V_Entrada_L3_N              : [FLOAT] (Mostrar solo si Trifásico)
+    Frecuencia_Entrada_Hz       : [FLOAT]
+
+    # --- PARAMETROS DE SALIDA ---
+    # [CAMBIO J] Nuevas opciones de Estado Salida
+    Estado_Salida_Actual        : [SELECT] { "Inversor Encendido", "Bypass Estatico", "Bypass Manual" }
+
+    # Visibilidad controlada por [CAMBIO G]
+    V_Salida_L1_L2              : [FLOAT] (Ocultar si es Monofásico)
+    V_Salida_L2_L3              : [FLOAT] (Mostrar solo si Trifásico)
+    V_Salida_L1_L3              : [FLOAT] (Mostrar solo si Trifásico)
+    V_Salida_L1_N               : [FLOAT] 
+    V_Salida_L2_N               : [FLOAT] (Ocultar si es Monofásico)
+    V_Salida_L3_N               : [FLOAT] (Mostrar solo si Trifásico)
+}
+
+BLOQUE_03_OPERACION_Y_ESTADO {
+    # [CAMBIO K] Estado Inicial
+    Estado_Inicial_UPS          : [SELECT] { "Inversor Encendido", "Bypass Estatico", "Apagado", "Bypass Manual o externo" }
+    
+    # [CAMBIO M] Modo durante Mantenimiento
+    Modo_Durante_Mantenimiento  : [SELECT] { "Inversor Encendido", "Bypass Estatico", "Apagado", "Bypass Manual o externo" }
+
+    # [CAMBIO E] Lógica de Seriales
+    Numero_Serie_Chasis         : [TXT_CORTO]
+    
+    Seriales_Modulos_Potencia   : [LISTA_TEXTO] 
+        (Visible SOLO si Arquitectura_UPS == "Modular")
+        (Debe permitir agregar N seriales según cantidad de módulos)
+
+    # Diagnóstico de Etapas
+    Estado_Rectificador         : [SELECT] { "Funcionando", "Dañado", "N/A" }
+    Estado_Inversor             : [SELECT] { "Funcionando", "Dañado", "N/A" }
+    Estado_Cargador             : [SELECT] { "Funcionando", "Dañado", "N/A" }
+    Estado_Baterias             : [SELECT] { "Funcionando", "Dañado", "N/A" }
+
+    # [CAMBIO O] Conformación (Multi-select, sin palabra "sistema")
+    Conformado_Por              : [MULTI_SELECT] { 
+                                    "UPS", 
+                                    "Gabinete de Baterías", 
+                                    "Gabinete de Transformadores",
+                                    "STS", "ATS" 
+                                  }
+}
+
+BLOQUE_04_VENTILADORES_Y_CAPACITORES {
+    # --- VENTILADORES ---
+    Ventiladores_Giran_Libre    : [BOOL]
+    Ventiladores_Ruido          : [BOOL]
+    
+    Sustitucion_Vent_Operacion  : [BOOL]
+    
+    # [CAMBIO N] Daño y Piezas condicionado a Sustitución
+    Sustitucion_Vent_Daño       : [BOOL]
+        >>> SI_ES_TRUE: Que_Daño_Presenta_Vent : [TXT_CORTO]
+        >>> SI_ES_TRUE: Num_Piezas_Vent        : [INT]
+
+    # --- CAPACITORES ---
+    Estado_Fisico_Capacitores   : [SELECT] { "Buen estado", "Mal estado" }
+    Sustitucion_Caps_Operacion  : [BOOL]
+    
+    # [CAMBIO P] Daño y Piezas condicionado a Sustitución
+    Sustitucion_Caps_Daño       : [BOOL]
+        >>> SI_ES_TRUE: Que_Daño_Presenta_Caps : [TXT_CORTO]
+        >>> SI_ES_TRUE: Num_Piezas_Caps        : [INT]
+}
+
+BLOQUE_05_LIMPIEZA {
+    # [CAMBIO Q] "Por qué no" se habilita si la respuesta es NO
+    
+    Limpieza_Rectificador       : [BOOL]
+        >>> SI_ES_FALSE: Motivo_No_Rectif : [TXT_CORTO]
+        
+    Limpieza_Inversor           : [BOOL]
+        >>> SI_ES_FALSE: Motivo_No_Inv    : [TXT_CORTO]
+        
+    Limpieza_Cargador           : [BOOL]
+        >>> SI_ES_FALSE: Motivo_No_Carg   : [TXT_CORTO]
+        
+    Limpieza_Otras_Secciones    : [BOOL]
+        >>> SI_ES_FALSE: Motivo_No_Otras  : [TXT_CORTO]
+
+    # Hallazgos
+    # [CAMBIO R] Ubicación del hallazgo se habilita si se detecta el problema
+    Humedad_Detectada           : [BOOL]
+        >>> SI_ES_TRUE: En_Que_Etapa_Humedad : [TXT_CORTO]
+        
+    Rastros_Liquidos            : [BOOL]
+        >>> SI_ES_TRUE: En_Que_Etapa_Liquido : [TXT_CORTO]
+        
+    Plagas_Roedores             : [BOOL]
+        >>> SI_ES_TRUE: En_Que_Etapa_Plaga   : [TXT_CORTO]
+        
+    Cables_Roidos               : [BOOL]
+        >>> SI_ES_TRUE: Observaciones_Cables : [TXT_LARGO]
+}
+
+BLOQUE_06_CABLEADO_Y_CONEXIONES {
+    Estado_Cable_Control        : [SELECT] { "Buen estado", "Daño forro", "Calentamiento" }
+    Estado_Cable_Potencia       : [SELECT] { "Buen estado", "Daño forro", "Calentamiento" }
+    
+    Requiere_Cambio_Cables      : [BOOL]
+        >>> SI_ES_TRUE: Descripcion_y_Piezas : [TXT_LARGO]
+
+    # Torque Entrada
+    Estado_Torque_Entrada       : [SELECT] { "Conexión bien", "Conexión floja" }
+    Problema_Conexion_Entrada   : [BOOL]
+        >>> SI_ES_TRUE: Tipo_Problema_Ent : [SELECT] { "No se torqueó", "Barrido", "Cabeza degollada", "Otro" }
+    
+    # Torque Salida
+    Estado_Torque_Salida        : [SELECT] { "Conexión bien", "Conexión floja" }
+    Problema_Conexion_Salida    : [BOOL]
+        >>> SI_ES_TRUE: Tipo_Problema_Sal : [SELECT] { "No se torqueó", "Barrido", "Cabeza degollada", "Otro" }
+}
+
+BLOQUE_07_MANTENIMIENTO_EXTERIOR {
+    Limpieza_Gabinete_UPS       : [BOOL]
+    Limpieza_Tapas_Int_UPS      : [BOOL]
+
+    # Condicionales según "Conformado_Por" (Bloque 3)
+    Gabinete_Baterias_Humedad   : [BOOL] (Visible solo si hay Baterías)
+    Gabinete_Trafo_Humedad      : [BOOL] (Visible solo si hay Trafo)
+}
+
+BLOQUE_08_BATERIAS {
+    Tipo_Bateria                : [SELECT] { "Plomo-Ácido", "Litio", "NiCd", "Otro" }
+    Conexion_Baterias           : [SELECT] { "Correcto", "Terminal floja" }
+    
+    Condicion_Fisica            : [SELECT] { "Buen estado", "Sulfatada", "Inflada", "Rota" }
+        >>> SI_NO_ES_BUEN_ESTADO: Numeros_Baterias_Dañadas : [TXT_CORTO]
+
+    # Matriz de carga
+    Numero_Baterias             : [INT]
+    Numero_Bancos               : [INT]
+    
+    Voltajes_Bancos             : [LISTA_FLOAT] (N entradas según No. Bancos)
+}
+
+BLOQUE_09_TRANSFORMADORES {
+    # Solo visible si "Gabinete Transformadores" seleccionado en Conformado_Por
+    
+    Ubicacion_Transformador     : [SELECT] { "Entrada", "Salida", "Ambos" }
+    
+    # Datos Trafo Entrada (Si aplica)
+    Tipo_Trafo_Entrada          : [SELECT] { "Transformador Aislamiento", "Autotransformador" }
+    Conexion_Trafo_Entrada      : [SELECT] { "Delta-Estrella", "Estrella-Delta" }
+    Voltajes_Trafo_Entrada      : [TXT_CORTO] (Primario/Secundario)
+    
+    # Datos Trafo Salida (Si aplica)
+    Tipo_Trafo_Salida           : [SELECT] { "Transformador Aislamiento", "Autotransformador" }
+    Conexion_Trafo_Salida       : [SELECT] { "Delta-Estrella", "Estrella-Delta" }
+    Voltajes_Trafo_Salida       : [TXT_CORTO] (Primario/Secundario)
+}
+
+BLOQUE_10_PRUEBAS_FUNCIONALES {
+    Prueba_Bypass_a_Inversor    : [BOOL]
+    Prueba_Inversor_a_Bypass    : [BOOL]
+    
+    # [CAMBIO L] Descarga de eventos (Sin N/A)
+    Descarga_Eventos_Realizada  : [BOOL] { "Si", "No" }
+        >>> SI_ES_TRUE: Obs_Eventos : [TXT_CORTO]
+
+    Realizo_Prueba_Baterias     : [BOOL]
+    
+    # Pruebas 1, 2, 3 (Solo si Realizo_Prueba_Baterias == TRUE)
+    # Se repite estructura para Prueba 1, 2 y 3
+    Detalle_Prueba_1: {
+        Metodo: [SELECT] { "Test UPS", "Bajar Interruptor" },
+        Carga:  [SELECT] { "Vacío", "Parcial", "Completa" },
+        Obs:    [TXT_CORTO]
+    }
+}
+
+BLOQUE_11_CONDICIONES_SITIO {
+    Tipo_Cuarto                 : [SELECT] { "Cerrado", "Hermético" }
+    Tipo_Piso                   : [SELECT] { "Falso", "Concreto", "Azulejo", "Epóxico" }
+    Temperatura_Cuarto_C        : [FLOAT]
+    
+    Humedad_Ambiente            : [BOOL]
+    Polvo_Ambiente              : [BOOL]
+    Particulas_Volatiles        : [BOOL]
+    
+    Aire_Acondicionado_Existe   : [BOOL]
+        >>> SI_ES_TRUE: Funciona_AA : [BOOL]
+
+    Obstruccion_UPS             : [BOOL]
+    Obstruccion_Ventilacion     : [BOOL]
+    Obstruccion_Acceso          : [BOOL]
+    Evidencia_Roedores_Sitio    : [BOOL]
+    
+    Condicion_Instalacion_Elec  : [SELECT] { "Óptimas", "Buenas", "Malas", "Provisional", "No existe" }
+    
+    # Espacios libres (Checklist)
+    Libre_Parte_Trasera         : [BOOL]
+    Libre_Costados              : [BOOL]
+    Libre_Parte_Superior        : [BOOL]
+}
+
+# [CAMBIO A] BLOQUE 12 - EXCLUSIVO GE
+BLOQUE_12_PRUEBAS_GE {
+    (TODO ESTE BLOQUE SOLO ES VISIBLE SI Es_Equipo_GE == TRUE)
+
+    Validacion_Configuracion    : [BOOL]
+    Conectividad_Perifericos    : [BOOL]
+    Conectividad_Monitoreo      : [BOOL]
+    Operatividad_Puertos        : [BOOL]
+    Pruebas_Conectividad_Red    : [BOOL]
+    
+    Continuidad_Puesta_Tierra   : [BOOL]
+    Resistencia_Aislamiento     : [BOOL]
+    Corriente_Fuga_Tierra       : [BOOL]
+}
+
+BLOQUE_13_LOGISTICA_ENTREGA {
+    Servicio_Entrega            : [BOOL]
+        >>> SI_ES_TRUE: Entrega_Por : [SELECT] { "Personal Propio", "Externo" }
+        >>> SI_ES_TRUE: Items_Entregados : [MULTI_SELECT] { "UPS", "Baterías", "Trafo", "Tableros" }
+        >>> SI_ES_TRUE: Lugar_Entrega : [SELECT] { "Pie de camión", "Sitio final", "Descarga cliente" }
+        >>> SI_ES_TRUE: Destino_Final : [SELECT] { "Sitio final", "Bodega", "Cuarto UPS", "Subestación" }
+
+    Servicio_Maniobra           : [BOOL]
+        >>> SI_ES_TRUE: Realizada_Por : [SELECT] { "Personal Propio", "Externo" }
+        >>> SI_ES_TRUE: Cambio_Ubicacion : [BOOL]
+        
+        # Maniobras específicas (Si/No/NA)
+        Retiro_Materiales       : [SELECT] { "Si", "No", "N/A" }
+        Subir_A_Camion          : [SELECT] { "Si", "No", "N/A" }
+        Bajar_De_Camion         : [SELECT] { "Si", "No", "N/A" }
+        Arrastre_En_Sitio       : [SELECT] { "Si", "No", "N/A" }
+        Subir_Escaleras         : [SELECT] { "Si", "No", "N/A" }
+        Obstaculos              : [SELECT] { "Si", "No", "N/A" }
+        Movimiento_Camper       : [SELECT] { "Si", "No", "N/A" }
+}
