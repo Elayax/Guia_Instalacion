@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Reportes LBS - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animación de fondo */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            animation: rotate 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 60px 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            color: white;
+            font-size: 36px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .button-container {
+            margin: 40px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            padding: 25px 60px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(78, 205, 196, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(-2px);
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 40px;
+            color: white;
+        }
+
+        .info-section h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+
+        .info-section ul {
+            list-style: none;
+            text-align: left;
+            line-height: 2;
+        }
+
+        .info-section li {
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .info-section li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #4ecdc4;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .footer-links {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-links a {
+            color: #4ecdc4;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid rgba(255, 193, 7, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            color: #ffe082;
+            font-size: 14px;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .card {
+                padding: 40px 25px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .btn {
+                font-size: 20px;
+                padding: 20px 40px;
+            }
+
+            .logo {
+                font-size: 60px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">📄</div>
+            <h1>Generador de Reportes LBS</h1>
+            <p class="subtitle">
+                Sistema Standalone de Generación de Reportes de Servicio<br>
+                Versión Mejorada 2.0
+            </p>
+
+            <div class="status-badge">
+                ⚠️ Modo Independiente - No Conectado al Sistema
+            </div>
+
+            <div class="button-container">
+                <a href="/generar-muestra" class="btn" id="btnGenerar">
+                    <span>🖨️ Imprimir Muestra</span>
+                </a>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color: white; margin-top: 10px;">Generando reporte PDF...</p>
+            </div>
+
+            <div class="info-section">
+                <h3>📋 Características Implementadas</h3>
+                <ul>
+                    <li>Diseño fiel al reporte oficial LBS</li>
+                    <li>Colores corporativos (#C00000)</li>
+                    <li>Encabezado con logo y datos de contacto</li>
+                    <li>Información general del cliente y equipo</li>
+                    <li>Parámetros eléctricos de entrada/salida</li>
+                    <li>Operación del sistema UPS</li>
+                    <li>Condiciones de ventiladores y capacitores</li>
+                    <li>Sección de limpieza y firmas</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ IMPORTANTE:</strong>
+                Esta es una aplicación de demostración independiente. No está conectada al sistema principal
+                para evitar interferencias durante el desarrollo. El reporte generado contiene datos de ejemplo.
+            </div>
+
+            <div class="footer-links">
+                <a href="/info">ℹ️ Información</a>
+                <a href="https://www.lemonroy.com" target="_blank">🌐 LBS Website</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mostrar indicador de carga al hacer clic en el botón
+        document.getElementById('btnGenerar').addEventListener('click', function (e) {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            // Agregar pequeño delay para mejor UX
+            setTimeout(() => {
+                // El navegador descargará el archivo automáticamente
+            }, 100);
+
+            // Ocultar loading después de 3 segundos (tiempo estimado de generación)
+            setTimeout(() => {
+                loading.classList.remove('active');
+            }, 3000);
+        });
+
+        // Efecto de partículas en el fondo (opcional)
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.style.position = 'fixed';
+            particle.style.width = '5px';
+            particle.style.height = '5px';
+            particle.style.background = 'white';
+            particle.style.borderRadius = '50%';
+            particle.style.left = Math.random() * window.innerWidth + 'px';
+            particle.style.top = '-10px';
+            particle.style.opacity = '0.5';
+            particle.style.pointerEvents = 'none';
+            particle.style.zIndex = '0';
+
+            document.body.appendChild(particle);
+
+            const animation = particle.animate([
+                { transform: 'translateY(0px)', opacity: 0.5 },
+                { transform: `translateY(${window.innerHeight + 10}px)`, opacity: 0 }
+            ], {
+                duration: Math.random() * 3000 + 2000,
+                easing: 'linear'
+            });
+
+            animation.onfinish = () => particle.remove();
+        }
+
+        // Crear partículas cada cierto tiempo
+        setInterval(createParticle, 300);
+    </script>
+</body>
+
+</html>

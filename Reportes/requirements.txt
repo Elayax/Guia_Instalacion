@@ -4,6 +4,9 @@
 # Librería principal para generación de PDFs
 reportlab>=4.0.0
 
+# Framework web para la aplicación standalone
+Flask>=3.0.0
+
 # Opcional: Para trabajar con fechas y tiempos
 python-dateutil>=2.8.0
 
