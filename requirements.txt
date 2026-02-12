@@ -50,3 +50,4 @@ Werkzeug==3.1.5
 wsproto==1.3.2
 x690==1.0.0.post1
 zipp==3.23.0
+reportlab
