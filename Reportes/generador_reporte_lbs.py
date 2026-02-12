@@ -206,15 +206,7 @@ class ReporteLBSMejorado:
         # SID checkboxes
         x_sid = x + self.ANCHO_UTIL - 35*mm
         c.drawString(x_sid, y_int, "SID (GE):")
-        # Checkbox Si
-        c.rect(x_sid + 16*mm, y_int - 2*mm, 3*mm, 3*mm)
-        c.setFont("Helvetica", 6)
-        c.drawString(x_sid + 20*mm, y_int, "Si")
-        # Checkbox No
-        c.setFont("Helvetica", self.FONT_LABEL)
-        c.rect(x_sid + 25*mm, y_int - 2*mm, 3*mm, 3*mm)
-        c.setFont("Helvetica", 6)
-        c.drawString(x_sid + 29*mm, y_int, "No")
+
         
         # ===== LÍNEA 3: Ubicación =====
         y_int -= 5*mm
@@ -266,86 +258,11 @@ class ReporteLBSMejorado:
         c.drawString(x_disp, y_int, "Display (VSW):")
         c.line(x_disp + 24*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
-        # ===== LÍNEA 6: Tipo de servicio - CHECKBOXES =====
-        y_int -= 6*mm
-        c.drawString(x_int, y_int, "Tipo de servicio")
-        
-        # Checkboxes horizontales
-        y_checks = y_int - 5*mm
-        x_check = x_int
-        
-        checkboxes = [
-            ("☐ FPM", "☐ MITO", "☐ Cambio de Baterías", "☐ Reparación", "☑ Diagnóstico", 
-             "☐ Pruebas de Laboratorio", "Otros")
-        ]
-        
-        c.setFont("Helvetica", self.FONT_LABEL)
-        espaciado = 28*mm
-        
-        # Primera fila de checkboxes
-        c.drawString(x_check, y_checks, "☐ Computadora")
-        x_check += espaciado
-        c.drawString(x_check, y_checks, "☐ MITO")
-        x_check += espaciado
-        c.drawString(x_check, y_checks, "☐ Cambio de Baterías")
-        x_check += espaciado + 10*mm
-        c.drawString(x_check, y_checks, "☐ Reparación")
-        x_check += espaciado
-        c.drawString(x_check, y_checks, "☑ Diagnóstico")
-        
-        # Segunda fila
-        y_checks -= 4*mm
-        x_check = x_int
-        c.drawString(x_check, y_checks, "☐ Capacitativa")
-        x_check += espaciado
-        c.drawString(x_check, y_checks, "☐ Si")
-        x_check += 8*mm
-        c.drawString(x_check, y_checks, "☑ No")
-        
-        x_check += 12*mm
-        c.drawString(x_check, y_checks, "Tipo de carga:")
-        x_check += 24*mm
-        c.drawString(x_check, y_checks, "☐ Inductiva")
-        x_check += 20*mm
-        c.drawString(x_check, y_checks, "☐ Capacitiva")
-        x_check += 22*mm
-        c.drawString(x_check, y_checks, "☐ Resistiva")
-        x_check += 20*mm
-        c.drawString(x_check, y_checks, "☑ Lineal")
-        
-        # Tercera fila
-        y_checks -= 4*mm
-        x_check = x_int
-        c.drawString(x_check, y_checks, "Accesorios RPA:")
-        x_check += 28*mm
-        c.drawString(x_check, y_checks, "☐ Si")
-        x_check += 8*mm
-        c.drawString(x_check, y_checks, "☑ No")
-        
-        x_check += 12*mm
-        c.drawString(x_check, y_checks, "SNMP:")
-        x_check += 14*mm
-        c.drawString(x_check, y_checks, "☑ Si")
-        x_check += 8*mm
-        c.drawString(x_check, y_checks, "☐ No")
-        
-        x_check += 12*mm
-        c.drawString(x_check, y_checks, "No. de Sobrecargas:")
-        c.line(x_check + 32*mm, y_checks - 1*mm, x + self.ANCHO_UTIL - 50*mm, y_checks - 1*mm)
-        
-        # Equipo UPS (derecha)
-        x_equipo = x + self.ANCHO_UTIL - 45*mm
-        c.drawString(x_equipo, y_checks, "El equipo UPS es:")
-        x_equipo += 26*mm
-        c.drawString(x_equipo, y_checks, "☐ Monolítico")
-        x_equipo += 22*mm
-        c.drawString(x_equipo, y_checks, "☑ Modular")
-        
         return y - altura_modulo
-    
     # ========================================================================
     #              MÓDULO 3: PARÁMETROS DE ENTRADA Y SALIDA
     # ========================================================================
+
     
     def _modulo_parametros_entrada_salida(self, c, y_inicio):
         """
@@ -376,40 +293,26 @@ class ReporteLBSMejorado:
         
         # ===== PRIMERA LÍNEA: Medición de Voltaje en =====
         c.setFont("Helvetica", self.FONT_LABEL)
+        c.setStrokeColor(self.COLOR_GRIS)
+        c.setLineWidth(0.5)
         c.drawString(x_int, y_int, "Medición de Voltaje en:")
         
-        # Checkboxes de punto de medición
-        x_check = x_int + 40*mm
-        espaciado_check = 30*mm
-        
-        c.drawString(x_check, y_int, "☐ Tablero")
-        x_check += espaciado_check
-        c.drawString(x_check, y_int, "☐ Interruptor")
-        x_check += espaciado_check
-        c.drawString(x_check, y_int, "☐ En Contacto Duplex")
-        x_check += espaciado_check + 5*mm
-        c.drawString(x_check, y_int, "☑ UPS")
-        x_check += 20*mm
-        c.drawString(x_check, y_int, "☑ En Transformadores")
-        x_check += espaciado_check + 8*mm
-        c.drawString(x_check, y_int, "☐ STS")
-        x_check += 18*mm
-        c.drawString(x_check, y_int, "☐ ATS")
+        # Línea para escribir donde se midió el voltaje
+        c.line(x_int + 40*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
         # ===== SEGUNDA LÍNEA: Interruptores =====
         y_int -= 5*mm
         c.drawString(x_int, y_int, "Interruptor de Entrada:")
         
         x_check = x_int + 40*mm
-        c.drawString(x_check, y_int, "☑ Si")
-        c.drawString(x_check + 8*mm, y_int, "☐ No")
-        c.drawString(x_check + 16*mm, y_int, "☐ N/A")
+        c.drawString(x_check, y_int, "Si / No:")
+        c.line(x_check + 14*mm, y_int - 1*mm, x_check + 35*mm, y_int - 1*mm)
         
-        c.drawString(x_check + 28*mm, y_int, "Capacidad:")
-        c.line(x_check + 48*mm, y_int - 1*mm, x_check + 75*mm, y_int - 1*mm)
+        c.drawString(x_check + 40*mm, y_int, "Capacidad:")
+        c.line(x_check + 60*mm, y_int - 1*mm, x_check + 85*mm, y_int - 1*mm)
         
-        # Observaciones (mitad derecha)
-        x_obs = x + self.ANCHO_UTIL/2 + 10*mm
+        # Observaciones en la misma línea
+        x_obs = x + self.ANCHO_UTIL - 55*mm
         c.drawString(x_obs, y_int, "Observaciones:")
         c.line(x_obs + 26*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
@@ -417,12 +320,11 @@ class ReporteLBSMejorado:
         y_int -= 4*mm
         c.drawString(x_int, y_int, "Interruptor de Salida:")
         
-        c.drawString(x_check, y_int, "☐ Si")
-        c.drawString(x_check + 8*mm, y_int, "☐ No")
-        c.drawString(x_check + 16*mm, y_int, "☐ N/A")
+        c.drawString(x_check, y_int, "Si / No:")
+        c.line(x_check + 14*mm, y_int - 1*mm, x_check + 35*mm, y_int - 1*mm)
         
-        c.drawString(x_check + 28*mm, y_int, "Capacidad:")
-        c.line(x_check + 48*mm, y_int - 1*mm, x_check + 75*mm, y_int - 1*mm)
+        c.drawString(x_check + 40*mm, y_int, "Capacidad:")
+        c.line(x_check + 60*mm, y_int - 1*mm, x_check + 85*mm, y_int - 1*mm)
         
         c.drawString(x_obs, y_int, "Observaciones:")
         c.line(x_obs + 26*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
@@ -438,47 +340,38 @@ class ReporteLBSMejorado:
         
         # L1-L2
         c.drawString(x_int, y_int, "L1-L2:")
-        c.line(x_int + 12*mm, y_int - 1*mm, x_int + 30*mm, y_int - 1*mm)
+        c.line(x_int + 12*mm, y_int - 1*mm, x_int + 35*mm, y_int - 1*mm)
         
-        # L2-L3
-        x_col2 = x_int + 35*mm
+        # L1-L3
+        x_col2 = x_int + 40*mm
         c.drawString(x_col2, y_int, "L1-L3:")
-        c.line(x_col2 + 12*mm, y_int - 1*mm, x_col2 + 30*mm, y_int - 1*mm)
+        c.line(x_col2 + 12*mm, y_int - 1*mm, x_col2 + 35*mm, y_int - 1*mm)
         
-        # L3-N (mitad derecha)
+        # Parámetros de Salida (mitad derecha)
         x_mitad = x + self.ANCHO_UTIL/2
         c.setFont("Helvetica-Bold", self.FONT_LABEL)
         c.drawString(x_mitad, y_int, "Parámetros de Salida:")
         
-        # Checkboxes de estado
-        x_est = x_mitad + 40*mm
-        c.setFont("Helvetica", self.FONT_LABEL)
-        c.drawString(x_est, y_int, "☑ Inversor Encendido")
-        c.drawString(x_est + 38*mm, y_int, "☐ En Bypass")
-        
         # ===== SEXTA LÍNEA: Más voltajes entrada y salida =====
         y_int -= 4*mm
+        c.setFont("Helvetica", self.FONT_LABEL)
         
         # L1-N entrada
         c.drawString(x_int, y_int, "L1-N:")
-        c.line(x_int + 10*mm, y_int - 1*mm, x_int + 28*mm, y_int - 1*mm)
+        c.line(x_int + 10*mm, y_int - 1*mm, x_int + 35*mm, y_int - 1*mm)
         
         # L2-N entrada
         c.drawString(x_col2, y_int, "L2-N:")
-        c.line(x_col2 + 10*mm, y_int - 1*mm, x_col2 + 28*mm, y_int - 1*mm)
+        c.line(x_col2 + 10*mm, y_int - 1*mm, x_col2 + 35*mm, y_int - 1*mm)
         
         # L1-L2 salida
         c.drawString(x_mitad, y_int, "L1-L2:")
-        c.line(x_mitad + 12*mm, y_int - 1*mm, x_mitad + 32*mm, y_int - 1*mm)
+        c.line(x_mitad + 12*mm, y_int - 1*mm, x_mitad + 37*mm, y_int - 1*mm)
         
         # L1-L3 salida
-        x_sal2 = x_mitad + 37*mm
+        x_sal2 = x_mitad + 42*mm
         c.drawString(x_sal2, y_int, "L1-L3:")
-        c.line(x_sal2 + 12*mm, y_int - 1*mm, x_sal2 + 32*mm, y_int - 1*mm)
-        
-        # UPS apagado checkbox
-        x_apag = x_sal2 + 37*mm
-        c.drawString(x_apag, y_int, "☐ UPS apagado")
+        c.line(x_sal2 + 12*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
         # ===== SÉPTIMA LÍNEA: Frecuencia, más voltajes =====
         y_int -= 4*mm
@@ -487,89 +380,55 @@ class ReporteLBSMejorado:
         c.drawString(x_int, y_int, "N-T Física:")
         c.line(x_int + 18*mm, y_int - 1*mm, x_int + 35*mm, y_int - 1*mm)
         
-        # Frecuencia
-        x_freq = x_col2
-        c.drawString(x_freq, y_int, "Frecuencia:")
-        c.line(x_freq + 20*mm, y_int - 1*mm, x_freq + 35*mm, y_int - 1*mm)
-        c.drawString(x_freq + 38*mm, y_int, "Hz.")
+        # Frecuencia entrada
+        c.drawString(x_col2, y_int, "Frecuencia:")
+        c.line(x_col2 + 20*mm, y_int - 1*mm, x_col2 + 35*mm, y_int - 1*mm)
+        c.drawString(x_col2 + 36*mm, y_int, "Hz")
         
         # L1-N salida
         c.drawString(x_mitad, y_int, "L1-N:")
-        c.line(x_mitad + 10*mm, y_int - 1*mm, x_mitad + 28*mm, y_int - 1*mm)
+        c.line(x_mitad + 10*mm, y_int - 1*mm, x_mitad + 37*mm, y_int - 1*mm)
         
         # L2-N salida
         c.drawString(x_sal2, y_int, "L2-N:")
-        c.line(x_sal2 + 10*mm, y_int - 1*mm, x_sal2 + 28*mm, y_int - 1*mm)
+        c.line(x_sal2 + 10*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
-        # L3-N salida
-        c.drawString(x_apag, y_int, "L3-N:")
-        c.line(x_apag + 10*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
-        
-        # ===== OCTAVA LÍNEA: Temperatura, corriente, frecuencia salida =====
+        # ===== OCTAVA LÍNEA: Temperatura, L3-N salida =====
         y_int -= 4*mm
         
         # Temperatura del sistema
-        c.drawString(x_int, y_int, "Temperatura del Sistema UPS en electrónica:")
-        c.line(x_int + 78*mm, y_int - 1*mm, x_int + 95*mm, y_int - 1*mm)
-        c.drawString(x_int + 97*mm, y_int, "°C")
+        c.drawString(x_int, y_int, "Temp. UPS:")
+        c.line(x_int + 18*mm, y_int - 1*mm, x_int + 35*mm, y_int - 1*mm)
+        c.drawString(x_int + 36*mm, y_int, "°C")
         
         # N-T Física salida
         c.drawString(x_mitad, y_int, "N-T Física:")
-        c.line(x_mitad + 18*mm, y_int - 1*mm, x_mitad + 35*mm, y_int - 1*mm)
+        c.line(x_mitad + 18*mm, y_int - 1*mm, x_mitad + 37*mm, y_int - 1*mm)
         
         # Frecuencia salida
-        x_freq_sal = x_sal2
-        c.drawString(x_freq_sal, y_int, "Frecuencia:")
-        c.line(x_freq_sal + 20*mm, y_int - 1*mm, x_freq_sal + 35*mm, y_int - 1*mm)
-        c.drawString(x_freq_sal + 38*mm, y_int, "Hz.")
+        c.drawString(x_sal2, y_int, "Frecuencia:")
+        c.line(x_sal2 + 20*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
-        # ===== NOVENA LÍNEA: Descarga de eventos, corriente, % carga =====
+        # ===== NOVENA LÍNEA: Corriente salida =====
         y_int -= 4*mm
         
         # Descarga de eventos
-        c.drawString(x_int, y_int, "Descarga de eventos antes de empezar el mantenimiento:")
-        x_check_desc = x_int + 105*mm
-        c.drawString(x_check_desc, y_int, "☑ Si")
-        c.drawString(x_check_desc + 8*mm, y_int, "☐ No")
-        c.drawString(x_check_desc + 16*mm, y_int, "☐ N/A")
+        c.drawString(x_int, y_int, "Descarga eventos:")
+        c.line(x_int + 26*mm, y_int - 1*mm, x_int + 40*mm, y_int - 1*mm)
         
         # Corriente salida
-        c.drawString(x_mitad, y_int, "Corriente:")
-        c.drawString(x_mitad + 18*mm, y_int, "L1:")
-        c.line(x_mitad + 24*mm, y_int - 1*mm, x_mitad + 35*mm, y_int - 1*mm)
-        c.drawString(x_mitad + 36*mm, y_int, "A")
-        
-        x_l2 = x_mitad + 40*mm
-        c.drawString(x_l2, y_int, "L2:")
-        c.line(x_l2 + 6*mm, y_int - 1*mm, x_l2 + 17*mm, y_int - 1*mm)
-        c.drawString(x_l2 + 18*mm, y_int, "A")
-        
-        x_l3 = x_l2 + 22*mm
-        c.drawString(x_l3, y_int, "L3:")
-        c.line(x_l3 + 6*mm, y_int - 1*mm, x_l3 + 17*mm, y_int - 1*mm)
-        c.drawString(x_l3 + 18*mm, y_int, "A")
+        c.drawString(x_mitad, y_int, "Corriente L1:")
+        c.line(x_mitad + 26*mm, y_int - 1*mm, x_mitad + 40*mm, y_int - 1*mm)
+        c.drawString(x_mitad + 42*mm, y_int, "A")
         
         # ===== DÉCIMA LÍNEA: % de Carga =====
         y_int -= 4*mm
-        c.drawString(x_mitad, y_int, "% de Carga:")
-        c.drawString(x_mitad + 18*mm, y_int, "L1:")
-        c.line(x_mitad + 24*mm, y_int - 1*mm, x_mitad + 35*mm, y_int - 1*mm)
-        c.drawString(x_mitad + 36*mm, y_int, "%")
-        
-        c.drawString(x_l2, y_int, "L2:")
-        c.line(x_l2 + 6*mm, y_int - 1*mm, x_l2 + 17*mm, y_int - 1*mm)
-        c.drawString(x_l2 + 18*mm, y_int, "%")
-        
-        c.drawString(x_l3, y_int, "L3:")
-        c.line(x_l3 + 6*mm, y_int - 1*mm, x_l3 + 17*mm, y_int - 1*mm)
-        c.drawString(x_l3 + 18*mm, y_int, "%")
+        c.drawString(x_mitad, y_int, "% Carga L1:")
+        c.line(x_mitad + 26*mm, y_int - 1*mm, x_mitad + 40*mm, y_int - 1*mm)
+        c.drawString(x_mitad + 42*mm, y_int, "%")
         
         return y - altura_modulo
-    
-    # ========================================================================
-    #                  MÓDULO 4: OPERACIÓN DEL SISTEMA UPS
-    # ========================================================================
-    
+  
     def _modulo_operacion_sistema(self, c, y_inicio):
         """
         Dibuja el módulo de operación del sistema UPS, STS, ATS.
