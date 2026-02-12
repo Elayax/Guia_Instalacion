@@ -8,12 +8,12 @@ BLOQUE_01_ENCABEZADO_Y_METADATOS {
     Es_Equipo_GE                : [BOOL] 
         >>> SI_ES_TRUE: Habilitar_Bloque_12 (Servicios GE)
 
-    Folio_Ticket                : [TXT_CORTO] (Autorelleno)
-    Fecha_Servicio              : [DATE]
+    Folio_Ticket                : [TXT_CORTO]
+    Fecha_Servicio              : [DATE] (Autorelleno)
     
     # Datos del Cliente
-    Nombre_Cliente              : [TXT_CORTO]
-    Sucursal_Sitio              : [TXT_CORTO]
+    Nombre_Cliente              : [TXT_CORTO] (Autorelleno basandose en el Folio_Ticket)
+    Sucursal_Sitio              : [TXT_CORTO] (Autorelleno basandose en el Folio_Ticket)
     
     # [CAMBIO C] Capacitación
     Tipo_De_Servicio            : [SELECT] { 
@@ -23,13 +23,13 @@ BLOQUE_01_ENCABEZADO_Y_METADATOS {
                                     "Arranque / Puesta en Marcha",
                                     "Cambio de Baterías",
                                     "Laboratorio"
-                                  } # [CAMBIO B] Se eliminó opción "Otros"
+                                  }
     
     Capacitacion_Impartida      : [BOOL] (Visible SOLO si Tipo_De_Servicio == "Arranque / Puesta en Marcha")
 
     # Datos del Equipo
-    Marca_Equipo                : [TXT_CORTO]
-    Modelo_Equipo               : [TXT_CORTO]
+    Marca_Equipo                : [TXT_CORTO] (Autorelleno basandose en el Folio_Ticket)
+    Modelo_Equipo               : [TXT_CORTO] (Autorelleno basandose en el Folio_Ticket)
     
     # [CAMBIO E] Arquitectura (Define seriales en Bloque 3)
     Arquitectura_UPS            : [SELECT] { "Monolítico", "Modular" }
@@ -180,6 +180,8 @@ BLOQUE_06_CABLEADO_Y_CONEXIONES {
 BLOQUE_07_MANTENIMIENTO_EXTERIOR {
     Limpieza_Gabinete_UPS       : [BOOL]
     Limpieza_Tapas_Int_UPS      : [BOOL]
+
+
 
     # Condicionales según "Conformado_Por" (Bloque 3)
     Gabinete_Baterias_Humedad   : [BOOL] (Visible solo si hay Baterías)
