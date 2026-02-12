@@ -283,7 +283,7 @@ class ReporteLBSMejorado:
         espaciado = 28*mm
         
         # Primera fila de checkboxes
-        c.drawString(x_check, y_checks, "☐ FPM")
+        c.drawString(x_check, y_checks, "☐ Computadora")
         x_check += espaciado
         c.drawString(x_check, y_checks, "☐ MITO")
         x_check += espaciado
