@@ -497,11 +497,11 @@ class ReporteLBSMejorado:
         
         # ===== Líneas siguientes: Inversor, Rectificador, Cargador, Banco de Baterías, Otras Etapas =====
         componentes = [
-            ("Rectificador:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
-            ("Inversor:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
-            ("Cargador:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
-            ("Banco de Baterías:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
-            ("Otras Etapas:", "☐ Funcionando Correctamente", "☐ Presenta Daño")
+            ("Rectificador:", "Funcionando Correctamente", "Presenta Daño"),
+            ("Inversor:", "Funcionando Correctamente", "Presenta Daño"),
+            ("Cargador:", "Funcionando Correctamente", "Presenta Daño"),
+            ("Banco de Baterías:", "Funcionando Correctamente", "Presenta Daño"),
+            ("Otras Etapas:", "Funcionando Correctamente", "Presenta Daño")
         ]
         
         for comp_nombre, estado1, estado2 in componentes:
