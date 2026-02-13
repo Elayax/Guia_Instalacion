@@ -259,10 +259,6 @@ class ReporteLBSMejorado:
         c.line(x_disp + 24*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
         return y - altura_modulo
-    # ========================================================================
-    #              MÓDULO 3: PARÁMETROS DE ENTRADA Y SALIDA
-    # ========================================================================
-
     
     def _modulo_parametros_entrada_salida(self, c, y_inicio):
         """
@@ -273,7 +269,7 @@ class ReporteLBSMejorado:
         """
         x = self.MARGEN_IZQ
         y = y_inicio
-        altura_modulo = 42*mm
+        altura_modulo = 50*mm
         
         # Título de la sección
         c.setFont("Helvetica-Bold", self.FONT_SECCION)
@@ -282,7 +278,7 @@ class ReporteLBSMejorado:
         
         y -= 4*mm
         
-        # Rectángulo principal
+        # Rectángulo principal con borde rojo
         c.setStrokeColor(self.COLOR_ROJO_BORDE)
         c.setLineWidth(1.5)
         c.rect(x, y - altura_modulo, self.ANCHO_UTIL, altura_modulo)
@@ -438,12 +434,12 @@ class ReporteLBSMejorado:
         """
         x = self.MARGEN_IZQ
         y = y_inicio
-        altura_modulo = 42*mm
+        altura_modulo = 50*mm
         
         # Título de la sección
         c.setFont("Helvetica-Bold", self.FONT_SECCION)
         c.setFillColor(self.COLOR_NEGRO)
-        c.drawString(x, y, "OPERACIÓN DEL SISTEMA UPS, STS ,ATS:")
+        c.drawString(x, y, "OPERACIÓN DEL SISTEMA:")
         
         y -= 4*mm
         
@@ -460,20 +456,10 @@ class ReporteLBSMejorado:
         
         # ===== PRIMERA LÍNEA: Estado Inicial =====
         c.drawString(x_int, y_int, "Estado Inicial:")
-        
-        # Checkboxes
-        x_check = x_int + 28*mm
-        c.drawString(x_check, y_int, "☐ Apagado")
-        x_check += 22*mm
-        c.drawString(x_check, y_int, "☐ En Bayppass")
-        x_check += 26*mm
-        c.drawString(x_check, y_int, "☑ Inversor Encendido")
-        x_check += 38*mm
-        c.drawString(x_check, y_int, "Otro:")
-        c.line(x_check + 10*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
+        c.line(x_int + 28*mm, y_int - 1*mm, x + self.ANCHO_UTIL/2 - 5*mm, y_int - 1*mm)
         
         # Lado derecho - Cuantos módulos
-        x_der = x + self.ANCHO_UTIL - 70*mm
+        x_der = x + self.ANCHO_UTIL/2 + 2*mm
         c.drawString(x_der, y_int, "Cuantos módulos tiene:")
         c.line(x_der + 36*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
@@ -481,45 +467,27 @@ class ReporteLBSMejorado:
         y_int -= 5*mm
         c.drawString(x_int, y_int, "El Modo del UPS se realiza:")
         
-        x_check = x_int + 48*mm
-        c.drawString(x_check, y_int, "☐ Apagado")
-        x_check += 22*mm
-        c.drawString(x_check, y_int, "☐ Si")
-        x_check += 10*mm
-        c.drawString(x_check, y_int, "☑ En Bayppass")
-        x_check += 26*mm
-        c.drawString(x_check, y_int, "☐ Inversor Encendido")
+        x_linea = x_int + 48*mm
+        c.drawString(x_linea, y_int, "Modo:")
+        c.line(x_linea + 12*mm, y_int - 1*mm, x_linea + 35*mm, y_int - 1*mm)
         
-        # Lado derecho
+        # Lado derecho - ajustado para mejor alineación
         c.drawString(x_der, y_int, "No. de Serie del Módulo:")
         c.line(x_der + 38*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
         # ===== TERCERA LÍNEA: Diagnóstico =====
-        y_int -= 4*mm
-        c.drawString(x_int, y_int, "Diagnóstico")
+        y_int -= 5*mm
+        c.drawString(x_int, y_int, "Diagnóstico:")
+        c.line(x_int + 28*mm, y_int - 1*mm, x + self.ANCHO_UTIL/2 - 5*mm, y_int - 1*mm)
         
-        x_check = x_int + 48*mm
-        c.drawString(x_check, y_int, "☑ Si")
-        x_check += 10*mm
-        c.drawString(x_check, y_int, "☐ N/A")
-        x_check += 12*mm
-        c.drawString(x_check, y_int, "☐ Equipo Dañado")
-        
-        # Continúa lado derecho
+        # Lado derecho - alineado correctamente
         c.drawString(x_der, y_int, "No. de Serie del Módulo:")
         c.line(x_der + 38*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
-        
         # ===== CUARTA LÍNEA: Antes de Apagar el Sistema =====
         y_int -= 4*mm
         c.drawString(x_int, y_int, "Antes de Apagar el Sistema:")
         
-        x_check = x_int + 48*mm
-        c.drawString(x_check, y_int, "☐ Si")
-        x_check += 10*mm
-        c.drawString(x_check, y_int, "☑ N/A")
-        x_check += 12*mm
-        c.drawString(x_check, y_int, "☐ Equipo Dañado")
-        
+        c.line(x_int + 48*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         c.drawString(x_der, y_int, "No. de Serie del Módulo:")
         c.line(x_der + 38*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
         
@@ -527,23 +495,13 @@ class ReporteLBSMejorado:
         y_int -= 4*mm
         c.drawString(x_int, y_int, "Revisión de la etapa de")
         
-        x_check = x_int + 40*mm
-        c.drawString(x_check, y_int, "Inversor:")
-        x_check += 18*mm
-        c.drawString(x_check, y_int, "☑ Funcionando Correctamente")
-        x_check += 52*mm
-        c.drawString(x_check, y_int, "☐ Presenta Daño")
-        
-        c.drawString(x_der, y_int, "No. de Serie del Módulo:")
-        c.line(x_der + 38*mm, y_int - 1*mm, x + self.ANCHO_UTIL - 2*mm, y_int - 1*mm)
-        
-        # ===== Líneas siguientes: Rectificador, Cargador, Banco de Baterías, Otras Etapas =====
+        # ===== Líneas siguientes: Inversor, Rectificador, Cargador, Banco de Baterías, Otras Etapas =====
         componentes = [
             ("Rectificador:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
+            ("Inversor:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
             ("Cargador:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
             ("Banco de Baterías:", "☑ Funcionando Correctamente", "☐ Presenta Daño"),
-            ("Otra Etapa", "☐ Funcionando Correctamente", "☐ Presenta Daño"),
-            ("Otra Etapa", "☐ Funcionando Correctamente", "☐ Presenta Daño")
+            ("Otras Etapas:", "☐ Funcionando Correctamente", "☐ Presenta Daño")
         ]
         
         for comp_nombre, estado1, estado2 in componentes:
@@ -563,18 +521,18 @@ class ReporteLBSMejorado:
         c.drawString(x_int, y_int, "El Sistema UPS está conformado por:")
         
         x_check = x_int + 65*mm
-        c.drawString(x_check, y_int, "☑ UPS")
+        c.drawString(x_check, y_int, "☐ UPS")
         x_check += 15*mm
-        c.drawString(x_check, y_int, "☑ Gabinete de Baterías")
+        c.drawString(x_check, y_int, "☐ Gabinete de Baterías")
         x_check += 42*mm
-        c.drawString(x_check, y_int, "☑ Gabinete de Transformadores")
+        c.drawString(x_check, y_int, "☐ Gabinete de Transformadores")
         
         # Segunda fila de conformado
         y_int -= 4*mm
         c.drawString(x_int, y_int, "El sistema UPS tiene el Horario correcto en pantalla:")
         
         x_check = x_int + 90*mm
-        c.drawString(x_check, y_int, "☑ Si")
+        c.drawString(x_check, y_int, "☐ Si")
         x_check += 10*mm
         c.drawString(x_check, y_int, "☐ No")
         x_check += 10*mm
