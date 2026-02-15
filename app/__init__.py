@@ -20,6 +20,9 @@ def create_app():
     
     from app.routes.test_snmp_routes import test_snmp_bp
     app.register_blueprint(test_snmp_bp)
+    
+    from app.routes.diagnostic_routes import diagnostic_bp
+    app.register_blueprint(diagnostic_bp)
 
 
     from app.extensions import socketio

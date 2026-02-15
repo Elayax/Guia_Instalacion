@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Red - UPS Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .terminal-container {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #c9d1d9;
+        }
+
+        .terminal-output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+
+        .terminal-prompt {
+            color: #58a6ff;
+            font-weight: bold;
+        }
+
+        .terminal-success {
+            color: #3fb950;
+        }
+
+        .terminal-error {
+            color: #f85149;
+        }
+
+        .terminal-warning {
+            color: #d29922;
+        }
+
+        .terminal-info {
+            color: #58a6ff;
+        }
+
+        .command-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 8px 16px;
+            margin: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .command-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .command-btn.active {
+            background: #1f6feb;
+            border-color: #1f6feb;
+            color: white;
+        }
+
+        .form-control-terminal {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .form-control-terminal:focus {
+            background: #0d1117;
+            border-color: #58a6ff;
+            color: #c9d1d9;
+            box-shadow: 0 0 0 0.25rem rgba(88, 166, 255, 0.25);
+        }
+
+        .spinner-terminal {
+            border: 2px solid #30363d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tool-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .tool-card:hover {
+            border-color: #58a6ff;
+        }
+
+        .tool-icon {
+            font-size: 32px;
+            color: #58a6ff;
+            margin-bottom: 10px;
+        }
+
+        .quick-ip {
+            display: inline-block;
+            margin: 4px;
+            padding: 4px 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #58a6ff;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .quick-ip:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">DIAGNÓSTICO DE RED</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">HERRAMIENTAS DE TESTING</small>
+            </div>
+        </div>
+        <nav class="d-flex gap-4">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+            <a href="{{ url_for('diagnostic.index') }}" class="nav-link active"><i class="bi bi-terminal me-1"></i> DIAGNÓSTICO</a>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid p-4" style="background: #010409; min-height: calc(100vh - 60px);">
+        <div class="row">
+            <!-- Panel de Herramientas -->
+            <div class="col-md-4">
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="bi bi-broadcast-pin"></i></div>
+                    <h5 class="text-white mb-3">Test de Ping</h5>
+                    <div class="mb-2">
+                        <label class="text-muted small">IP o Hostname:</label>
+                        <input type="text" class="form-control form-control-sm form-control-terminal" id="pingIp" placeholder="192.168.0.100">
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">IPs Rápidas:</label><br>
+                        <span class="quick-ip" onclick="setIP('pingIp', '192.168.10.198')">192.168.10.198</span>
+                        <span class="quick-ip" onclick="setIP('pingIp', '192.168.0.100')">192.168.0.100</span>
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="runPing()">
+                        <i class="bi bi-play-fill me-1"></i> Ejecutar Ping
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="bi bi-cpu"></i></div>
+                    <h5 class="text-white mb-3">Test de Puerto</h5>
+                    <div class="row mb-2">
+                        <div class="col-7">
+                            <label class="text-muted small">IP:</label>
+                            <input type="text" class="form-control form-control-sm form-control-terminal" id="portIp" placeholder="192.168.0.100">
+                        </div>
+                        <div class="col-5">
+                            <label class="text-muted small">Puerto:</label>
+                            <input type="number" class="form-control form-control-sm form-control-terminal" id="portNumber" placeholder="502">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Puertos Comunes:</label><br>
+                        <button class="command-btn" onclick="setPort(502)">Modbus (502)</button>
+                        <button class="command-btn" onclick="setPort(161)">SNMP (161)</button>
+                        <button class="command-btn" onclick="setPort(80)">HTTP (80)</button>
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="runPortTest()">
+                        <i class="bi bi-play-fill me-1"></i> Probar Puerto
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="bi bi-router"></i></div>
+                    <h5 class="text-white mb-3">Test SNMP</h5>
+                    <div class="mb-2">
+                        <label class="text-muted small">IP:</label>
+                        <input type="text" class="form-control form-control-sm form-control-terminal" id="snmpIp" placeholder="192.168.0.100">
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label class="text-muted small">Puerto:</label>
+                            <input type="number" class="form-control form-control-sm form-control-terminal" id="snmpPort" value="161">
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small">Community:</label>
+                            <input type="text" class="form-control form-control-sm form-control-terminal" id="snmpCommunity" value="public">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="runSNMPTest()">
+                        <i class="bi bi-play-fill me-1"></i> Probar SNMP
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="bi bi-diagram-3"></i></div>
+                    <h5 class="text-white mb-3">Test Modbus TCP</h5>
+                    <div class="mb-2">
+                        <label class="text-muted small">IP:</label>
+                        <input type="text" class="form-control form-control-sm form-control-terminal" id="modbusIp" placeholder="192.168.0.100">
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label class="text-muted small">Puerto:</label>
+                            <input type="number" class="form-control form-control-sm form-control-terminal" id="modbusPort" value="502">
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small">Slave ID:</label>
+                            <input type="number" class="form-control form-control-sm form-control-terminal" id="modbusSlave" value="1">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="runModbusTest()">
+                        <i class="bi bi-play-fill me-1"></i> Probar Modbus
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="bi bi-search"></i></div>
+                    <h5 class="text-white mb-3">Escaneo de Red</h5>
+                    <div class="mb-2">
+                        <label class="text-muted small">Red (ej: 192.168.0):</label>
+                        <input type="text" class="form-control form-control-sm form-control-terminal" id="scanNetwork" placeholder="192.168.0">
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label class="text-muted small">Desde:</label>
+                            <input type="number" class="form-control form-control-sm form-control-terminal" id="scanStart" value="1">
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small">Hasta:</label>
+                            <input type="number" class="form-control form-control-sm form-control-terminal" id="scanEnd" value="254">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-warning w-100" onclick="runScan()">
+                        <i class="bi bi-radar me-1"></i> Escanear Red
+                    </button>
+                    <small class="text-warning d-block mt-2"><i class="bi bi-exclamation-triangle me-1"></i>Puede tardar varios minutos</small>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon"><i class="bi bi-info-circle"></i></div>
+                    <h5 class="text-white mb-3">Información del Sistema</h5>
+                    <button class="btn btn-sm btn-secondary w-100 mb-2" onclick="showRoutes()">
+                        <i class="bi bi-signpost me-1"></i> Ver Tabla de Rutas
+                    </button>
+                    <button class="btn btn-sm btn-secondary w-100" onclick="showInterfaces()">
+                        <i class="bi bi-ethernet me-1"></i> Ver Interfaces de Red
+                    </button>
+                </div>
+            </div>
+
+            <!-- Terminal de Salida -->
+            <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-white m-0"><i class="bi bi-terminal me-2"></i>Terminal de Diagnóstico</h4>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearTerminal()">
+                        <i class="bi bi-trash me-1"></i> Limpiar
+                    </button>
+                </div>
+                
+                <div class="terminal-container" id="terminal">
+                    <div class="terminal-output">
+<span class="terminal-info">╔═══════════════════════════════════════════════════════════╗
+║  TERMINAL DE DIAGNÓSTICO DE RED - UPS MONITORING SYSTEM  ║
+╚═══════════════════════════════════════════════════════════╝</span>
+
+Sistema listo para ejecutar pruebas de conectividad.
+Selecciona una herramienta del panel izquierdo para comenzar.
+
+<span class="terminal-prompt">$</span> <span class="terminal-success">Esperando comandos...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+            document.getElementById('date').textContent = now.toISOString().split('T')[0];
+        }, 1000);
+
+        function appendToTerminal(text, type = 'info') {
+            const terminal = document.getElementById('terminal');
+            const output = terminal.querySelector('.terminal-output');
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'terminal-success' : 
+                            type === 'error' ? 'terminal-error' : 
+                            type === 'warning' ? 'terminal-warning' : 'terminal-info';
+            
+            output.innerHTML += `\n<span class="terminal-prompt">[${timestamp}]</span> <span class="${className}">${text}</span>`;
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function clearTerminal() {
+            const terminal = document.getElementById('terminal');
+            const output = terminal.querySelector('.terminal-output');
+            output.innerHTML = '<span class="terminal-prompt">$</span> <span class="terminal-success">Terminal limpiada</span>';
+        }
+
+        function showLoading(message) {
+            appendToTerminal(`<span class="spinner-terminal"></span>${message}`, 'info');
+        }
+
+        function setIP(fieldId, ip) {
+            document.getElementById(fieldId).value = ip;
+        }
+
+        function setPort(port) {
+            document.getElementById('portNumber').value = port;
+        }
+
+        async function runPing() {
+            const ip = document.getElementById('pingIp').value;
+            if (!ip) {
+                appendToTerminal('❌ Error: Ingresa una IP', 'error');
+                return;
+            }
+
+            appendToTerminal(`🔍 Ejecutando ping a ${ip}...`, 'info');
+            showLoading('Esperando respuesta...');
+
+            try {
+                const response = await fetch('/api/diagnostic/ping', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip })
+                });
+
+                const data = await response.json();
+                const type = data.success ? 'success' : 'error';
+                appendToTerminal(`\n${data.output}`, type);
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runPortTest() {
+            const ip = document.getElementById('portIp').value;
+            const port = document.getElementById('portNumber').value;
+            
+            if (!ip || !port) {
+                appendToTerminal('❌ Error: Ingresa IP y puerto', 'error');
+                return;
+            }
+
+            appendToTerminal(`🔍 Probando conexión a ${ip}:${port}...`, 'info');
+            showLoading('Verificando puerto...');
+
+            try {
+                const response = await fetch('/api/diagnostic/port', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, port })
+                });
+
+                const data = await response.json();
+                const type = data.success ? 'success' : 'error';
+                appendToTerminal(`\n${data.output}`, type);
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runSNMPTest() {
+            const ip = document.getElementById('snmpIp').value;
+            const port = document.getElementById('snmpPort').value;
+            const community = document.getElementById('snmpCommunity').value;
+            
+            if (!ip) {
+                appendToTerminal('❌ Error: Ingresa una IP', 'error');
+                return;
+            }
+
+            appendToTerminal(`🔍 Probando SNMP en ${ip}:${port} (community: ${community})...`, 'info');
+            showLoading('Consultando dispositivo via SNMP...');
+
+            try {
+                const response = await fetch('/api/diagnostic/snmp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, port, community })
+                });
+
+                const data = await response.json();
+                const type = data.success ? 'success' : 'error';
+                appendToTerminal(`\n${data.output}`, type);
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runModbusTest() {
+            const ip = document.getElementById('modbusIp').value;
+            const port = document.getElementById('modbusPort').value;
+            const slave_id = document.getElementById('modbusSlave').value;
+            
+            if (!ip) {
+                appendToTerminal('❌ Error: Ingresa una IP', 'error');
+                return;
+            }
+
+            appendToTerminal(`🔍 Probando Modbus TCP en ${ip}:${port} (Slave ${slave_id})...`, 'info');
+            showLoading('Conectando via Modbus TCP...');
+
+            try {
+                const response = await fetch('/api/diagnostic/modbus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, port, slave_id })
+                });
+
+                const data = await response.json();
+                const type = data.success ? 'success' : 'error';
+                appendToTerminal(`\n${data.output}`, type);
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runScan() {
+            const network = document.getElementById('scanNetwork').value;
+            const start = document.getElementById('scanStart').value;
+            const end = document.getElementById('scanEnd').value;
+            
+            if (!network) {
+                appendToTerminal('❌ Error: Ingresa la red a escanear', 'error');
+                return;
+            }
+
+            appendToTerminal(`🔍 Escaneando red ${network}.${start}-${end}...`, 'info');
+            appendToTerminal(`⚠️  ADVERTENCIA: Esto puede tardar varios minutos`, 'warning');
+            showLoading('Escaneando hosts...');
+
+            try {
+                const response = await fetch('/api/diagnostic/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ network, start, end })
+                });
+
+                const data = await response.json();
+                appendToTerminal(`\n${data.output}`, 'success');
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function showRoutes() {
+            appendToTerminal('📋 Obteniendo tabla de rutas del sistema...', 'info');
+            showLoading('Consultando rutas...');
+
+            try {
+                const response = await fetch('/api/diagnostic/route', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                appendToTerminal(`\n${data.output}`, 'info');
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function showInterfaces() {
+            appendToTerminal('📋 Obteniendo interfaces de red...', 'info');
+            showLoading('Consultando interfaces...');
+
+            try {
+                const response = await fetch('/api/diagnostic/interfaces');
+                const data = await response.json();
+                appendToTerminal(`\n${data.output}`, 'info');
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
