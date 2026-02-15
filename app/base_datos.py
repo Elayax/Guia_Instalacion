@@ -272,11 +272,20 @@ class GestorDB:
                 protocolo TEXT DEFAULT 'modbus',
                 snmp_community TEXT DEFAULT 'public',
                 snmp_port INTEGER DEFAULT 161,
+                snmp_version INTEGER DEFAULT 1,
                 estado TEXT DEFAULT 'inactivo',
                 fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(ip, port, slave_id)
             )
         ''')
+        
+        # Agregar columna snmp_version si no existe (para BD existentes)
+        try:
+            cursor.execute("SELECT snmp_version FROM monitoreo_config LIMIT 1")
+        except sqlite3.OperationalError:
+            cursor.execute("ALTER TABLE monitoreo_config ADD COLUMN snmp_version INTEGER DEFAULT 1")
+            conn.commit()
+
 
         # MIGRACION: Agregar columnas protocolo/snmp si no existen
         for col, default in [('protocolo', "'modbus'"), ('snmp_community', "'public'"), ('snmp_port', '161')]:
@@ -1374,8 +1383,8 @@ class GestorDB:
         conn = self._conectar()
         try:
             conn.execute('''
-                INSERT INTO monitoreo_config (ip, port, slave_id, nombre, protocolo, snmp_community, snmp_port)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO monitoreo_config (ip, port, slave_id, nombre, protocolo, snmp_community, snmp_port, snmp_version)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 datos['ip'],
                 int(datos.get('port', 502)),
@@ -1383,7 +1392,8 @@ class GestorDB:
                 datos.get('nombre', 'UPS'),
                 datos.get('protocolo', 'modbus'),
                 datos.get('snmp_community', 'public'),
-                int(datos.get('snmp_port', 161))
+                int(datos.get('snmp_port', 161)),
+                int(datos.get('snmp_version', 1))  # 0=SNMPv1, 1=SNMPv2c
             ))
             conn.commit()
             return True

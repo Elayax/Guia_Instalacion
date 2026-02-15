@@ -233,6 +233,29 @@
                     </button>
                 </div>
 
+                <div class="tool-card" style="border-color: #ffa500;">
+                    <div class="tool-icon" style="color: #ffa500;"><i class="bi bi-magic"></i></div>
+                    <h5 class="text-white mb-3">🔍 Auto-Detección SNMP <span class="badge bg-warning text-dark">NUEVO</span></h5>
+                    <div class="mb-3">
+                        <label class="text-muted small">IP del UPS:</label>
+                        <input type="text" class="form-control form-control-sm form-control-terminal" id="autodetectIp" placeholder="192.168.0.100">
+                        <small class="text-warning d-block mt-1">
+                            <i class="bi bi-info-circle me-1"></i>Prueba automáticamente diferentes versiones y communities
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">IPs Rápidas:</label><br>
+                        <span class="quick-ip" onclick="setIP('autodetectIp', '192.168.10.198')">192.168.10.198</span>
+                        <span class="quick-ip" onclick="setIP('autodetectIp', '192.168.0.100')">192.168.0.100</span>
+                    </div>
+                    <button class="btn btn-sm btn-warning w-100" onclick="runAutoDetect()">
+                        <i class="bi bi-lightning-fill me-1"></i> Auto-Detectar Configuración
+                    </button>
+                    <small class="text-muted d-block mt-2">
+                        Detecta: SNMPv1/v2c, community, tipo de UPS (INVT/UPS-MIB/Estándar)
+                    </small>
+                </div>
+
                 <div class="tool-card">
                     <div class="tool-icon"><i class="bi bi-diagram-3"></i></div>
                     <h5 class="text-white mb-3">Test Modbus TCP</h5>
@@ -516,6 +539,62 @@ Selecciona una herramienta del panel izquierdo para comenzar.
                 const response = await fetch('/api/diagnostic/interfaces');
                 const data = await response.json();
                 appendToTerminal(`\n${data.output}`, 'info');
+            } catch (error) {
+                appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAutoDetect() {
+            const ip = document.getElementById('autodetectIp').value;
+            
+            if (!ip) {
+                appendToTerminal('❌ Error: Ingresa una IP', 'error');
+                return;
+            }
+
+            appendToTerminal(`⚡ Iniciando AUTO-DETECCIÓN SNMP para ${ip}...`, 'warning');
+            appendToTerminal(`🔄 Esto probará múltiples versiones y communities automáticamente`, 'info');
+            showLoading('Ejecutando auto-detección...');
+
+            try {
+                const response = await fetch('/api/diagnostic/snmp-autodetect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip })
+                });
+
+                const data = await response.json();
+                
+                // Mostrar el progreso completo
+                appendToTerminal(`\n${data.output}`, data.success ? 'success' : 'error');
+                
+                // Si fue exitoso, mostrar recomendación
+                if (data.success && data.config) {
+                    const config = data.config;
+                    appendToTerminal(`\n${'='.repeat(60)}`, 'success');
+                    appendToTerminal(`💡 RECOMENDACIÓN PARA AGREGAR AL MONITOREO:`, 'success');
+                    appendToTerminal(`${'='.repeat(60)}`, 'success');
+                    appendToTerminal(`\nVe a: http://localhost:5000/monitoreo`, 'info');
+                    appendToTerminal(`Click en el botón "+" para agregar dispositivo`, 'info');
+                    appendToTerminal(`\nUsa esta configuración:`, 'info');
+                    appendToTerminal(`  • IP: ${config.ip}`, 'info');
+                    appendToTerminal(`  • Protocolo: SNMP`, 'info');
+                    appendToTerminal(`  • Puerto: ${config.port}`, 'info');
+                    appendToTerminal(`  • Community: ${config.community}`, 'info');
+                    appendToTerminal(`  • Versión: ${config.version}`, 'info');
+                    
+                    if (config.ups_type) {
+                        appendToTerminal(`  • Tipo detectado: ${config.ups_type}`, 'info');
+                    }
+                    
+                    appendToTerminal(`\n${'='.repeat(60)}\n`, 'success');
+                } else if (!data.success) {
+                    appendToTerminal(`\n💡 SUGERENCIAS:`, 'warning');
+                    appendToTerminal(`  - Verifica que el dispositivo tenga SNMP habilitado`, 'warning');
+                    appendToTerminal(`  - Revisa la configuración del firewall`, 'warning');
+                    appendToTerminal(`  - Verifica que la IP sea correcta con Test de Ping`, 'warning');
+                    appendToTerminal(`  - Prueba Modbus TCP si SNMP no está disponible\n`, 'warning');
+                }
             } catch (error) {
                 appendToTerminal(`❌ Error: ${error.message}`, 'error');
             }

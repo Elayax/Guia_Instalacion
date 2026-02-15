@@ -30,12 +30,20 @@ class SNMPClientError(Exception):
 
 class SNMPClient:
     def __init__(self, ip_address: str = None, port: int = 161,
-                 community: str = 'public', timeout: int = 2, retries: int = 1):
+                 community: str = 'public', timeout: int = 2, retries: int = 1,
+                 mp_model: int = 1):
+        """
+        Cliente SNMP para UPS.
+        
+        Args:
+            mp_model: 0 para SNMPv1, 1 para SNMPv2c (default: 1)
+        """
         self.ip_address = ip_address
         self.community = community
         self.port = port
         self.timeout = timeout
         self.retries = retries
+        self.mp_model = mp_model  # 0=v1, 1=v2c
         self.engine = SnmpEngine()
 
     async def get_ups_data(self, ip_address: str = None) -> Dict[str, Any]:
@@ -82,7 +90,7 @@ class SNMPClient:
 
             errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
                 self.engine,
-                CommunityData(self.community, mpModel=1),
+                CommunityData(self.community, mpModel=self.mp_model),
                 transport,
                 ContextData(),
                 *objetos
@@ -164,12 +172,24 @@ class SNMPClient:
         result['battery_runtime'] = formatted.get('battery_runtime_remaining', 0)
         result['temperature'] = formatted.get('battery_temperature', 0)
 
-        # Status (decodificar enums)
+        # Status (decodificar enums) - robusto a errores
         ps_raw = formatted.get('status_power_source', 0)
-        result['power_source'] = DECODERS['power_source'].get(int(ps_raw), str(ps_raw))
+        try:
+            if ps_raw and str(ps_raw) != '0' and 'No Such Object' not in str(ps_raw):
+                result['power_source'] = DECODERS['power_source'].get(int(ps_raw), str(ps_raw))
+            else:
+                result['power_source'] = 'Unknown'
+        except (ValueError, TypeError):
+            result['power_source'] = str(ps_raw) if ps_raw else 'Unknown'
 
         bs_raw = formatted.get('status_battery_status', 0)
-        result['battery_status'] = DECODERS['battery_status'].get(int(bs_raw), str(bs_raw))
+        try:
+            if bs_raw and str(bs_raw) != '0' and 'No Such Object' not in str(bs_raw):
+                result['battery_status'] = DECODERS['battery_status'].get(int(bs_raw), str(bs_raw))
+            else:
+                result['battery_status'] = 'Unknown'
+        except (ValueError, TypeError):
+            result['battery_status'] = str(bs_raw) if bs_raw else 'Unknown'
 
         return result
 
@@ -203,7 +223,7 @@ class SNMPClient:
             )
             errorIndication, errorStatus, errorIndex, varBinds = await get_cmd(
                 self.engine,
-                CommunityData(self.community, mpModel=1),
+                CommunityData(self.community, mpModel=self.mp_model),
                 transport,
                 ContextData(),
                 ObjectType(ObjectIdentity(oid))

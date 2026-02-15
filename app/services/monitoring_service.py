@@ -71,14 +71,32 @@ class MonitoringService(threading.Thread):
         ip = dev['ip']
         port = dev.get('snmp_port', 161) or 161
         community = dev.get('snmp_community', 'public') or 'public'
+        # Manejo robusto de snmp_version (puede ser None, str, o int)
+        snmp_version_raw = dev.get('snmp_version')
+        if snmp_version_raw is None or snmp_version_raw == '':
+            snmp_version = 1  # Default SNMPv2c
+        else:
+            snmp_version = int(snmp_version_raw)
         dev_id = dev['id']
 
         try:
-            client = SNMPClient(community=community, port=port)
+            client = SNMPClient(community=community, port=port, mp_model=snmp_version)
             data = await client.get_ups_data(ip)
 
             if data:
-                status = 'online'
+                data['device_id'] = dev_id
+                data['ip'] = ip
+                data['nombre'] = dev.get('nombre', 'UPS')
+                data['estado'] = 'ONLINE'
+
+                # Agregar info de versión SNMP
+                version_name = 'SNMPv1' if snmp_version == 0 else 'SNMPv2c'
+                data['snmp_version'] = version_name
+
+                socketio.emit('ups_data', data, namespace='/monitor')
+                logger.info(f"✅ {ip} ({version_name}): {data.get('input_voltage_l1', 0)}V entrada, {data.get('battery_capacity', 0)}% batería")
+
+                # Original logic for mapped_data and alarms, adapted to use the 'data' dictionary
                 mapped_data = {
                     # Voltajes de entrada por fase
                     'voltaje_in_l1': data.get('input_voltage_l1', 0),

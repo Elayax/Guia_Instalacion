@@ -426,3 +426,53 @@ def get_interfaces():
             'success': False,
             'output': f'❌ Error obteniendo interfaces: {str(e)}'
         })
+
+
+@diagnostic_bp.route('/api/diagnostic/snmp-autodetect', methods=['POST'])
+def snmp_autodetect():
+    """
+    Auto-detecta la mejor configuración SNMP para un UPS
+    Prueba diferentes versiones, communities y OIDs
+    """
+    data = request.json
+    ip = data.get('ip', '')
+    
+    if not ip:
+        return jsonify({'error': 'IP requerida'}), 400
+    
+    try:
+        from app.services.protocols.snmp_scanner import SNMPScanner
+        
+        # Crear scanner
+        scanner = SNMPScanner(ip=ip, port=161, timeout=3)
+        
+        async def run_detection():
+            return await scanner.auto_detect()
+        
+        # Ejecutar detección
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        config = loop.run_until_complete(run_detection())
+        loop.close()
+        
+        # Formatear resultados para la terminal
+        output_lines = []
+        for log_entry in scanner.results:
+            ts = log_entry['timestamp']
+            msg = log_entry['message']
+            output_lines.append(f"[{ts}] {msg}")
+        
+        return jsonify({
+            'success': config.get('success', False),
+            'output': '\n'.join(output_lines),
+            'config': config,
+            'ip': ip
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'output': f'❌ Error en auto-detección SNMP:\n{str(e)}',
+            'ip': ip
+        })
+
