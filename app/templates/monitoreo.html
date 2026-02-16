@@ -94,6 +94,19 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Status Log Panel -->
+                <div class="eng-panel p-3 mb-4 bg-dark bg-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="m-0 text-white-50"><i class="bi bi-activity me-2"></i>LOG DE ESTADO</h6>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:0.1rem 0.5rem;" onclick="clearStatusLog()">
+                            <i class="bi bi-trash"></i> Limpiar
+                        </button>
+                    </div>
+                    <div id="statusLogPanel" class="font-mono" style="max-height: 120px; overflow-y: auto; font-size: 0.75rem; line-height: 1.4;">
+                        <div class="text-muted small">Esperando eventos...</div>
+                    </div>
+                </div>
 
                 <!-- Mimic Diagram / Overview -->
                 <div class="row mb-4">
@@ -290,36 +303,36 @@
 
     <!-- Modal Agregar Dispositivo (Dark Theme) -->
     <div class="modal fade" id="addDeviceModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="background: #1c1c1e; border: 1px solid var(--accent-red); box-shadow: 0 0 50px rgba(255, 69, 58, 0.1);">
                 <div class="modal-header border-bottom border-secondary">
-                    <h5 class="modal-title font-mono" style="color: var(--accent-red); font-weight: 700;"><i class="bi bi-plus-square me-2"></i>ADD NEW DEVICE</h5>
+                    <h5 class="modal-title font-mono" style="color: var(--accent-red); font-weight: 700;"><i class="bi bi-plus-square me-2"></i>AGREGAR NUEVO DISPOSITIVO</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="addDeviceForm">
                         <div class="mb-3">
-                            <label class="form-label text-muted small">DEVICE ID</label>
-                            <input type="text" class="form-control font-mono" id="devName" placeholder="UPS-CORE-01" required>
+                            <label class="form-label text-muted small">NOMBRE DEL DISPOSITIVO</label>
+                            <input type="text" class="form-control font-mono" id="devName" placeholder="UPS-PRINCIPAL-01" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-muted small">PROTOCOL</label>
+                            <label class="form-label text-muted small">PROTOCOLO</label>
                             <div class="btn-group w-100" role="group">
                                 <input type="radio" class="btn-check" name="protocolo" id="proto_modbus" value="modbus" checked>
                                 <label class="btn btn-outline-secondary" for="proto_modbus">MODBUS TCP</label>
                                 <input type="radio" class="btn-check" name="protocolo" id="proto_snmp" value="snmp">
-                                <label class="btn btn-outline-secondary" for="proto_snmp">SNMP v2</label>
+                                <label class="btn btn-outline-secondary" for="proto_snmp">SNMP</label>
                             </div>
                         </div>
                         <div class="row g-3">
                             <div class="col-8">
-                                <label class="form-label text-muted small">IP ADDRESS</label>
+                                <label class="form-label text-muted small">DIRECCIÓN IP</label>
                                 <input type="text" class="form-control font-mono" id="devIp" placeholder="192.168.1.10" required>
                             </div>
                             <!-- Modbus Fields -->
                             <div id="modbusFields" class="col-12 row g-3 m-0 p-0">
                                 <div class="col-4">
-                                    <label class="form-label text-muted small">PORT</label>
+                                    <label class="form-label text-muted small">PUERTO</label>
                                     <input type="number" class="form-control font-mono" id="devPort" value="502">
                                 </div>
                                 <div class="col-4">
@@ -330,20 +343,35 @@
                             <!-- SNMP Fields -->
                             <div id="snmpFields" class="col-12 row g-3 m-0 p-0" style="display:none;">
                                 <div class="col-4">
-                                    <label class="form-label text-muted small">PORT</label>
+                                    <label class="form-label text-muted small">PUERTO</label>
                                     <input type="number" class="form-control font-mono" id="devSnmpPort" value="161">
                                 </div>
                                 <div class="col-8">
                                     <label class="form-label text-muted small">COMMUNITY</label>
                                     <input type="text" class="form-control font-mono" id="devCommunity" value="public">
                                 </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted small">VERSIÓN SNMP</label>
+                                    <select class="form-select font-mono" id="devSnmpVersion">
+                                        <option value="0">SNMP v1</option>
+                                        <option value="1" selected>SNMP v2c</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted small">TIPO DE UPS</label>
+                                    <select class="form-select font-mono" id="devUpsType">
+                                        <option value="invt_enterprise">Trifásico (INVT)</option>
+                                        <option value="ups_mib_standard">Monofásico (UPS-MIB)</option>
+                                        <option value="hybrid">Híbrido</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-top border-secondary">
-                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">CANCEL</button>
-                    <button type="button" class="btn btn-primary fw-bold" onclick="addDevice()">CONNECT DEVICE</button>
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="addDevice()">AGREGAR DISPOSITIVO</button>
                 </div>
             </div>
         </div>
@@ -421,15 +449,21 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const socket = io();
+        
+        // Helper Time Formatter (24h)
+        function getTimeString() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
         let devices = {};
         let currentDevId = null;
 
-        // Clock Update
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').textContent = now.toLocaleTimeString();
-            document.getElementById('date').textContent = now.toISOString().split('T')[0];
-        }, 1000);
+        // Clock Update removed (handled by main.js and inline fix at bottom)
+        // setInterval(() => { ... }, 1000);
 
         // Charts
         let chartVIn = null;
@@ -601,14 +635,80 @@
                 document.getElementById('currentDevIp').textContent = dev.ip;
                 document.getElementById('currentDevProtocol').textContent = (dev.protocolo || 'modbus').toUpperCase();
                 
-                // Reset Charts
-                 [chartVIn, chartVOut, chartFreq, chartTemp].forEach(c => {
+                // === LÓGICA DE FASES (MONOFÁSICO) ===
+                // Leer configuración del dispositivo (fallback a 3 si no está definido)
+                // Usamos 'phases' o 'fases' o si el tipo es 'invt_minimal' o 'megatec_snmp'
+                const phases = dev.phases || dev.fases || (dev.ups_type === 'invt_minimal' || dev.ups_type === 'megatec_snmp' ? 1 : 3);
+                const isMono = (phases === 1);
+                
+                console.log(`Dispositivo ${dev.ip} seleccionado. Fases: ${phases}. Monofásico: ${isMono}`);
+
+                // Ocultar elementos visuales L2 y L3 de forma agresiva
+                document.querySelectorAll('.text-l2, .text-l3').forEach(el => {
+                    if (isMono) {
+                        el.style.setProperty('display', 'none', 'important');
+                    } else {
+                        el.style.display = el.classList.contains('mimic-value-row') ? 'flex' : '';
+                    }
+                });
+                
+                // Reconfigurar Charts segun fases
+                const recreateCharts = (forceMono) => {
+                    // Destruir existentes
+                    if(chartVIn) chartVIn.destroy();
+                    if(chartVOut) chartVOut.destroy();
+                    
+                    // Config para L1 (Mono) o L1/L2/L3 (Tri)
+                    const datasetsV = [
+                        { label: 'L1', borderColor: PHASE_COLORS.l1, data: [], borderWidth: 2 }
+                    ];
+                    
+                    if (!forceMono) {
+                        datasetsV.push({ label: 'L2', borderColor: PHASE_COLORS.l2, data: [], borderWidth: 2 });
+                        datasetsV.push({ label: 'L3', borderColor: PHASE_COLORS.l3, data: [], borderWidth: 2 });
+                    }
+                    
+                    const vConfig = (label) => lineChartConfig(JSON.parse(JSON.stringify(datasetsV))); // Deep copy
+
+                    chartVIn = new Chart(document.getElementById('chartVoltajeIn').getContext('2d'), vConfig());
+                    chartVOut = new Chart(document.getElementById('chartVoltajeOut').getContext('2d'), vConfig());
+                };
+
+                // Verificar si necesitamos recrear (si el estado actual de charts no coincide)
+                // O simplemente recrear siempre al cambiar dispositivo para limpiar datos
+                recreateCharts(isMono);
+
+                // Limpiar otros charts
+                 [chartFreq, chartTemp].forEach(c => {
                     if (c) {
                         c.data.labels = [];
                         c.data.datasets.forEach(ds => ds.data = []);
                         c.update();
                     }
                 });
+
+                // RESTAURAR HISTORIAL SI EXISTE (Persistencia)
+                if (dev.history) {
+                    const h = dev.history;
+                    const restoreData = (chart, labelArr, dataArrs) => {
+                        if (!chart) return;
+                        chart.data.labels = [...h.labels]; // Copiar etiquetas
+                        dataArrs.forEach((arr, idx) => {
+                            if (chart.data.datasets[idx]) {
+                                chart.data.datasets[idx].data = [...arr];
+                            }
+                        });
+                        chart.update();
+                    };
+
+                    // Inyectar datos guardados
+                    restoreData(chartVIn, h.labels, [h.vInL1, h.vInL2, h.vInL3]);
+                    restoreData(chartVOut, h.labels, [h.vOutL1, h.vOutL2, h.vOutL3]);
+                    restoreData(chartFreq, h.labels, [h.freqIn, h.freqOut]);
+                    restoreData(chartTemp, h.labels, [h.temp, h.envTemp]);
+                    
+                    console.log(`[HISTORIAL] Restaurados ${h.labels.length} puntos para ${dev.ip}`);
+                }
 
                 // Trigger fast polling
                 startTelemetry();
@@ -657,6 +757,8 @@
                 slave_id: protocolo === 'modbus' ? document.getElementById('devSlave').value : 1,
                 snmp_port: protocolo === 'snmp' ? document.getElementById('devSnmpPort').value : 161,
                 snmp_community: protocolo === 'snmp' ? document.getElementById('devCommunity').value : 'public',
+                snmp_version: protocolo === 'snmp' ? parseInt(document.getElementById('devSnmpVersion').value) : 1,
+                ups_type: protocolo === 'snmp' ? document.getElementById('devUpsType').value : 'invt_enterprise',
             };
 
             fetch('/api/monitoreo/add', {
@@ -695,7 +797,7 @@
             panel.innerHTML = '<table class="alarm-table"><thead><tr><th>HORA</th><th>MENSAJE</th><th>NIVEL</th></tr></thead><tbody>';
             
             alarms.forEach(a => {
-                const time = new Date().toLocaleTimeString(); 
+                const time = getTimeString(); 
                 panel.innerHTML += `
                     <tr>
                         <td class="font-mono text-muted">${time}</td>
@@ -748,6 +850,42 @@
                 document.getElementById('currentDevStatus').className = `eng-badge badge-${data.status === 'online' ? 'ok' : 'err'}`;
 
                 // --- DATA MAPPING ---
+                // Detectar Fases y adaptar interfaz (BLINDADO)
+                const devConfig = devices[data.id];
+                // Prioridad: Config local > Datos socket > Default 3
+                // Si es invt_minimal o megatec_snmp, SIEMPRE es 1
+                const isConfigMono = (devConfig && (devConfig.ups_type === 'invt_minimal' || devConfig.ups_type === 'megatec_snmp'));
+                const phases = isConfigMono ? 1 : (d._phases || 3);
+                const isMono = (phases === 1);
+                
+                // Ocultar/Mostrar elementos de L2 y L3 (AGRESIVO)
+                document.querySelectorAll('.text-l2, .text-l3').forEach(el => {
+                    if (isMono) {
+                        el.style.setProperty('display', 'none', 'important');
+                    } else {
+                        // Restaurar display original
+                        if (el.classList.contains('mimic-value-row')) {
+                            el.style.display = 'flex';
+                        } else {
+                            el.style.display = ''; 
+                        }
+                    }
+                });
+
+                // Actualizar datasets de gráficos (Si existen)
+                // Nota: Si ya se recrearon como monofásicos en selectDevice, estos datasets no existirán, 
+                // así que verificamos longitud antes de intentar ocultar.
+                if (chartVIn && chartVIn.data.datasets.length >= 3) {
+                    chartVIn.data.datasets[1].hidden = isMono; 
+                    chartVIn.data.datasets[2].hidden = isMono; 
+                    chartVIn.update('none');
+                }
+                if (chartVOut && chartVOut.data.datasets.length >= 3) {
+                    chartVOut.data.datasets[1].hidden = isMono; 
+                    chartVOut.data.datasets[2].hidden = isMono;
+                    chartVOut.update('none');
+                }
+
                 const setTxt = (id, val) => {
                     const el = document.getElementById(id);
                     if(el) el.textContent = (val !== undefined && val !== null) ? val : '--';
@@ -807,12 +945,52 @@
                 if (d.modules) renderModules(d.modules);
                 renderAlarms(data.alarms || []);
 
-                // Charts
-                const now = new Date().toLocaleTimeString();
-                if (chartVIn) pushChartData(chartVIn, now, [d.voltaje_in_l1, d.voltaje_in_l2, d.voltaje_in_l3]);
-                if (chartVOut) pushChartData(chartVOut, now, [d.voltaje_out_l1, d.voltaje_out_l2, d.voltaje_out_l3]);
-                if (chartFreq) pushChartData(chartFreq, now, [d.frecuencia_in, d.frecuencia_out]);
-                if (chartTemp) pushChartData(chartTemp, now, [d.temperatura, d.env_temperature || 0]);
+                // --- HISTORIAL DE DATOS (Optimización RAM + Persistencia) ---
+                if (!devices[data.id].history) {
+                    // Intentar recuperar de SessionStorage (si venimos de otra pestaña)
+                    try {
+                        const saved = sessionStorage.getItem(`ups_hist_${data.id}`);
+                        if (saved) {
+                            devices[data.id].history = JSON.parse(saved);
+                        }
+                    } catch(e) { console.error("Error loading history", e); }
+
+                    // Si aun no existe, crear nuevo
+                    if (!devices[data.id].history) {
+                        devices[data.id].history = {
+                            labels: [],
+                            vInL1: [], vInL2: [], vInL3: [],
+                            vOutL1: [], vOutL2: [], vOutL3: [],
+                            freqIn: [], freqOut: [],
+                            temp: [], envTemp: []
+                        };
+                    }
+                }
+                
+                const hist = devices[data.id].history;
+                const timeStr = getTimeString();
+                const MAX_POINTS = 50;
+                
+                // Helper para agregar y rotar
+                const addPoint = (arr, val) => {
+                    arr.push(val);
+                    if (arr.length > MAX_POINTS) arr.shift();
+                };
+                
+                addPoint(hist.labels, timeStr);
+                addPoint(hist.vInL1, d.voltaje_in_l1); addPoint(hist.vInL2, d.voltaje_in_l2); addPoint(hist.vInL3, d.voltaje_in_l3);
+                addPoint(hist.vOutL1, d.voltaje_out_l1); addPoint(hist.vOutL2, d.voltaje_out_l2); addPoint(hist.vOutL3, d.voltaje_out_l3);
+                addPoint(hist.freqIn, d.frecuencia_in); addPoint(hist.freqOut, d.frecuencia_out);
+                addPoint(hist.temp, d.temperatura); addPoint(hist.envTemp, d.env_temperature || 0);
+
+                // Si es el dispositivo actual, actualizar gráficos visualmente
+                const now = timeStr;
+                if (currentDevId === data.id) {
+                    if (chartVIn) pushChartData(chartVIn, now, [d.voltaje_in_l1, d.voltaje_in_l2, d.voltaje_in_l3]);
+                    if (chartVOut) pushChartData(chartVOut, now, [d.voltaje_out_l1, d.voltaje_out_l2, d.voltaje_out_l3]);
+                    if (chartFreq) pushChartData(chartFreq, now, [d.frecuencia_in, d.frecuencia_out]);
+                    if (chartTemp) pushChartData(chartTemp, now, [d.temperatura, d.env_temperature || 0]);
+                }
             }
         });
 
@@ -829,12 +1007,106 @@
             const marquee = document.getElementById('sys-status-marquee');
             if(marquee) {
                 const msg = statusMessages[Math.floor(Math.random() * statusMessages.length)];
-                const time = new Date().toLocaleTimeString();
+                const time = getTimeString();
                 const linkStatus = currentDevId ? (devices[currentDevId]?.status === 'online' ? 'CONECTADO' : 'SIN CONEXIÓN') : 'ESPERA';
                 marquee.textContent = `HORA DEL SISTEMA: ${time} | ESTADO: ${msg} | MONITOREO ACTIVO | ENLACE UPS: ${linkStatus}`;
             }
         }, 5000);
+        
+        // Status Log Functions
+        let statusLogMessages = [];
+        const MAX_LOG_MESSAGES = 50;
+        
+        function addStatusLog(message, type = 'info') {
+            const timestamp = getTimeString();
+            const color = type === 'error' ? '#ff4444' : type === 'warning' ? '#ffaa00' : type === 'success' ? '#00ff88' : '#88aaff';
+            const icon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️';
+            
+            statusLogMessages.unshift({
+                time: timestamp,
+                message: message,
+                type: type,
+                color: color,
+                icon: icon
+            });
+            
+            // Limit messages
+            if (statusLogMessages.length > MAX_LOG_MESSAGES) {
+                statusLogMessages.pop();
+            }
+            
+            renderStatusLog();
+        }
+        
+        function renderStatusLog() {
+            const panel = document.getElementById('statusLogPanel');
+            if (!panel) return;
+            
+            if (statusLogMessages.length === 0) {
+                panel.innerHTML = '<div class="text-muted small">Esperando eventos...</div>';
+                return;
+            }
+            
+            panel.innerHTML = statusLogMessages.map(log => `
+                <div style="margin-bottom: 0.3rem; color: ${log.color};">
+                    <span class="text-muted">[${log.time}]</span> ${log.icon} ${log.message}
+                </div>
+            `).join('');
+            
+            // Auto-scroll to top (las últimas líneas)
+            panel.scrollTop = 0;
+        }
+        
+        function clearStatusLog() {
+            statusLogMessages = [];
+            renderStatusLog();
+        }
+        
+        // Log connection events
+        let lastDeviceStatus = {};
+        function logConnectionStatus(devId, status, data) {
+            if (!devId) return;
+            
+            const prevStatus = lastDeviceStatus[devId];
+            
+            if (prevStatus !== status) {
+                if (status === 'online') {
+                    const version = data?.snmp_version || 'N/A';
+                    const upsType = data?._ups_type || data?._phases === 1 ? 'Monofásico' : 'Trifásico';
+                    addStatusLog(`🟢 UPS ${devId} ONLINE (${version}, ${upsType})`, 'success');
+                } else {
+                    addStatusLog(`🔴 UPS ${devId} DESCONECTADO`, 'error');
+                }
+                lastDeviceStatus[devId] = status;
+            }
+        }
+        
+        // Optimización RAM: Guardar historial al cerrar/navegar
+        window.addEventListener('beforeunload', () => {
+             Object.keys(devices).forEach(id => {
+                 if(devices[id].history) {
+                     try {
+                        sessionStorage.setItem(`ups_hist_${id}`, JSON.stringify(devices[id].history));
+                     } catch(e) {}
+                 }
+             });
+        });
     </script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Version added to force cache reload -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2"></script>
+    <script>
+        // Emergency Clock Override (Anti-Flicker)
+        // Sobrescribe cualquier logica anterior para garantizar formato 24h H:M:S sin AM/PM
+        setInterval(() => {
+            const el = document.getElementById('clock');
+            if(el) {
+                 const now = new Date();
+                 const h = String(now.getHours()).padStart(2, '0');
+                 const m = String(now.getMinutes()).padStart(2, '0');
+                 const s = String(now.getSeconds()).padStart(2, '0');
+                 el.textContent = `${h}:${m}:${s}`;
+            }
+        }, 1000);
+    </script>
 </body>
 </html>

@@ -273,6 +273,7 @@ class GestorDB:
                 snmp_community TEXT DEFAULT 'public',
                 snmp_port INTEGER DEFAULT 161,
                 snmp_version INTEGER DEFAULT 1,
+                ups_type TEXT DEFAULT 'invt_enterprise',
                 estado TEXT DEFAULT 'inactivo',
                 fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(ip, port, slave_id)
@@ -285,6 +286,14 @@ class GestorDB:
         except sqlite3.OperationalError:
             cursor.execute("ALTER TABLE monitoreo_config ADD COLUMN snmp_version INTEGER DEFAULT 1")
             conn.commit()
+        
+        # Agregar columna ups_type si no existe (para BD existentes)
+        try:
+            cursor.execute("SELECT ups_type FROM monitoreo_config LIMIT 1")
+        except sqlite3.OperationalError:
+            cursor.execute("ALTER TABLE monitoreo_config ADD COLUMN ups_type TEXT DEFAULT 'invt_enterprise'")
+            conn.commit()
+
 
 
         # MIGRACION: Agregar columnas protocolo/snmp si no existen
@@ -1383,8 +1392,8 @@ class GestorDB:
         conn = self._conectar()
         try:
             conn.execute('''
-                INSERT INTO monitoreo_config (ip, port, slave_id, nombre, protocolo, snmp_community, snmp_port, snmp_version)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO monitoreo_config (ip, port, slave_id, nombre, protocolo, snmp_community, snmp_port, snmp_version, ups_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 datos['ip'],
                 int(datos.get('port', 502)),
@@ -1393,7 +1402,8 @@ class GestorDB:
                 datos.get('protocolo', 'modbus'),
                 datos.get('snmp_community', 'public'),
                 int(datos.get('snmp_port', 161)),
-                int(datos.get('snmp_version', 1))  # 0=SNMPv1, 1=SNMPv2c
+                int(datos.get('snmp_version', 1)),  # 0=SNMPv1, 1=SNMPv2c
+                datos.get('ups_type', 'invt_enterprise')  # invt_enterprise, ups_mib_standard, hybrid
             ))
             conn.commit()
             return True

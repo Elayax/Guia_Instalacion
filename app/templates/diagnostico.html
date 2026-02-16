@@ -256,6 +256,34 @@
                     </small>
                 </div>
 
+                <div class="tool-card" style="border-color: #00bcd4; margin-bottom: 20px;">
+                    <div class="tool-icon" style="color: #00bcd4;"><i class="bi bi-list-columns-reverse"></i></div>
+                    <h5 class="text-white mb-3">Escáner de OIDs</h5>
+                    <div class="mb-2">
+                        <label class="text-muted small">IP:</label>
+                        <input type="text" class="form-control form-control-sm form-control-terminal" id="walkIp" placeholder="192.168.0.100">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="text-muted small">OID Raíz:</label>
+                            <input type="text" class="form-control form-control-sm form-control-terminal" id="walkRoot" value="1.3.6.1">
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small">Ver:</label>
+                            <select class="form-select form-select-sm form-control-terminal" id="walkVer">
+                                <option value="0">v1</option>
+                                <option value="1">v2c</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-info w-100 text-white" onclick="runSNMPWalk()">
+                        <i class="bi bi-search me-1"></i> Escanear OIDs
+                    </button>
+                    <small class="text-muted d-block mt-2">
+                        Escanea los primeros 50 OIDs disponibles.
+                    </small>
+                </div>
+
                 <div class="tool-card">
                     <div class="tool-icon"><i class="bi bi-diagram-3"></i></div>
                     <h5 class="text-white mb-3">Test Modbus TCP</h5>
@@ -597,6 +625,43 @@ Selecciona una herramienta del panel izquierdo para comenzar.
                 }
             } catch (error) {
                 appendToTerminal(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function runSNMPWalk() {
+            const ip = document.getElementById('walkIp').value;
+            const root = document.getElementById('walkRoot').value || '1.3.6.1';
+            const ver = document.getElementById('walkVer').value;
+            
+            if(!ip) return alert("Ingrese una IP");
+            
+            appendToTerminal(`\n🔍 INICIANDO ESCANEO DE OIDS EN ${ip}...\n`, 'info');
+            appendToTerminal(`   OID Raíz: ${root} | Versión: SNMPv${parseInt(ver)+1}\n`, 'info');
+            appendToTerminal(`   (Esto puede tardar unos segundos...)\n`, 'warning');
+            
+            try {
+                const response = await fetch('/api/diagnostic/snmp-walk', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ip: ip, oid: root, version: ver })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    appendToTerminal(`✅ ESCANEO COMPLETADO: ${data.count} OIDs encontrados\n`, 'success');
+                    if (data.limit_reached) appendToTerminal(`⚠️ Límite de seguridad alcanzado (50 OIDs)\n`, 'warning');
+                    
+                    appendToTerminal(`\n--- RESULTADOS ---\n`, 'info');
+                    data.results.forEach(item => {
+                        appendToTerminal(`${item.oid} = ${item.value}`);
+                    });
+                    appendToTerminal(`------------------\n`, 'info');
+                } else {
+                    appendToTerminal(`❌ ERROR: ${data.error}\n`, 'error');
+                }
+            } catch (error) {
+                appendToTerminal(`❌ ERROR DE CONEXIÓN: ${error}\n`, 'error');
             }
         }
     </script>

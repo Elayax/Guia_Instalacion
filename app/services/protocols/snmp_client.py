@@ -96,16 +96,25 @@ class SNMPClient:
                 *objetos
             )
 
-            if errorIndication or errorStatus:
-                logger.error(f"Error SNMP en {target_ip}: {errorIndication or errorStatus}")
+            if errorIndication:
+                logger.error(f"Error crítico SNMP en {target_ip}: {errorIndication}")
                 return {}
 
-            # Mapear respuestas
+            # noSuchName es NORMAL (OID no existe en este dispositivo)
+            # Procesamos los que SÍ exist en
+            if errorStatus and str(errorStatus) != 'noSuchName':
+                logger.warning(f"Error SNMP en {target_ip}: {errorStatus}")
+                # No retornar vacío, procesar lo que se pueda
+
+            # Mapear respuestas (incluso si algunas fallaron)
             keys = list(oids_map.keys())
             oid_list = list(oids_map.values())
             raw_data = {}
             for i, var in enumerate(varBinds):
-                raw_data[keys[i]] = var[1].prettyPrint()
+                value_str = var[1].prettyPrint()
+                # Filtrar valores que indican OID no existe
+                if 'No Such Object' not in value_str and 'No Such Instance' not in value_str:
+                    raw_data[keys[i]] = value_str
 
             # Formatear y escalar
             data = self._format_data(raw_data, oid_list, keys)

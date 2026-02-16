@@ -6,7 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const dateEl = document.getElementById('date');
         
         if (clockEl) {
-            clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+            // Manual formatting to avoid locale flickering and AM/PM issues
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            clockEl.textContent = `${h}:${m}:${s}`;
         }
         
         if (dateEl) {

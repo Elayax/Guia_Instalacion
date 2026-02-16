@@ -476,3 +476,81 @@ def snmp_autodetect():
             'ip': ip
         })
 
+
+@diagnostic_bp.route('/api/diagnostic/snmp-walk', methods=['POST'])
+async def snmp_walk():
+    """
+    Realiza un SNMP Walk (secuencia de GetNext) para listar OIDs disponibles.
+    Limitado a 50 resultados por seguridad.
+    """
+    data = request.json
+    ip = data.get('ip')
+    port = int(data.get('port', 161))
+    community = data.get('community', 'public')
+    version = int(data.get('version', 0)) # Default v1 (0) o v2c (1)
+    # Default: .1.3.6.1.4.1 (enterprises) para buscar cosas custom
+    # O .1.3.6.1.2.1 (MIB-2) para estandar
+    root_oid_str = data.get('oid', '1.3.6.1.2.1') 
+
+    try:
+        # Importar aqui para evitar ciclos y solo cargar si se usa
+        from pysnmp.hlapi.v3arch.asyncio import next_cmd, SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity
+        
+        results = []
+        limit = 50 # Limite estricto para no saturar
+        
+        # Objeto raiz
+        engine = SnmpEngine()
+        auth = CommunityData(community, mpModel=version)
+        transport = await UdpTransportTarget.create((ip, port), timeout=2.0, retries=0)
+        context = ContextData()
+        
+        # Iniciar desde el OID raiz solicitado
+        # NOTA: next_cmd espera un objeto ObjectType(ObjectIdentity(oid))
+        current_oid = ObjectType(ObjectIdentity(root_oid_str))
+        
+        # Bucle GetNext manual para simular Walk
+        for _ in range(limit):
+            errorIndication, errorStatus, errorIndex, varBinds = await next_cmd(
+                engine, auth, transport, context, current_oid
+            )
+            
+            if errorIndication:
+                return jsonify({'success': False, 'error': f"Error de conexión: {errorIndication}"})
+            
+            if errorStatus:
+                # Fin de MIB o error
+                if str(errorStatus) == 'noSuchName':
+                    break # Fin
+                return jsonify({'success': False, 'error': f"Error SNMP: {errorStatus.prettyPrint()}"})
+                
+            if not varBinds:
+                break
+            
+            # Procesar resultado (usualmente un solo varBind)
+            varBind = varBinds[0]
+            oid_obj = varBind[0]
+            val_obj = varBind[1]
+            
+            oid_str = str(oid_obj)
+            val_str = val_obj.prettyPrint()
+            
+            # Guardar
+            results.append({
+                'oid': oid_str,
+                'value': val_str
+            })
+            
+            # Preparar siguiente iteración usando el OID obtenido
+            current_oid = ObjectType(ObjectIdentity(oid_str))
+            
+        return jsonify({
+            'success': True,
+            'results': results,
+            'count': len(results),
+            'limit_reache': len(results) >= limit
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
