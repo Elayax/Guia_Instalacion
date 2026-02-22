@@ -71,14 +71,53 @@ class MonitoringService(threading.Thread):
         ip = dev['ip']
         port = dev.get('snmp_port', 161) or 161
         community = dev.get('snmp_community', 'public') or 'public'
+        # Manejo robusto de snmp_version (puede ser None, str, o int)
+        snmp_version_raw = dev.get('snmp_version')
+        if snmp_version_raw is None or snmp_version_raw == '':
+            snmp_version = 1  # Default SNMPv2c
+        else:
+            snmp_version = int(snmp_version_raw)
+        
+        # Tipo de UPS (nuevo)
+        ups_type = dev.get('ups_type', 'invt_enterprise')
         dev_id = dev['id']
 
         try:
-            client = SNMPClient(community=community, port=port)
+            # Seleccionar cliente según tipo de UPS
+            if ups_type == 'ups_mib_standard' or ups_type == 'hybrid':
+                # Usar cliente UPS-MIB para monofásicos o híbridos
+                from app.services.protocols.snmp_upsmib_client import UPSMIBClient
+                client = UPSMIBClient(
+                    ip_address=ip,
+                    community=community,
+                    port=port,
+                    mp_model=int(snmp_version),  # Asegurar que sea int
+                    include_invt=(ups_type == 'hybrid')
+                )
+                logger.info(f"Usando UPSMIBClient para {ip} (tipo: {ups_type})")
+            else:
+                # Usar cliente MINIMAL para INVT (muchos UPS INVT tienen OIDs limitados)
+                from app.services.protocols.snmp_minimal_client import MinimalSNMPClient
+                client = MinimalSNMPClient(community=community, port=port, mp_model=int(snmp_version))
+                logger.info(f"Usando MinimalSNMPClient para {ip} (tipo: {ups_type}, solo 5 OIDs)")
+            
             data = await client.get_ups_data(ip)
 
             if data:
-                status = 'online'
+                status = 'online'  # Estado online si hay datos
+                data['device_id'] = dev_id
+                data['ip'] = ip
+                data['nombre'] = dev.get('nombre', 'UPS')
+                data['estado'] = 'ONLINE'
+
+                # Agregar info de versión SNMP
+                version_name = 'SNMPv1' if snmp_version == 0 else 'SNMPv2c'
+                data['snmp_version'] = version_name
+
+                socketio.emit('ups_data', data, namespace='/monitor')
+                logger.info(f"✅ {ip} ({version_name}): {data.get('input_voltage_l1', 0)}V entrada, {data.get('battery_capacity', 0)}% batería")
+
+                # Original logic for mapped_data and alarms, adapted to use the 'data' dictionary
                 mapped_data = {
                     # Voltajes de entrada por fase
                     'voltaje_in_l1': data.get('input_voltage_l1', 0),

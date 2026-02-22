@@ -68,6 +68,9 @@ def create_app(config_name=None):
     app.register_blueprint(documents_bp)
     app.register_blueprint(monitoreo_bp)
     app.register_blueprint(test_snmp_bp)
+    
+    from app.routes.diagnostic_routes import diagnostic_bp
+    app.register_blueprint(diagnostic_bp)
 
     # --- Monitoreo en segundo plano ---
     try:

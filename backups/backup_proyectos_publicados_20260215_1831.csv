@@ -1,0 +1,11 @@
+id,pedido,fecha_publicacion,modelo_snap,potencia_snap,cliente_snap,sucursal_snap,calibre_fases,config_salida,calibre_tierra,voltaje,fases,longitud,tiempo_respaldo,id_ups,id_bateria,id_cliente,pdf_guia_url,pdf_checklist_url,checklist_dir_instalacion,checklist_contacto_nombre,checklist_contacto_tel,checklist_contacto_email,checklist_nombre_jefe,checklist_area_frente,checklist_obs_conexion,checklist_comentarios,checklist_contacto_cargo,voltaje_entrada,voltaje_salida,potencia_kva
+1,24132,2026-01-18 00:44,Dragon Power Six 6 KVA,6.0,ABB MEXICO,KRONES,12,3F + N + GND,12,,,,,23,,,,,,,,,,,,,,,,
+2,42,2026-01-20 22:19,Dragon Power Plus 50,50.0,AGROASEMEX,Hospital Central Militar,3/0,3F + N + GND,6,,,,,2,,,,,,,,,,,,,,,,
+3,64554,2026-01-20 23:24,Dragon Power Plus 50,50.0,AGMA DISEÑO Y CONSTRUCCION,BBVA CPD LAGO ESMERALDA,3,3F + N + GND,8,,,,,2,,,,,,,,,,,,,,,,
+4,2424,2026-01-20 23:56,Dragon Power Plus 50,50.0,"CIBANCO, S.A. INSTITUCION DE BANCA MULTIPLE",MAYALAND,3,3F + N + GND,8,,,,,2,,,,,,,,,,,,,,,,
+5,6541198,2026-01-21 00:03,Dragon Power Plus 50,50.0,AGMA DISEÑO Y CONSTRUCCION,BBVA CPD LAGO ESMERALDA,3,3F + N + GND,8,,,,,2,,,,,,,,,,,,,,,,
+6,25156,2026-01-21 00:05,Dragon Power Plus 50,50.0,BANCO DEL BAJIO,Escandon,3,3F + N + GND,8,,,,,2,,,,,,,,,,,,,,,,
+7,251563,2026-01-21 00:12,Dragon Power Plus 50,50.0,AGROASEMEX,Hospital Central Militar,3,3F + N + GND,8,,,,,2,,,,,,,,,,,,,,,,
+8,12345689,2026-01-21 23:07,Dragon Power Plus 50,50.0,AGMA DISEÑO Y CONSTRUCCION,BBVA CPD LAGO ESMERALDA,3/0,3F + N + GND,6,,,,,2,,,,,,,,,,,,,,,,
+10,1,2026-01-25 14:07,Desconocido,0.0,ABB MEXICO,KRONES,3/0,3F + N + GND,6,220.0,3,12.0,12.0,2,6,,pdf/proyectos/1/Guia_Instalacion_1_20260125_140702.pdf,pdf/proyectos/1/Checklist_1_20260125_121844.pdf,,,,,,,,,,,,
+13,TEST-MEM-001,,Dragon Power Plus 10,10.0,AGROASEMEX,Hospital Central Militar,,,,480.0,3,15.0,12.0,17,6,,,,,,,,,,,,,,,
