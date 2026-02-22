@@ -34,6 +34,7 @@ def gestion():
         clientes=db.obtener_clientes(),
         baterias=db.obtener_baterias_modelos(),
         personal=db.obtener_personal(),
+        proyectos=db.obtener_proyectos(),
         tipos_ventilacion=db.obtener_tipos_ventilacion(),
         **state)
 

@@ -51,6 +51,25 @@ def _procesar_acciones_tipo(db, request, state, tipo):
         db.eliminar_bateria(request.form.get('id'))
         state['active_tab'] = 'baterias'
         return True
+    elif tipo == 'add_personal':
+        db.agregar_personal(request.form)
+        state['active_tab'] = 'personal'
+        return True
+    elif tipo == 'edit_personal':
+        id_personal = request.form.get('id_personal')
+        state['personal_seleccionado'] = db.obtener_personal_id(id_personal)
+        state['active_tab'] = 'personal'
+        return True
+    elif tipo == 'update_personal':
+        db.actualizar_personal(request.form.get('id'), request.form)
+        state['active_tab'] = 'personal'
+        state['personal_seleccionado'] = None
+        state['mensaje'] = "Personal actualizado correctamente"
+        return True
+    elif tipo == 'cancelar_edit_personal':
+        state['personal_seleccionado'] = None
+        state['active_tab'] = 'personal'
+        return True
     elif tipo == 'del_personal':
         db.eliminar_personal(request.form.get('id'))
         state['active_tab'] = 'personal'

@@ -73,6 +73,9 @@
                     <button class="nav-link {% if active_tab == 'clientes' %}active{% endif %}" id="v-pills-clients-tab"
                         data-bs-toggle="pill" data-bs-target="#v-pills-clients" type="button" role="tab"><i
                             class="fas fa-users"></i> CLIENTES</button>
+                    <button class="nav-link {% if active_tab == 'personal' %}active{% endif %}"
+                        id="v-pills-personal-tab" data-bs-toggle="pill" data-bs-target="#v-pills-personal" type="button"
+                        role="tab"><i class="fas fa-id-badge"></i> PERSONAL</button>
                     <button class="nav-link {% if active_tab == 'ventilacion' %}active{% endif %}"
                         id="v-pills-ventilacion-tab" data-bs-toggle="pill" data-bs-target="#v-pills-ventilacion"
                         type="button" role="tab"><i class="fas fa-wind"></i> VENTILACIÓN</button>
@@ -851,6 +854,115 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- PESTAÑA PERSONAL (NUEVO) -->
+                    <div class="tab-pane fade {% if active_tab == 'personal' %}show active{% endif %}"
+                        id="v-pills-personal" role="tabpanel">
+
+                        {% if personal_seleccionado %}
+                        <!-- FORMULARIO DE EDICIÓN PERSONAL -->
+                        <div class="tech-matrix">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="m-0 fw-bold">Editando: <span class="text-primary">{{
+                                        personal_seleccionado.nombre }}</span></h4>
+                                <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="tipo" value="cancelar_edit_personal">
+                                    <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Volver a
+                                        Lista</button>
+                                </form>
+                            </div>
+
+                            <form method="POST">
+                                <input type="hidden" name="tipo" value="update_personal">
+                                <input type="hidden" name="id" value="{{ personal_seleccionado.id }}">
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Nombre Completo</label>
+                                        <input type="text" name="nombre" class="form-control"
+                                            value="{{ personal_seleccionado.nombre }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="small" style="color: #ff8a80;">Puesto / Cargo</label>
+                                        <input type="text" name="puesto" class="form-control"
+                                            value="{{ personal_seleccionado.puesto }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="submit" class="btn btn-success fw-bold px-5"><i
+                                            class="fas fa-save"></i> GUARDAR CAMBIOS</button>
+                                </div>
+                            </form>
+                        </div>
+                        {% else %}
+
+                        <!-- LISTA DE PERSONAL -->
+                        <div class="tech-matrix">
+                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-id-badge me-2"></i> LISTA
+                                    DE PERSONAL</div>
+                                <a href="{{ url_for('management.exportar_bd', tabla='personal') }}"
+                                    class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
+                            </div>
+
+                            <!-- Formulario de Agregado Rápido -->
+                            <form method="POST" class="row g-2 mb-3 p-2 border rounded"
+                                style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
+                                <input type="hidden" name="tipo" value="add_personal">
+                                <div class="col-5">
+                                    <input type="text" name="nombre" class="form-control form-control-sm"
+                                        placeholder="Nombre Completo" required>
+                                </div>
+                                <div class="col-5">
+                                    <input type="text" name="puesto" class="form-control form-control-sm"
+                                        placeholder="Puesto / Cargo" required>
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-sm btn-success w-100"><i class="fas fa-plus"></i>
+                                        Agregar</button>
+                                </div>
+                            </form>
+
+                            <div style="height: 600px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre Completo</th>
+                                            <th>Puesto / Cargo</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for p in personal %}
+                                        <tr>
+                                            <td>{{ p.id }}</td>
+                                            <td>{{ p.nombre }}</td>
+                                            <td>{{ p.puesto }}</td>
+                                            <td class="text-center">
+                                                <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="tipo" value="edit_personal">
+                                                    <input type="hidden" name="id_personal" value="{{ p.id }}">
+                                                    <button class="btn btn-warning btn-sm me-2" title="Editar"><i
+                                                            class="fas fa-edit"></i></button>
+                                                </form>
+                                                <form method="POST" style="display:inline;"
+                                                    onsubmit="return confirm('¿Eliminar a {{ p.nombre }}?');">
+                                                    <input type="hidden" name="tipo" value="del_personal">
+                                                    <input type="hidden" name="id" value="{{ p.id }}">
+                                                    <button class="btn btn-danger btn-sm" title="Eliminar"><i
+                                                            class="fas fa-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- PESTAÑA 3.5: TIPOS DE VENTILACIÓN -->
