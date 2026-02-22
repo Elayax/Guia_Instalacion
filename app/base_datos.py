@@ -275,6 +275,54 @@ class GestorDB:
             )
         ''')
 
+        # 6. TABLA PERSONAL (NUEVO)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS personal (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                puesto TEXT NOT NULL
+            )
+        ''')
+
+        # CARGA DE DATOS DE EJEMPLO PERSONAL
+        check_personal = cursor.execute("SELECT count(*) FROM personal").fetchone()[0]
+        if check_personal == 0:
+            datos_personal = [
+                ("Gustavo Velazquillo Zamora", "Ingeniero de Soporte"),
+                ("David Zuñiga", "Tecnico de Servicio"),
+                ("Pedro Ramirez Vazquez", "Gerente de Servicio"),
+                ("Remigio Gutiérrez Gutierrez", "Técnico de Servicio"),
+                ("Juan Daniel Benítez Olivarez", "Técnico de Servicio"),
+                ("Victor Hugo Dominguez Alvarez", "Técnico de Servicio"),
+                ("Mario Ceballos Lopez", "Técnico de Servicio"),
+                ("Braulio Rodriguez Acosta", "Técnico de Servicio"),
+                ("Juan Ivan Sanchez Burgos", "Técnico de Servicio"),
+                ("Esteban Gutiérrez Chavero", "Técnico de Servicio"),
+                ("Israel Villagrán Maldonado", "Técnico de Servicio"),
+                ("Antonio de Jesus Hernandez Amaya", "Técnico de Servicio"),
+                ("Juan Alberto Rosales", "Técnico de Servicio"),
+                ("Saul Alejandro Escarcega Nava", "Técnico de Servicio"),
+                ("Erik Omar Flores Soto", "Técnico de Servicio"),
+                ("Fancisco Dominguez Maya", "Técnico de Servicio"),
+                ("Jose Luis Dorantes Nava", "Técnico de Servicio"),
+                ("Sergio Arturo Franco Tellez", "Tecnico de Servicio"),
+                ("Ricardo Zarate", "Tecnico de Apoyo"),
+                ("Aldair Ortega Hernández", "Tecnico de Apoyo"),
+                ("Alberto Zavala Perez", "Maniobrista"),
+                ("Oswaldo Davalos", "Gerente de Almacén"),
+                ("Carlos Sandoval", "Coordinador de Embarques"),
+                ("Joel Mendez", "Almacenista"),
+                ("Alberto Sanchez", "Almacenista"),
+                ("Cristhoper Cuevas", "Gerente de Producciòn"),
+                ("Samuel Elias Martinez Garcia", "Becario"),
+                ("Luis Damian Vazquez Gonzalez", "Becario"),
+                ("Emmanuel Hernandez", "Becario"),
+                ("Vangelis Angeles", "Técnico de Apoyo"),
+                ("Oscar Nolasco", "Personal de Almacen"),
+                ("Alma San Vicente", "Coordinadora de Servicio")
+            ]
+            cursor.executemany("INSERT INTO personal (nombre, puesto) VALUES (?, ?)", datos_personal)
+
         conn.commit()
         conn.close()
 
@@ -460,6 +508,50 @@ class GestorDB:
         res = conn.execute("SELECT * FROM clientes ORDER BY cliente, sucursal").fetchall()
         conn.close()
         return [dict(row) for row in res]
+
+    def obtener_personal(self):
+        conn = self._conectar()
+        res = conn.execute("SELECT * FROM personal ORDER BY nombre").fetchall()
+        conn.close()
+        return [dict(row) for row in res]
+
+    def obtener_personal_id(self, id_personal):
+        conn = self._conectar()
+        row = conn.execute("SELECT * FROM personal WHERE id = ?", (id_personal,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def agregar_personal(self, datos):
+        conn = self._conectar()
+        try:
+            conn.execute("INSERT INTO personal (nombre, puesto) VALUES (?, ?)", 
+                         (datos['nombre'], datos['puesto']))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error agregando personal: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def actualizar_personal(self, id_personal, datos):
+        conn = self._conectar()
+        try:
+            conn.execute("UPDATE personal SET nombre = ?, puesto = ? WHERE id = ?", 
+                         (datos['nombre'], datos['puesto'], id_personal))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error actualizando personal: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def eliminar_personal(self, id_personal):
+        conn = self._conectar()
+        conn.execute("DELETE FROM personal WHERE id = ?", (id_personal,))
+        conn.commit()
+        conn.close()
 
     def eliminar_cliente(self, id_cliente):
         conn = self._conectar()

@@ -24,6 +24,7 @@ def gestion():
         'agregando_ups': False,
         'bateria_seleccionada': None,
         'agregando_bateria': False,
+        'personal_seleccionado': None,
         'pivot_data': None,
         'unidad_curva': 'W'
     }
@@ -33,6 +34,7 @@ def gestion():
     
     return render_template('gestion.html',
                            clientes=db.obtener_clientes(),
+                           personal=db.obtener_personal(),
                            ups=db.obtener_ups_todos(),
                            proyectos=db.obtener_proyectos(),
                            baterias=db.obtener_baterias_modelos(),
@@ -43,6 +45,7 @@ def gestion():
                            agregando_ups=state['agregando_ups'],
                            bateria_seleccionada=state['bateria_seleccionada'],
                            agregando_bateria=state['agregando_bateria'],
+                           personal_seleccionado=state.get('personal_seleccionado'),
                            unidad_curva=state['unidad_curva'],
                            pivot_data=state['pivot_data'],
                            active_tab=state['active_tab'],
