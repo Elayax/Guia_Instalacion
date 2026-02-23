@@ -6,8 +6,8 @@ Usa PostgreSQL (configurado en app/config.py)
 import os
 from datetime import datetime
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 
 from app.config import BaseConfig
 
@@ -17,13 +17,13 @@ class MigradorProyectos:
         self.database_url = database_url or BaseConfig.DATABASE_URL
 
     def _conectar(self):
-        conn = psycopg2.connect(self.database_url)
+        conn = psycopg.connect(self.database_url)
         return conn
     
     def obtener_proyectos_incompletos(self):
         """Retorna lista de proyectos con datos faltantes"""
         conn = self._conectar()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor = conn.cursor(row_factory=dict_row)
         cursor.execute("""
             SELECT id, pedido, cliente_snap, sucursal_snap, modelo_snap, potencia_snap,
                    id_ups, voltaje, fases, longitud, tiempo_respaldo, id_bateria
@@ -38,7 +38,7 @@ class MigradorProyectos:
     def buscar_ups_por_nombre(self, nombre_ups):
         """Busca UPS en catálogo por nombre aproximado"""
         conn = self._conectar()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor = conn.cursor(row_factory=dict_row)
         cursor.execute("""
             SELECT id, "Nombre_del_Producto", "Capacidad_kVA", "Serie"
             FROM ups_specs

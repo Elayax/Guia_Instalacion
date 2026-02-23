@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Carga Masiva - UPS Manager</title>
@@ -7,19 +8,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
+
 <body>
     <!-- Header consistente con el resto de la app -->
     <header class="app-header">
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="40">
-            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span style="color:var(--accent-red)">MANAGER</span></span>
+            <span style="font-weight:700; font-size:1.2rem; letter-spacing:1px; color: #fff;">SISTEMA UPS <span
+                    style="color:var(--accent-red)">MANAGER</span></span>
         </div>
         <nav class="nav-links">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link">CALCULADORA</a>
-            <a href="{{ url_for('management.equipos') }}" class="nav-link">EDICIÓN EQUIPOS</a>
-            <a href="{{ url_for('management.baterias') }}" class="nav-link">BATERÍAS</a>
-            <a href="{{ url_for('management.gestion') }}" class="nav-link">GESTIÓN BD</a>
-            <a href="{{ url_for('management.carga_masiva') }}" class="nav-link active">CARGA MASIVA</a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link">TABLERO</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link">CÁLCULOS</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link">DATOS</a>
+            <a href="{{ url_for('monitoreo.index') }}" class="nav-link">SCADA</a>
         </nav>
     </header>
 
@@ -35,14 +37,20 @@
                 <div class="card-control h-100 text-center">
                     <div class="icon-box"><i class="fas fa-server"></i></div>
                     <h5 class="fw-bold mb-3">Catálogo UPS</h5>
-                    <p class="small text-muted mb-4">Especificaciones técnicas de equipos UPS (kVA, Voltajes, Dimensiones).</p>
-                    
+                    <p class="small text-muted mb-4">Especificaciones técnicas de equipos UPS (kVA, Voltajes,
+                        Dimensiones).</p>
+
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('management.descargar_plantilla', tipo='ups') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='ups') }}"
+                            class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
+                            Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="ups">
-                            <input type="file" name="archivo_csv" id="csv_ups" class="d-none" accept=".csv" onchange="this.form.submit()">
-                            <button type="button" class="btn btn-primary btn-sm btn-upload" onclick="document.getElementById('csv_ups').click()"><i class="fas fa-upload me-1"></i> Subir CSV</button>
+                            <input type="file" name="archivo_csv" id="csv_ups" class="d-none" accept=".csv"
+                                onchange="this.form.submit()">
+                            <button type="button" class="btn btn-primary btn-sm btn-upload"
+                                onclick="document.getElementById('csv_ups').click()"><i class="fas fa-upload me-1"></i>
+                                Subir CSV</button>
                         </form>
                     </div>
                 </div>
@@ -53,14 +61,20 @@
                 <div class="card-control h-100 text-center">
                     <div class="icon-box"><i class="fas fa-users"></i></div>
                     <h5 class="fw-bold mb-3">Clientes</h5>
-                    <p class="small text-muted mb-4">Base de datos de clientes, sucursales y coordenadas geográficas.</p>
-                    
+                    <p class="small text-muted mb-4">Base de datos de clientes, sucursales y coordenadas geográficas.
+                    </p>
+
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('management.descargar_plantilla', tipo='clientes') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='clientes') }}"
+                            class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
+                            Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="clientes">
-                            <input type="file" name="archivo_csv" id="csv_clientes" class="d-none" accept=".csv" onchange="this.form.submit()">
-                            <button type="button" class="btn btn-primary btn-sm btn-upload" onclick="document.getElementById('csv_clientes').click()"><i class="fas fa-upload me-1"></i> Subir CSV</button>
+                            <input type="file" name="archivo_csv" id="csv_clientes" class="d-none" accept=".csv"
+                                onchange="this.form.submit()">
+                            <button type="button" class="btn btn-primary btn-sm btn-upload"
+                                onclick="document.getElementById('csv_clientes').click()"><i
+                                    class="fas fa-upload me-1"></i> Subir CSV</button>
                         </form>
                     </div>
                 </div>
@@ -71,14 +85,20 @@
                 <div class="card-control h-100 text-center">
                     <div class="icon-box"><i class="fas fa-car-battery"></i></div>
                     <h5 class="fw-bold mb-3">Modelos Baterías</h5>
-                    <p class="small text-muted mb-4">Fichas técnicas de baterías (Voltaje, Ah, Vida Útil, Dimensiones).</p>
-                    
+                    <p class="small text-muted mb-4">Fichas técnicas de baterías (Voltaje, Ah, Vida Útil, Dimensiones).
+                    </p>
+
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_modelos') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_modelos') }}"
+                            class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
+                            Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="baterias_modelos">
-                            <input type="file" name="archivo_csv" id="csv_bat_mod" class="d-none" accept=".csv" onchange="this.form.submit()">
-                            <button type="button" class="btn btn-primary btn-sm btn-upload" onclick="document.getElementById('csv_bat_mod').click()"><i class="fas fa-upload me-1"></i> Subir CSV</button>
+                            <input type="file" name="archivo_csv" id="csv_bat_mod" class="d-none" accept=".csv"
+                                onchange="this.form.submit()">
+                            <button type="button" class="btn btn-primary btn-sm btn-upload"
+                                onclick="document.getElementById('csv_bat_mod').click()"><i
+                                    class="fas fa-upload me-1"></i> Subir CSV</button>
                         </form>
                     </div>
                 </div>
@@ -89,14 +109,20 @@
                 <div class="card-control h-100 text-center">
                     <div class="icon-box"><i class="fas fa-chart-line"></i></div>
                     <h5 class="fw-bold mb-3">Curvas Descarga</h5>
-                    <p class="small text-muted mb-4">Tablas de potencia constante (Watts/Celda) para dimensionamiento.</p>
-                    
+                    <p class="small text-muted mb-4">Tablas de potencia constante (Watts/Celda) para dimensionamiento.
+                    </p>
+
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_curvas') }}" class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar Plantilla</a>
+                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_curvas') }}"
+                            class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
+                            Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="tipo_carga" value="baterias_curvas">
-                            <input type="file" name="archivo_csv" id="csv_bat_curv" class="d-none" accept=".csv" onchange="this.form.submit()">
-                            <button type="button" class="btn btn-primary btn-sm btn-upload" onclick="document.getElementById('csv_bat_curv').click()"><i class="fas fa-upload me-1"></i> Subir CSV</button>
+                            <input type="file" name="archivo_csv" id="csv_bat_curv" class="d-none" accept=".csv"
+                                onchange="this.form.submit()">
+                            <button type="button" class="btn btn-primary btn-sm btn-upload"
+                                onclick="document.getElementById('csv_bat_curv').click()"><i
+                                    class="fas fa-upload me-1"></i> Subir CSV</button>
                         </form>
                     </div>
                 </div>
@@ -104,15 +130,21 @@
         </div>
 
         <div class="tech-matrix mt-5">
-            <h6 class="text-white fw-bold mb-3"><i class="fas fa-info-circle text-info me-2"></i> Instrucciones Importantes</h6>
+            <h6 class="text-white fw-bold mb-3"><i class="fas fa-info-circle text-info me-2"></i> Instrucciones
+                Importantes</h6>
             <ul class="text-muted small mb-0" style="list-style-type: square;">
-                <li class="mb-1">Utilice siempre las <strong>plantillas proporcionadas</strong> para asegurar el formato correcto de columnas.</li>
-                <li class="mb-1">Los archivos deben guardarse como <strong>CSV (delimitado por comas)</strong> con codificación <strong>UTF-8</strong>.</li>
-                <li class="mb-1">Para la carga de <strong>Curvas de Descarga</strong>, es obligatorio que el "Modelo" especificado en el CSV ya exista en la base de datos (cargue primero los Modelos de Baterías).</li>
-                <li>Las columnas de voltaje en las curvas deben seguir el formato <code>FV_1.60</code>, <code>FV_1.70</code>, etc. (Voltaje Final por celda).</li>
+                <li class="mb-1">Utilice siempre las <strong>plantillas proporcionadas</strong> para asegurar el formato
+                    correcto de columnas.</li>
+                <li class="mb-1">Los archivos deben guardarse como <strong>CSV (delimitado por comas)</strong> con
+                    codificación <strong>UTF-8</strong>.</li>
+                <li class="mb-1">Para la carga de <strong>Curvas de Descarga</strong>, es obligatorio que el "Modelo"
+                    especificado en el CSV ya exista en la base de datos (cargue primero los Modelos de Baterías).</li>
+                <li>Las columnas de voltaje en las curvas deben seguir el formato <code>FV_1.60</code>,
+                    <code>FV_1.70</code>, etc. (Voltaje Final por celda).</li>
             </ul>
         </div>
     </div>
 
 </body>
+
 </html>

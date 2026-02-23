@@ -9,13 +9,13 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 from app.config import BaseConfig
 
 
 def get_connection():
-    return psycopg2.connect(BaseConfig.DATABASE_URL)
+    return psycopg.connect(BaseConfig.DATABASE_URL)
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
 
     try:
         conn = get_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor = conn.cursor(row_factory=dict_row)
 
         cursor.execute("SELECT * FROM monitoreo_config WHERE ip = %s", ('192.168.0.100',))
         device = cursor.fetchone()

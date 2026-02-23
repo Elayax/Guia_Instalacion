@@ -2,7 +2,7 @@ import os
 import csv
 import logging
 from datetime import datetime
-from psycopg2.extras import RealDictCursor
+from psycopg.rows import dict_row
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class GestorDB:
 
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
                     lector = csv.reader(f)
                     for fila in lector:
@@ -85,7 +85,7 @@ class GestorDB:
 
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 columnas_validas = self._get_columnas_validas(cursor, tabla)
 
                 with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
@@ -130,13 +130,13 @@ class GestorDB:
     # =========================================================================
     def obtener_ups_todos(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute('SELECT * FROM ups_specs ORDER BY "Capacidad_kVA"')
             return [dict(row) for row in cursor.fetchall()]
 
     def obtener_ups_id(self, id_ups):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM ups_specs WHERE id = %s", (id_ups,))
             row = cursor.fetchone()
             return dict(row) if row else None
@@ -144,7 +144,7 @@ class GestorDB:
     def insertar_ups_manual(self, datos_dict):
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 datos_limpios = self._filtrar_datos(cursor, 'ups_specs', datos_dict)
                 if not datos_limpios:
                     return False
@@ -166,7 +166,7 @@ class GestorDB:
         """Actualiza un registro existente en ups_specs."""
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 datos_limpios = self._filtrar_datos(cursor, 'ups_specs', datos)
                 if not datos_limpios:
                     return False
@@ -192,7 +192,7 @@ class GestorDB:
     def verificar_modelo_ups_existe(self, nombre_modelo, excluir_id=None):
         """Verifica si existe un UPS con el nombre de modelo dado."""
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             if excluir_id:
                 cursor.execute(
                     'SELECT id FROM ups_specs WHERE "Nombre_del_Producto" = %s AND id != %s',
@@ -221,7 +221,7 @@ class GestorDB:
 
     def obtener_clientes(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM clientes ORDER BY cliente, sucursal")
             return [dict(row) for row in cursor.fetchall()]
 
@@ -238,7 +238,7 @@ class GestorDB:
 
     def obtener_sucursales_por_cliente(self, nombre_cliente):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute(
                 "SELECT * FROM clientes WHERE cliente = %s ORDER BY sucursal",
                 (nombre_cliente,)
@@ -313,14 +313,14 @@ class GestorDB:
 
     def obtener_proyectos(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM proyectos_publicados ORDER BY id DESC")
             return [dict(row) for row in cursor.fetchall()]
 
     def obtener_proyecto_por_pedido(self, pedido):
         """Obtiene un proyecto completo con todas sus relaciones."""
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute('''
                 SELECT
                     p.*,
@@ -371,7 +371,7 @@ class GestorDB:
     def agregar_modelo_bateria(self, datos_dict):
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 campos_validos = [
                     'modelo', 'serie', 'voltaje_nominal', 'capacidad_nominal_ah',
                     'resistencia_interna_mohm', 'max_corriente_descarga_5s_a',
@@ -402,7 +402,7 @@ class GestorDB:
 
     def buscar_bateria_optima(self, watts_requeridos_celda, tiempo_minutos, fv_inversor):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute('''
                 SELECT m.modelo, m.capacidad_nominal_ah, m.voltaje_nominal,
                        c.valor as watts_celda, c.tiempo_minutos, c.voltaje_corte_fv, c.unidad
@@ -419,7 +419,7 @@ class GestorDB:
 
     def obtener_baterias_modelos(self, solo_con_curvas=False):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             if solo_con_curvas:
                 cursor.execute("""
                     SELECT DISTINCT m.*
@@ -433,7 +433,7 @@ class GestorDB:
 
     def obtener_bateria_id(self, id_bateria):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM baterias_modelos WHERE id = %s", (id_bateria,))
             row = cursor.fetchone()
             return dict(row) if row else None
@@ -441,7 +441,7 @@ class GestorDB:
     def actualizar_bateria(self, id_bateria, datos):
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 datos_limpios = self._filtrar_datos(cursor, 'baterias_modelos', datos)
                 if not datos_limpios:
                     return False
@@ -469,7 +469,7 @@ class GestorDB:
     # =========================================================================
     def obtener_curvas_por_bateria(self, id_bateria):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute(
                 "SELECT * FROM baterias_curvas_descarga WHERE bateria_id = %s ORDER BY unidad, tiempo_minutos, voltaje_corte_fv",
                 (id_bateria,)
@@ -479,7 +479,7 @@ class GestorDB:
     def obtener_curvas_pivot(self, bateria_id, unidad='W'):
         """Retorna curvas como matriz para visualización."""
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute(
                 "SELECT tiempo_minutos, voltaje_corte_fv, valor FROM baterias_curvas_descarga WHERE bateria_id = %s AND unidad = %s ORDER BY tiempo_minutos, voltaje_corte_fv",
                 (bateria_id, unidad)
@@ -579,7 +579,7 @@ class GestorDB:
 
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
 
                 # PRIMERA PASADA: Validación
                 with open(ruta_csv, mode='r', encoding='utf-8-sig') as f:
@@ -699,10 +699,8 @@ class GestorDB:
                             logs.append(f"Dato inválido: {key}={valor_str}")
 
                 if puntos_a_insertar:
-                    from psycopg2.extras import execute_values
-                    execute_values(
-                        cursor,
-                        "INSERT INTO baterias_curvas_descarga (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad) VALUES %s",
+                    cursor.executemany(
+                        "INSERT INTO baterias_curvas_descarga (bateria_id, tiempo_minutos, voltaje_corte_fv, valor, unidad) VALUES (%s, %s, %s, %s, %s)",
                         puntos_a_insertar
                     )
                     insertados = len(puntos_a_insertar)
@@ -716,7 +714,7 @@ class GestorDB:
     # =========================================================================
     def obtener_personal(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM personal ORDER BY nombre")
             return [dict(row) for row in cursor.fetchall()]
 
@@ -755,7 +753,7 @@ class GestorDB:
     # =========================================================================
     def obtener_tipos_ventilacion(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM tipos_ventilacion ORDER BY nombre")
             return [dict(row) for row in cursor.fetchall()]
 
@@ -785,7 +783,7 @@ class GestorDB:
 
     def obtener_tipo_ventilacion_id(self, id_tipo):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM tipos_ventilacion WHERE id = %s", (id_tipo,))
             row = cursor.fetchone()
             return dict(row) if row else None
@@ -903,7 +901,7 @@ class GestorDB:
 
     def obtener_proyectos_incompletos(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("""
                 SELECT id, pedido, cliente_snap, sucursal_snap, modelo_snap, potencia_snap,
                        id_ups, voltaje, fases, longitud, tiempo_respaldo, id_bateria
@@ -947,7 +945,7 @@ class GestorDB:
     # =========================================================================
     def obtener_calculo_por_pedido(self, pedido):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM proyectos_publicados WHERE pedido = %s", (pedido,))
             row = cursor.fetchone()
             return dict(row) if row else None
@@ -956,7 +954,7 @@ class GestorDB:
         """Guarda o actualiza cálculo de un pedido."""
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
                 cursor.execute("SELECT id FROM proyectos_publicados WHERE pedido = %s", (pedido,))
                 existe = cursor.fetchone()
 
@@ -1028,7 +1026,7 @@ class GestorDB:
 
     def obtener_monitoreo_ups(self):
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM monitoreo_config ORDER BY nombre")
             return [dict(row) for row in cursor.fetchall()]
 
@@ -1043,14 +1041,14 @@ class GestorDB:
     def obtener_usuario_por_username(self, username):
         """Busca un usuario por nombre de usuario."""
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             return cursor.fetchone()
 
     def obtener_usuario_por_id(self, user_id):
         """Busca un usuario por ID."""
         with self.pool.get_connection() as conn:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
             cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
             return cursor.fetchone()
 

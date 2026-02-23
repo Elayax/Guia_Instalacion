@@ -7,6 +7,18 @@ from . import management_bp
 logger = logging.getLogger(__name__)
 
 
+@management_bp.route('/equipos')
+@login_required
+def equipos():
+    return redirect(url_for('management.gestion', tab='ups'))
+
+
+@management_bp.route('/baterias')
+@login_required
+def baterias():
+    return redirect(url_for('management.gestion', tab='baterias'))
+
+
 @management_bp.route('/gestion', methods=['GET', 'POST'])
 @login_required
 def gestion():

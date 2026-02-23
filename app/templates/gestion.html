@@ -437,7 +437,7 @@
                                         <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
                                             Agregar Nuevo Equipo</button>
                                     </form>
-                                    <a href="{{ url_for('management.exportar_bd', tabla='ups_specs') }}"
+                                    <a href="{{ url_for('management.exportar_tabla', tabla='ups_specs') }}"
                                         class="btn btn-sm btn-outline-info ms-2"><i class="fas fa-download"></i>
                                         Exportar CSV</a>
                                 </div>
@@ -745,7 +745,7 @@
                                         <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
                                             Agregar Nueva Batería</button>
                                     </form>
-                                    <a href="{{ url_for('management.exportar_bd', tabla='baterias_modelos') }}"
+                                    <a href="{{ url_for('management.exportar_tabla', tabla='baterias_modelos') }}"
                                         class="btn btn-sm btn-outline-info ms-2"><i class="fas fa-download"></i>
                                         Exportar CSV</a>
                                 </div>
@@ -803,7 +803,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                                 <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-users me-2"></i> GESTIÓN
                                     DE CLIENTES Y SUCURSALES</div>
-                                <a href="{{ url_for('management.exportar_bd', tabla='clientes') }}"
+                                <a href="{{ url_for('management.exportar_tabla', tabla='clientes') }}"
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
                             <form method="POST" class="row g-2 mb-3 p-2 border rounded"
@@ -903,7 +903,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                                 <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-id-badge me-2"></i> LISTA
                                     DE PERSONAL</div>
-                                <a href="{{ url_for('management.exportar_bd', tabla='personal') }}"
+                                <a href="{{ url_for('management.exportar_tabla', tabla='personal') }}"
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
 
@@ -1030,7 +1030,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                                 <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-wind me-2"></i> TIPOS DE
                                     VENTILACIÓN</div>
-                                <a href="{{ url_for('management.exportar_bd', tabla='tipos_ventilacion') }}"
+                                <a href="{{ url_for('management.exportar_tabla', tabla='tipos_ventilacion') }}"
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
 
@@ -1111,7 +1111,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                                 <div class="control-title mb-0 border-0 pb-0" style="color: var(--success);"><i
                                         class="fas fa-history me-2"></i> PROYECTOS PUBLICADOS (HISTORIAL)</div>
-                                <a href="{{ url_for('management.exportar_bd', tabla='proyectos_publicados') }}"
+                                <a href="{{ url_for('management.exportar_tabla', tabla='proyectos_publicados') }}"
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
                             <div style="max-height: 600px; overflow-y: auto;">
