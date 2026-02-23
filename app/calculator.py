@@ -10,7 +10,7 @@ from app.auxiliares import (
 import os
 import tempfile
 from werkzeug.datastructures import ImmutableMultiDict
-from . import calculator_bp
+from app.routes import calculator_bp
 
 db = GestorDB()
 
@@ -119,18 +119,18 @@ def calculadora():
                         ups_data = db.obtener_ups_id(datos['id_ups'])
                         bateria_info = db.obtener_bateria_id(id_bateria) or {}
                         curvas = db.obtener_curvas_por_bateria(id_bateria)
-                            from app.calculos import CalculadoraBaterias
-                            calc_bat = CalculadoraBaterias()
-                            res_bat = calc_bat.calcular(
-                                kva=ups_data.get('Capacidad_kVA'),
-                                kw=ups_data.get('Capacidad_kW'),
-                                eficiencia=ups_data.get('Eficiencia_Modo_Bateria_pct'),
-                                v_dc=ups_data.get('Bateria_Vdc'),
-                                tiempo_min=float(datos['tiempo_respaldo'] or 0),
-                                curvas=curvas,
-                                bat_voltaje_nominal=bateria_info.get('voltaje_nominal', 12)
-                            )
-                            resultado.update(res_bat)
+                        from app.calculos import CalculadoraBaterias
+                        calc_bat = CalculadoraBaterias()
+                        res_bat = calc_bat.calcular(
+                            kva=ups_data.get('Capacidad_kVA'),
+                            kw=ups_data.get('Capacidad_kW'),
+                            eficiencia=ups_data.get('Eficiencia_Modo_Bateria_pct'),
+                            v_dc=ups_data.get('Bateria_Vdc'),
+                            tiempo_min=float(datos['tiempo_respaldo'] or 0),
+                            curvas=curvas,
+                            bat_voltaje_nominal=bateria_info.get('voltaje_nominal', 12)
+                        )
+                        resultado.update(res_bat)
                     except Exception as e:
                         resultado['bat_error'] = str(e)
         

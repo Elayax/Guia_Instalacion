@@ -1,35 +1,50 @@
-
-import sqlite3
+"""
+Verificar esquema de la tabla monitoreo_config en PostgreSQL
+"""
+import sys
 import os
 
-def check():
-    path = os.path.join('app', 'Equipos.db')
-    if not os.path.exists(path):
-        print(f"Error: {path} no existe")
-        return
-        
-    conn = sqlite3.connect(path)
-    # PRAGMA para ver columnas
-    cur = conn.cursor()
-    cur.execute("PRAGMA table_info(monitoreo_config)")
-    rows = cur.fetchall()
-    print("Tabla monitoreo_config:")
-    for r in rows:
-        print(f" - {r[1]} ({r[2]}) {r[4]}") # name, type, dflt_value
-        
-    # Ver datos actuales del UPS
-    cur.execute("SELECT * FROM monitoreo_config WHERE ip = '192.168.0.100'")
-    ups = cur.fetchone()
-    if ups:
-        print("\nDatos actuales UPS 192.168.0.100:")
-        # Mapear columnas a valores
-        cols = [r[1] for r in rows]
-        for i, val in enumerate(ups):
-            print(f" {cols[i]}: {val}")
-    else:
-        print("\nUPS 192.168.0.100 no encontrado en BD")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-    conn.close()
+import psycopg2
+from app.config import BaseConfig
+
+
+def check():
+    try:
+        conn = psycopg2.connect(BaseConfig.DATABASE_URL)
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT column_name, data_type, column_default
+            FROM information_schema.columns
+            WHERE table_name = 'monitoreo_config'
+            ORDER BY ordinal_position
+        """)
+        rows = cur.fetchall()
+
+        if not rows:
+            print("Tabla monitoreo_config no encontrada en PostgreSQL")
+            return
+
+        print("Tabla monitoreo_config:")
+        for r in rows:
+            print(f" - {r[0]} ({r[1]}) default={r[2]}")
+
+        cur.execute("SELECT * FROM monitoreo_config WHERE ip = '192.168.0.100'")
+        ups = cur.fetchone()
+        if ups:
+            print("\nDatos actuales UPS 192.168.0.100:")
+            col_names = [desc[0] for desc in cur.description]
+            for i, val in enumerate(ups):
+                print(f" {col_names[i]}: {val}")
+        else:
+            print("\nUPS 192.168.0.100 no encontrado en BD")
+
+        conn.close()
+
+    except Exception as e:
+        print(f"Error conectando a PostgreSQL: {e}")
 
 if __name__ == '__main__':
     check()

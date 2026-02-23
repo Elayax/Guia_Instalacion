@@ -1,24 +1,30 @@
 """
 Script de migración de proyectos antiguos con datos incompletos.
 Recupera automáticamente id_ups desde modelo_snap y permite completar datos manualmente.
+Usa PostgreSQL (configurado en app/config.py)
 """
-import sqlite3
 import os
 from datetime import datetime
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+from app.config import BaseConfig
+
+
 class MigradorProyectos:
-    def __init__(self, db_path='app/Equipos.db'):
-        self.db_path = db_path
-    
+    def __init__(self, database_url=None):
+        self.database_url = database_url or BaseConfig.DATABASE_URL
+
     def _conectar(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = psycopg2.connect(self.database_url)
         return conn
     
     def obtener_proyectos_incompletos(self):
         """Retorna lista de proyectos con datos faltantes"""
         conn = self._conectar()
-        cursor = conn.execute("""
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
             SELECT id, pedido, cliente_snap, sucursal_snap, modelo_snap, potencia_snap,
                    id_ups, voltaje, fases, longitud, tiempo_respaldo, id_bateria
             FROM proyectos_publicados
@@ -32,11 +38,12 @@ class MigradorProyectos:
     def buscar_ups_por_nombre(self, nombre_ups):
         """Busca UPS en catálogo por nombre aproximado"""
         conn = self._conectar()
-        cursor = conn.execute("""
-            SELECT id, Nombre_del_Producto, Capacidad_kVA, Serie
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
+            SELECT id, "Nombre_del_Producto", "Capacidad_kVA", "Serie"
             FROM ups_specs
-            WHERE Nombre_del_Producto LIKE ?
-            ORDER BY Capacidad_kVA
+            WHERE "Nombre_del_Producto" ILIKE %s
+            ORDER BY "Capacidad_kVA"
         """, (f'%{nombre_ups}%',))
         resultados = [dict(row) for row in cursor.fetchall()]
         conn.close()
@@ -91,14 +98,14 @@ class MigradorProyectos:
             
             for key, value in datos.items():
                 if key in ['id_ups', 'voltaje', 'fases', 'longitud', 'tiempo_respaldo', 'id_bateria']:
-                    set_parts.append(f"{key} = ?")
+                    set_parts.append(f"{key} = %s")
                     values.append(value)
-            
+
             if not set_parts:
                 return False
-            
+
             values.append(pedido)
-            sql = f"UPDATE proyectos_publicados SET {', '.join(set_parts)} WHERE pedido = ?"
+            sql = f"UPDATE proyectos_publicados SET {', '.join(set_parts)} WHERE pedido = %s"
             
             conn.execute(sql, values)
             conn.commit()

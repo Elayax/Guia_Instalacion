@@ -1,64 +1,62 @@
 # -*- coding: utf-8 -*-
 """
 Script para actualizar el UPS 192.168.0.100 a ups_mib_standard
+Usa PostgreSQL (configurado en app/config.py)
 """
 
 import sys
 import os
-import sqlite3
 
-# Agregar el directorio actual al path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from app.config import BaseConfig
+
+
+def get_connection():
+    return psycopg2.connect(BaseConfig.DATABASE_URL)
+
+
 def main():
-    # Conectar a la BD
-    db_path = os.path.join(os.path.dirname(__file__), 'app', 'Equipos.db')
-    
-    print("="*60)
+    print("=" * 60)
     print("  ACTUALIZANDO UPS 192.168.0.100 A UPS-MIB STANDARD")
-    print("="*60)
+    print("=" * 60)
     print()
-    
+
     try:
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        # Buscar el dispositivo
-        cursor.execute("SELECT * FROM monitoreo_config WHERE ip = ?", ('192.168.0.100',))
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        cursor.execute("SELECT * FROM monitoreo_config WHERE ip = %s", ('192.168.0.100',))
         device = cursor.fetchone()
-        
+
         if not device:
             print("ERROR: No se encontro el UPS 192.168.0.100")
             return
-        
+
         print("Dispositivo encontrado:")
         print("  * ID: {}".format(device['id']))
         print("  * IP: {}".format(device['ip']))
-        print("  * Nombre: {}".format(device['nombre'] or 'Sin nombre'))
-       
-        try:
-            current_type = device['ups_type']
-        except (IndexError, KeyError):
-            current_type = 'No definido'
-        
+        print("  * Nombre: {}".format(device.get('nombre') or 'Sin nombre'))
+
+        current_type = device.get('ups_type', 'No definido')
         print("  * Tipo actual: {}".format(current_type))
         print()
-        
+
         confirm = input("Actualizar a 'ups_mib_standard' (monofasico)? (s/n): ")
         if confirm.lower() != 's':
             print("Cancelado.")
             return
-        
-        # Actualizar a ups_mib_standard
+
         cursor.execute("""
-            UPDATE monitoreo_config 
+            UPDATE monitoreo_config
             SET ups_type = 'ups_mib_standard'
-            WHERE ip = ?
+            WHERE ip = %s
         """, ('192.168.0.100',))
-        
+
         conn.commit()
-        
+
         print()
         print("OK - UPS actualizado a ups_mib_standard!")
         print()
@@ -70,7 +68,7 @@ def main():
         print()
         print("El cambio surtira efecto en unos segundos.")
         print("Ve a http://localhost:5000/monitoreo")
-        
+
     except Exception as e:
         print("ERROR: {}".format(e))
         import traceback

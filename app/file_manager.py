@@ -207,32 +207,31 @@ class FileManager:
     
     def crear_backup_db(self, db_path=None):
         """
-        Crea un backup de la base de datos
-        
-        Args:
-            db_path: Ruta a la base de datos (por defecto app/Equipos.db)
-        
+        Crea un backup de la base de datos PostgreSQL usando pg_dump.
+
         Returns:
             str: Ruta al archivo de backup creado
         """
-        if db_path is None:
-            db_path = os.path.join(self.base_dir, 'app', 'Equipos.db')
-        
-        if not os.path.exists(db_path):
-            raise FileNotFoundError(f"Base de datos no encontrada: {db_path}")
-        
-        # Crear directorio de backups
+        import subprocess
+        from app.config import BaseConfig
+
         backup_dir = os.path.join(self.base_dir, 'backups')
         os.makedirs(backup_dir, exist_ok=True)
-        
-        # Nombre del backup con timestamp
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_filename = f'Equipos_backup_{timestamp}.db'
+        backup_filename = f'ups_manager_backup_{timestamp}.sql'
         backup_path = os.path.join(backup_dir, backup_filename)
-        
-        # Copiar archivo
-        shutil.copy2(db_path, backup_path)
-        
+
+        try:
+            result = subprocess.run(
+                ['pg_dump', BaseConfig.DATABASE_URL, '-f', backup_path],
+                capture_output=True, text=True, timeout=60
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"pg_dump failed: {result.stderr}")
+        except FileNotFoundError:
+            raise RuntimeError("pg_dump no encontrado. Instalar PostgreSQL client tools.")
+
         return backup_path
     
     def obtener_ruta_completa_imagen(self, pedido, nombre_archivo):
