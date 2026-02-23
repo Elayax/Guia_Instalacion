@@ -1,0 +1,9 @@
+C\:\\Users\\smartinez\\OneDrive - LEMONROY BUSINESS SOLUTIONS SA DE CV\\Documents\\DEV\\Git-Guia-Install\\Guia_Instalacion\\scripts:
+add_js_function.py	      fix_import_json.py
+agregar_rutas.py	      fix_migration.py
+analizar_bds.py		      fix_unicode.py
+aplicar_migracion.py	      insert_route.py
+Comandos		      nuevas_rutas_recuperacion.py
+completar_proyectos.py	      replace_buttons.py
+eliminar_proyectos_vacios.py  snmp_walk.py
+fix_import.py		      update_modal.py

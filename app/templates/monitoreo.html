@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPS Engineering Monitor - SCADA View</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts for Technical Look -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">MONITOR UPS</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+            </div>
+        </div>
+        <nav class="d-flex gap-4">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            <a href="{{ url_for('monitoreo.index') }}" class="nav-link active"><i class="bi bi-activity me-1"></i> SCADA</a>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-outline-secondary btn-sm font-mono" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <i class="bi bi-gear-fill me-1"></i>CONF
+            </button>
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Device List -->
+        <aside class="sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+                <h6 class="m-0 text-white-50">DISPOSITIVOS</h6>
+                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div id="deviceList" class="flex-grow-1 overflow-auto">
+                <!-- Device Items -->
+                <div class="text-center text-muted mt-5">
+                    <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
+                    <p class="small">Esperando Datos...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Engineering Panel -->
+        <main class="main-panel position-relative">
+            
+            <!-- Default Placeholder -->
+            <div id="dashboardView" class="placeholder-view text-center text-muted">
+                <i class="bi bi-hdd-rack" style="font-size: 5rem; opacity: 0.1;"></i>
+                <h2 class="mt-4" style="letter-spacing: 5px; opacity:0.5;">SIN SEÑAL</h2>
+                <p class="text-white-50">Seleccione un dispositivo para iniciar la telemetría.</p>
+            </div>
+
+            <!-- Active Monitor Panel -->
+            <div id="monitorPanel" style="display:none; animation: fadeIn 0.5s;">
+                
+                <!-- Top Status Bar -->
+                <div class="eng-panel p-3 mb-4 d-flex justify-content-between align-items-center bg-dark bg-opacity-50">
+                    <div>
+                        <h2 class="mb-0 text-white" id="currentDevName" style="text-shadow: 0 0 10px rgba(255,255,255,0.2);">CARGANDO...</h2>
+                        <div class="d-flex gap-3 text-muted small font-mono mt-1">
+                            <span><i class="bi bi-globe me-1"></i>IP: <span id="currentDevIp" class="text-light">--</span></span>
+                            <span><i class="bi bi-diagram-2 me-1"></i>PROTO: <span id="currentDevProtocol" class="text-light">--</span></span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <div class="text-end">
+                            <span class="d-block text-muted small" style="font-size:0.7rem;">ESTADO DEL SISTEMA</span>
+                            <span id="currentDevStatus" class="eng-badge badge-ok">EN LINEA</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block text-muted small" style="font-size:0.7rem;">MODO DE ENERGIA</span>
+                            <span id="currentPowerMode" class="eng-badge badge-warn">NORMAL</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block text-muted small" style="font-size:0.7rem;">BATERIA</span>
+                            <span id="currentBatStatus" class="eng-badge badge-ok">FLOTANTE</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Log Panel -->
+                <div class="eng-panel p-3 mb-4 bg-dark bg-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="m-0 text-white-50"><i class="bi bi-activity me-2"></i>LOG DE ESTADO</h6>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding:0.1rem 0.5rem;" onclick="clearStatusLog()">
+                            <i class="bi bi-trash"></i> Limpiar
+                        </button>
+                    </div>
+                    <div id="statusLogPanel" class="font-mono" style="max-height: 120px; overflow-y: auto; font-size: 0.75rem; line-height: 1.4;">
+                        <div class="text-muted small">Esperando eventos...</div>
+                    </div>
+                </div>
+
+                <!-- Mimic Diagram / Overview -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="eng-panel">
+                            <div class="eng-panel-header">
+                                <h5 class="eng-panel-title"><i class="bi bi-motherboard me-2"></i>DIAGRAMA MIMICO DE SISTEMA</h5>
+                                <div class="font-mono small text-danger">FLUJO EN TIEMPO REAL</div>
+                            </div>
+                            <div class="eng-panel-body">
+                                <div class="mimic-container">
+                                    <div class="mimic-line"></div>
+                                    
+                                    <!-- INPUT NODE -->
+                                    <div class="mimic-node">
+                                        <h4>RED ELECTRICA</h4>
+                                        <div class="mimic-value-row text-l1"><span>L1</span> <span id="val_vin_l1">--</span>V</div>
+                                        <div class="mimic-value-row text-l2"><span>L2</span> <span id="val_vin_l2">--</span>V</div>
+                                        <div class="mimic-value-row text-l3"><span>L3</span> <span id="val_vin_l3">--</span>V</div>
+                                        <div class="mimic-value-row text-white mt-1 pt-1 border-top border-secondary">
+                                            <span>FREC</span> <span id="val_freq_in">--</span>Hz
+                                        </div>
+                                    </div>
+
+                                    <i class="bi bi-arrow-right fs-2 text-muted"></i>
+
+                                    <!-- CONVERTER/BAT NODE -->
+                                    <div class="mimic-node" style="border-color: var(--status-warn);">
+                                        <h4 style="color: var(--status-warn);">BUS DE BATERIAS</h4>
+                                        <div class="text-center my-2">
+                                            <div class="font-mono fs-4 fw-bold" id="val_bat">--</div>
+                                            <div class="small text-muted">% CARGA</div>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background: #333;">
+                                            <div id="prog_bat" class="progress-bar bg-warning" style="width: 0%"></div>
+                                        </div>
+                                        <div class="mimic-value-row mt-2 text-white-50"><span>VOLT</span> <span id="val_vbat">--</span>V</div>
+                                        <div class="mimic-value-row text-white-50"><span>AMP</span> <span id="val_ibat">--</span>A</div>
+                                        <div class="mimic-value-row text-white-50"><span>TEMP</span> <span id="val_temp">--</span>°C</div>
+                                        <div style="display:none;"><div id="temp_bar_fill"></div></div>
+                                    </div>
+
+                                    <i class="bi bi-arrow-right fs-2 text-muted"></i>
+
+                                    <!-- OUTPUT NODE -->
+                                    <div class="mimic-node" style="border-color: var(--status-ok);">
+                                        <h4 style="color: var(--status-ok);">SALIDA UPS</h4>
+                                        <div class="mimic-value-row text-l1"><span>L1</span> <span id="val_vout_l1">--</span>V</div>
+                                        <div class="mimic-value-row text-l2"><span>L2</span> <span id="val_vout_l2">--</span>V</div>
+                                        <div class="mimic-value-row text-l3"><span>L3</span> <span id="val_vout_l3">--</span>V</div>
+                                        <div class="mimic-value-row text-white mt-1 pt-1 border-top border-secondary">
+                                            <span>CARGA</span> <span id="val_load">--</span>%
+                                        </div>
+                                        <div style="display:none;"><div id="prog_load"></div></div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deep Data Metrics -->
+                <div class="row g-4 mb-4">
+                    <!-- Power & Load -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                            <div class="eng-panel-header">
+                                <h5 class="eng-panel-title"><i class="bi bi-lightning-charge me-2"></i>ANALISIS DE CARGA</h5>
+                            </div>
+                            <div class="eng-panel-body">
+                                <div class="row g-2 font-mono">
+                                    <div class="col-4">
+                                        <div class="metric-box">
+                                            <label>FACTOR POT.</label>
+                                            <div class="fs-5 fw-bold text-white" id="val_pf">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="metric-box">
+                                            <label>POT. ACTIVA</label>
+                                            <div class="fs-5 fw-bold text-white"><span id="val_pwr_active">--</span> <small class="text-muted">kW</small></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="metric-box">
+                                            <label>APARENTE</label>
+                                            <div class="fs-5 fw-bold text-white"><span id="val_pwr_apparent">--</span> <small class="text-muted">kVA</small></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <label class="small text-muted mb-2 d-block">CORRIENTE DE SALIDA (AMPS)</label>
+                                        <div class="d-flex justify-content-between text-center bg-black bg-opacity-25 p-2 rounded">
+                                            <div class="text-l1">L1: <span id="val_iout_l1" class="fw-bold">--</span> A</div>
+                                            <div class="text-l2">L2: <span id="val_iout_l2" class="fw-bold">--</span> A</div>
+                                            <div class="text-l3">L3: <span id="val_iout_l3" class="fw-bold">--</span> A</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-2 pt-2 border-top border-secondary">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="small text-muted">TIEMPO ESTIMADO RESTANTE</span>
+                                            <span class="fs-4 fw-bold text-success"><span id="val_remain_time">--</span> min</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Environment & Alarms -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                            <div class="eng-panel-header">
+                                <h5 class="eng-panel-title"><i class="bi bi-thermometer-sun me-2"></i>AMBIENTE Y ALARMAS</h5>
+                            </div>
+                            <div class="eng-panel-body">
+                                <!-- Env Section -->
+                                <div id="envSection" style="display:none;" class="mb-3 p-2 border border-secondary rounded">
+                                    <div class="d-flex justify-content-around text-center">
+                                        <div>
+                                            <div class="text-muted small">TEMP</div>
+                                            <div class="fw-bold text-white"><span id="val_env_temp">--</span>°C</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small">HUMEDAD</div>
+                                            <div class="fw-bold text-info"><span id="val_env_hum">--</span>%</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small">AGUA</div>
+                                            <div class="fw-bold" id="val_water_leak">--</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-none"><span id="val_freq_out"></span></div>
+
+                                <!-- Alarm Section -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-danger fw-bold small">ALARMAS ACTIVAS (<span id="alarmCount">0</span>)</span>
+                                    <span class="badge bg-danger animate-pulse">ACTIVO</span>
+                                </div>
+                                <div id="alarmContainer" style="display:none; height: 160px; overflow-y: auto;" class="bg-black bg-opacity-25 p-2 rounded border border-danger border-opacity-25">
+                                    <div id="alarmPanel"></div>
+                                </div>
+                                <div id="modulesSection" style="display:none;">
+                                    <div id="modulesContainer" class="row g-1 mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Oscilloscope View (Grid Layout) -->
+                <div class="row g-4 mb-5">
+                     <div class="col-12">
+                         <div class="eng-panel-header rounded-top">
+                             <h5 class="eng-panel-title"><i class="bi bi-activity me-2"></i>TELEMETRIA DE OSCILOSCOPIO</h5>
+                         </div>
+                     </div>
+                    <!-- Chart 1: Voltage IN -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">VOLTAJE ENTRADA (FASES)</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartVoltajeIn"></canvas></div>
+                        </div>
+                    </div>
+                    <!-- Chart 2: Voltage OUT -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">VOLTAJE SALIDA (FASES)</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartVoltajeOut"></canvas></div>
+                        </div>
+                    </div>
+                    <!-- Chart 3: Frequency -->
+                    <div class="col-md-6">
+                        <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">DOMINIO DE FRECUENCIA</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartFrequency"></canvas></div>
+                        </div>
+                    </div>
+                    <!-- Chart 4: Temperature -->
+                    <div class="col-md-6">
+                         <div class="eng-panel h-100">
+                             <h6 class="text-center text-muted small pt-2 mb-0">TENDENCIA DE TEMPERATURA</h6>
+                            <div style="height:200px" class="p-2"><canvas id="chartTemp"></canvas></div>
+                        </div>
+                    </div>
+                     <!-- Hidden Battery Chart Canvas -->
+                    <div style="display:none;"><canvas id="chartBateria"></canvas><span id="bat_center_label"></span></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Agregar Dispositivo (Dark Theme) -->
+    <div class="modal fade" id="addDeviceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background: #1c1c1e; border: 1px solid var(--accent-red); box-shadow: 0 0 50px rgba(255, 69, 58, 0.1);">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title font-mono" style="color: var(--accent-red); font-weight: 700;"><i class="bi bi-plus-square me-2"></i>AGREGAR NUEVO DISPOSITIVO</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="addDeviceForm">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">NOMBRE DEL DISPOSITIVO</label>
+                            <input type="text" class="form-control font-mono" id="devName" placeholder="UPS-PRINCIPAL-01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">PROTOCOLO</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="protocolo" id="proto_modbus" value="modbus" checked>
+                                <label class="btn btn-outline-secondary" for="proto_modbus">MODBUS TCP</label>
+                                <input type="radio" class="btn-check" name="protocolo" id="proto_snmp" value="snmp">
+                                <label class="btn btn-outline-secondary" for="proto_snmp">SNMP</label>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-8">
+                                <label class="form-label text-muted small">DIRECCIÓN IP</label>
+                                <input type="text" class="form-control font-mono" id="devIp" placeholder="192.168.1.10" required>
+                            </div>
+                            <!-- Modbus Fields -->
+                            <div id="modbusFields" class="col-12 row g-3 m-0 p-0">
+                                <div class="col-4">
+                                    <label class="form-label text-muted small">PUERTO</label>
+                                    <input type="number" class="form-control font-mono" id="devPort" value="502">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label text-muted small">SLAVE ID</label>
+                                    <input type="number" class="form-control font-mono" id="devSlave" value="1">
+                                </div>
+                            </div>
+                            <!-- SNMP Fields -->
+                            <div id="snmpFields" class="col-12 row g-3 m-0 p-0" style="display:none;">
+                                <div class="col-4">
+                                    <label class="form-label text-muted small">PUERTO</label>
+                                    <input type="number" class="form-control font-mono" id="devSnmpPort" value="161">
+                                </div>
+                                <div class="col-8">
+                                    <label class="form-label text-muted small">COMMUNITY</label>
+                                    <input type="text" class="form-control font-mono" id="devCommunity" value="public">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted small">VERSIÓN SNMP</label>
+                                    <select class="form-select font-mono" id="devSnmpVersion">
+                                        <option value="0">SNMP v1</option>
+                                        <option value="1" selected>SNMP v2c</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted small">TIPO DE UPS</label>
+                                    <select class="form-select font-mono" id="devUpsType">
+                                        <option value="invt_enterprise">Trifásico (INVT)</option>
+                                        <option value="ups_mib_standard">Monofásico (UPS-MIB)</option>
+                                        <option value="hybrid">Híbrido</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="addDevice()">AGREGAR DISPOSITIVO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: #1c1c1e; border: 1px solid var(--accent-red);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title font-mono" style="color: var(--accent-red); font-weight: 700;">SYSTEM CONFIGURATION</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs border-secondary mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active text-white" data-bs-toggle="tab" href="#general">GENERAL</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" data-bs-toggle="tab" href="#thresholds">THRESHOLDS</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" data-bs-toggle="tab" href="#notifications">NOTIFICATIONS</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content text-white-50 small">
+                        <div class="tab-pane fade show active" id="general">
+                            <div class="mb-3">
+                                <label class="form-label">Refresh Rate (ms)</label>
+                                <input type="range" class="form-range" min="500" max="5000" step="500" value="1000">
+                                <small class="text-white d-block text-end">1000 ms</small>
+                            </div>
+                            <div class="mb-3 form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="darkModeSwitch" checked disabled>
+                                <label class="form-check-label">Force Dark Mode (System Default)</label>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="thresholds">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label>High Voltage Alarm (V)</label>
+                                    <input type="number" class="form-control form-control-sm font-mono" value="240">
+                                </div>
+                                <div class="col-6">
+                                    <label>Low Battery Warning (%)</label>
+                                    <input type="number" class="form-control form-control-sm font-mono" value="20">
+                                </div>
+                            </div>
+                            <p class="mt-3 text-warning"><i class="bi bi-exclamation-triangle me-1"></i> Changes here are local simulation only.</p>
+                        </div>
+                        <div class="tab-pane fade" id="notifications">
+                             <div class="mb-3">
+                                <label>Email Alerts To:</label>
+                                <input type="email" class="form-control font-mono" placeholder="admin@example.com">
+                             </div>
+                             <button class="btn btn-outline-info btn-sm">Test Alert</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">CLOSE</button>
+                    <button type="button" class="btn btn-info btn-sm">SAVE PARAMETERS</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrolling Footer -->
+    <div class="scrolling-footer">
+        <div class="scrolling-content font-mono" id="sys-status-marquee">
+            SYSTEM INITIALIZED | WAITING FOR TELEMETRY STREAM | CHECKING CONNECTIVITY...
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const socket = io();
+        
+        // Helper Time Formatter (24h)
+        function getTimeString() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        let devices = {};
+        let currentDevId = null;
+
+        // Clock Update removed (handled by main.js and inline fix at bottom)
+        // setInterval(() => { ... }, 1000);
+
+        // Charts
+        let chartVIn = null;
+        let chartVOut = null;
+        let chartB = null;
+        let chartFreq = null;
+        let chartTemp = null;
+
+        const PHASE_COLORS = {
+            l1: '#ff453a', // Red
+            l2: '#ff9f0a', // Orange
+            l3: '#0a84ff'  // Blue
+        };
+
+        // Toggle protocol fields in modal
+        document.querySelectorAll('input[name="protocolo"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const isModbus = e.target.value === 'modbus';
+                document.getElementById('modbusFields').style.display = isModbus ? 'flex' : 'none';
+                document.getElementById('snmpFields').style.display = isModbus ? 'none' : 'flex';
+            });
+        });
+
+        // Sci-Fi Chart Config
+        function lineChartConfig(datasets) {
+            return {
+                type: 'line',
+                data: { labels: [], datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 9, family: 'JetBrains Mono' } },
+                            border: { display: false }
+                        },
+                        x: { 
+                            display: true,
+                            grid: { display: false },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#bbb', usePointStyle: true, boxWidth: 6, font: { size: 10, family: 'Rajdhani' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(28, 28, 30, 0.9)',
+                            titleFont: { family: 'Rajdhani' },
+                            bodyFont: { family: 'JetBrains Mono' },
+                            borderColor: '#ff453a',
+                            borderWidth: 1
+                        }
+                    },
+                    elements: {
+                        line: { tension: 0.4 },
+                        point: { radius: 0, hoverRadius: 4 }
+                    }
+                }
+            };
+        }
+
+        function initCharts() {
+            // Voltages
+            const vConfig = (ctx, label) => lineChartConfig([
+                { label: 'L1', borderColor: PHASE_COLORS.l1, data: [], borderWidth: 2 },
+                { label: 'L2', borderColor: PHASE_COLORS.l2, data: [], borderWidth: 2 },
+                { label: 'L3', borderColor: PHASE_COLORS.l3, data: [], borderWidth: 2 }
+            ]);
+
+            chartVIn = new Chart(document.getElementById('chartVoltajeIn').getContext('2d'), vConfig());
+            chartVOut = new Chart(document.getElementById('chartVoltajeOut').getContext('2d'), vConfig());
+
+            // Frequency
+            chartFreq = new Chart(document.getElementById('chartFrequency').getContext('2d'), lineChartConfig([
+                { label: 'IN', borderColor: '#bf5af2', data: [], borderWidth: 2, borderDash: [5, 5] },
+                { label: 'OUT', borderColor: '#32d74b', data: [], borderWidth: 2 }
+            ]));
+
+            // Temp
+            chartTemp = new Chart(document.getElementById('chartTemp').getContext('2d'), lineChartConfig([
+                { label: 'BATT', borderColor: '#ff9f0a', data: [], borderWidth: 2, fill: {
+                    target: 'origin', below: 'rgba(255, 159, 10, 0.1)' 
+                }},
+                { label: 'ENV', borderColor: '#30d158', data: [], borderWidth: 1 }
+            ]));
+
+            // Hidden dummy battery chart to satisfy update logic
+            chartB = new Chart(document.getElementById('chartBateria').getContext('2d'), {
+                type: 'doughnut', data: { datasets: [{ data: [1, 1] }] }
+            });
+        }
+
+        function pushChartData(chart, label, values) {
+            const maxPoints = 50;
+            if (chart.data.labels.length >= maxPoints) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(ds => ds.data.shift());
+            }
+            chart.data.labels.push(label);
+            values.forEach((v, i) => {
+                if (chart.data.datasets[i]) chart.data.datasets[i].data.push(v);
+            });
+            chart.update('none');
+        }
+
+        // --- DATA LOGIC REMAINS MOSTLY SAME ---
+
+        fetch('/api/monitoreo/list')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('deviceList');
+                container.innerHTML = '';
+                data.forEach(dev => {
+                    devices[dev.id] = dev;
+                    renderDeviceCard(dev);
+                });
+            });
+
+
+
+        // Initial Fast Polling Logic
+        let pollInterval = 1000; // Start normal
+        let fastPollActive = false;
+        let pollTimer = null;
+
+        function startTelemetry() {
+            if(pollTimer) clearInterval(pollTimer);
+            
+            // Fast polling for first 10 seconds to fill charts/data
+            fastPollActive = true;
+            pollInterval = 500; // 500ms for fast updates
+            console.log("🚀 TELEMETRÍA RÁPIDA INICIADA (500ms)");
+
+            pollTimer = setInterval(() => {
+                if(currentDevId) socket.emit('request_update', { device_id: currentDevId });
+            }, pollInterval);
+
+            // Revert to normal after 10s
+            setTimeout(() => {
+                clearInterval(pollTimer);
+                pollInterval = 2000; // 2s normal
+                console.log("✅ TELEMETRÍA ESTABILIZADA (2000ms)");
+                // Continue regular polling
+                pollTimer = setInterval(() => {
+                    if(currentDevId) socket.emit('request_update', { device_id: currentDevId });
+                }, pollInterval);
+            }, 10000);
+        }
+
+        function selectDevice(id) {
+            currentDevId = id;
+            
+            // Fix display logic
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('monitorPanel').style.display = 'block'; 
+            
+            document.querySelectorAll('.device-list-item').forEach(c => c.classList.remove('active'));
+            const activeCard = document.getElementById(`card-${id}`);
+            if (activeCard) activeCard.classList.add('active');
+
+            const dev = devices[id];
+            if (dev) {
+                document.getElementById('currentDevName').textContent = dev.nombre || dev.name;
+                document.getElementById('currentDevIp').textContent = dev.ip;
+                document.getElementById('currentDevProtocol').textContent = (dev.protocolo || 'modbus').toUpperCase();
+                
+                // === LÓGICA DE FASES (MONOFÁSICO) ===
+                // Leer configuración del dispositivo (fallback a 3 si no está definido)
+                // Usamos 'phases' o 'fases' o si el tipo es 'invt_minimal' o 'megatec_snmp'
+                const phases = dev.phases || dev.fases || (dev.ups_type === 'invt_minimal' || dev.ups_type === 'megatec_snmp' ? 1 : 3);
+                const isMono = (phases === 1);
+                
+                console.log(`Dispositivo ${dev.ip} seleccionado. Fases: ${phases}. Monofásico: ${isMono}`);
+
+                // Ocultar elementos visuales L2 y L3 de forma agresiva
+                document.querySelectorAll('.text-l2, .text-l3').forEach(el => {
+                    if (isMono) {
+                        el.style.setProperty('display', 'none', 'important');
+                    } else {
+                        el.style.display = el.classList.contains('mimic-value-row') ? 'flex' : '';
+                    }
+                });
+                
+                // Reconfigurar Charts segun fases
+                const recreateCharts = (forceMono) => {
+                    // Destruir existentes
+                    if(chartVIn) chartVIn.destroy();
+                    if(chartVOut) chartVOut.destroy();
+                    
+                    // Config para L1 (Mono) o L1/L2/L3 (Tri)
+                    const datasetsV = [
+                        { label: 'L1', borderColor: PHASE_COLORS.l1, data: [], borderWidth: 2 }
+                    ];
+                    
+                    if (!forceMono) {
+                        datasetsV.push({ label: 'L2', borderColor: PHASE_COLORS.l2, data: [], borderWidth: 2 });
+                        datasetsV.push({ label: 'L3', borderColor: PHASE_COLORS.l3, data: [], borderWidth: 2 });
+                    }
+                    
+                    const vConfig = (label) => lineChartConfig(JSON.parse(JSON.stringify(datasetsV))); // Deep copy
+
+                    chartVIn = new Chart(document.getElementById('chartVoltajeIn').getContext('2d'), vConfig());
+                    chartVOut = new Chart(document.getElementById('chartVoltajeOut').getContext('2d'), vConfig());
+                };
+
+                // Verificar si necesitamos recrear (si el estado actual de charts no coincide)
+                // O simplemente recrear siempre al cambiar dispositivo para limpiar datos
+                recreateCharts(isMono);
+
+                // Limpiar otros charts
+                 [chartFreq, chartTemp].forEach(c => {
+                    if (c) {
+                        c.data.labels = [];
+                        c.data.datasets.forEach(ds => ds.data = []);
+                        c.update();
+                    }
+                });
+
+                // RESTAURAR HISTORIAL SI EXISTE (Persistencia)
+                if (dev.history) {
+                    const h = dev.history;
+                    const restoreData = (chart, labelArr, dataArrs) => {
+                        if (!chart) return;
+                        chart.data.labels = [...h.labels]; // Copiar etiquetas
+                        dataArrs.forEach((arr, idx) => {
+                            if (chart.data.datasets[idx]) {
+                                chart.data.datasets[idx].data = [...arr];
+                            }
+                        });
+                        chart.update();
+                    };
+
+                    // Inyectar datos guardados
+                    restoreData(chartVIn, h.labels, [h.vInL1, h.vInL2, h.vInL3]);
+                    restoreData(chartVOut, h.labels, [h.vOutL1, h.vOutL2, h.vOutL3]);
+                    restoreData(chartFreq, h.labels, [h.freqIn, h.freqOut]);
+                    restoreData(chartTemp, h.labels, [h.temp, h.envTemp]);
+                    
+                    console.log(`[HISTORIAL] Restaurados ${h.labels.length} puntos para ${dev.ip}`);
+                }
+
+                // Trigger fast polling
+                startTelemetry();
+            }
+        }
+
+        function renderDeviceCard(dev) {
+            const container = document.getElementById('deviceList');
+            let card = document.getElementById(`card-${dev.id}`);
+            if (!card) {
+                card = document.createElement('div');
+                card.id = `card-${dev.id}`;
+                card.className = 'device-list-item';
+                card.onclick = () => selectDevice(dev.id);
+                container.appendChild(card);
+            }
+
+            const statusClass = dev.status === 'online' ? 'status-online' : 'status-offline';
+            card.classList.remove('status-online', 'status-offline');
+            card.classList.add(statusClass);
+
+            const proto = (dev.protocolo || 'modbus').toUpperCase();
+            
+            card.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="fw-bold text-white mb-1 font-mono" style="font-size:0.8rem;">${dev.nombre || dev.name}</div>
+                        <div class="small text-muted" style="font-size:0.7rem;">${dev.ip} | ${proto}</div>
+                    </div>
+                    <div class="text-end">
+                         <i class="bi bi-trash text-dark" style="opacity:0.3; cursor:pointer;" onclick="deleteDevice(${dev.id}, event)" title="Eliminar Monitor"></i>
+                    </div>
+                </div>
+            `;
+
+            if (currentDevId === dev.id) card.classList.add('active');
+        }
+
+        function addDevice() {
+            const protocolo = document.querySelector('input[name="protocolo"]:checked').value;
+            const data = {
+                nombre: document.getElementById('devName').value,
+                ip: document.getElementById('devIp').value,
+                protocolo: protocolo,
+                port: protocolo === 'modbus' ? document.getElementById('devPort').value : 161,
+                slave_id: protocolo === 'modbus' ? document.getElementById('devSlave').value : 1,
+                snmp_port: protocolo === 'snmp' ? document.getElementById('devSnmpPort').value : 161,
+                snmp_community: protocolo === 'snmp' ? document.getElementById('devCommunity').value : 'public',
+                snmp_version: protocolo === 'snmp' ? parseInt(document.getElementById('devSnmpVersion').value) : 1,
+                ups_type: protocolo === 'snmp' ? document.getElementById('devUpsType').value : 'invt_enterprise',
+            };
+
+            fetch('/api/monitoreo/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(r => {
+                if (r.ok) location.reload();
+                else alert('Error: Verifique parámetros de conexión.');
+            });
+        }
+
+        function deleteDevice(id, e) {
+            e.stopPropagation();
+            if (confirm('¿Eliminar esta configuración de dispositivo?')) {
+                fetch(`/api/monitoreo/delete/${id}`, { method: 'DELETE' })
+                    .then(() => location.reload()); 
+            }
+        }
+
+        function getTempColor(temp) { return '#ff453a'; }
+
+        function renderAlarms(alarms) {
+            const container = document.getElementById('alarmContainer');
+            const panel = document.getElementById('alarmPanel');
+            const count = document.getElementById('alarmCount');
+
+            if (!alarms || alarms.length === 0) {
+                container.style.display = 'none';
+                count.textContent = '0';
+                return;
+            }
+
+            container.style.display = 'block';
+            count.textContent = alarms.length;
+            panel.innerHTML = '<table class="alarm-table"><thead><tr><th>HORA</th><th>MENSAJE</th><th>NIVEL</th></tr></thead><tbody>';
+            
+            alarms.forEach(a => {
+                const time = getTimeString(); 
+                panel.innerHTML += `
+                    <tr>
+                        <td class="font-mono text-muted">${time}</td>
+                        <td>${a.msg}</td>
+                        <td><span class="badge bg-${a.level === 'critical' ? 'danger' : 'warning'}">${a.level}</span></td>
+                    </tr>
+                `;
+            });
+            panel.innerHTML += '</tbody></table>';
+        }
+
+        function renderModules(modules) {
+           const container = document.getElementById('modulesContainer');
+           const section = document.getElementById('modulesSection');
+           if (!modules || modules.length === 0) {
+               section.style.display = 'none'; return;
+           }
+           section.style.display = 'block';
+           container.innerHTML = '';
+           modules.forEach(m => {
+               container.innerHTML += `
+                <div class="col-md-6">
+                    <div class="eng-panel p-2 mb-0">
+                        <div class="d-flex justify-content-between border-bottom border-secondary mb-1">
+                            <span class="small text-info">MOD ${m.module_number}</span>
+                             <span class="small text-muted">${(m.mod_output_voltage_a||0).toFixed(1)}V</span>
+                        </div>
+                    </div>
+                </div>`;
+           });
+        }
+
+        // Socket IO
+        socket.on('ups_update', (data) => {
+             // Update device list status dot
+            const card = document.getElementById(`card-${data.id}`);
+            if (card) {
+                card.classList.remove('status-online', 'status-offline');
+                const statusClass = data.status === 'online' ? 'status-online' : 'status-offline';
+                card.classList.add(statusClass);
+            }
+
+            devices[data.id] = { ...devices[data.id], ...data };
+
+            if (currentDevId === data.id && data.data) {
+                const d = data.data;
+
+                // Badges
+                document.getElementById('currentDevStatus').textContent = data.status === 'online' ? 'EN LINEA' : 'ERROR';
+                document.getElementById('currentDevStatus').className = `eng-badge badge-${data.status === 'online' ? 'ok' : 'err'}`;
+
+                // --- DATA MAPPING ---
+                // Detectar Fases y adaptar interfaz (BLINDADO)
+                const devConfig = devices[data.id];
+                // Prioridad: Config local > Datos socket > Default 3
+                // Si es invt_minimal o megatec_snmp, SIEMPRE es 1
+                const isConfigMono = (devConfig && (devConfig.ups_type === 'invt_minimal' || devConfig.ups_type === 'megatec_snmp'));
+                const phases = isConfigMono ? 1 : (d._phases || 3);
+                const isMono = (phases === 1);
+                
+                // Ocultar/Mostrar elementos de L2 y L3 (AGRESIVO)
+                document.querySelectorAll('.text-l2, .text-l3').forEach(el => {
+                    if (isMono) {
+                        el.style.setProperty('display', 'none', 'important');
+                    } else {
+                        // Restaurar display original
+                        if (el.classList.contains('mimic-value-row')) {
+                            el.style.display = 'flex';
+                        } else {
+                            el.style.display = ''; 
+                        }
+                    }
+                });
+
+                // Actualizar datasets de gráficos (Si existen)
+                // Nota: Si ya se recrearon como monofásicos en selectDevice, estos datasets no existirán, 
+                // así que verificamos longitud antes de intentar ocultar.
+                if (chartVIn && chartVIn.data.datasets.length >= 3) {
+                    chartVIn.data.datasets[1].hidden = isMono; 
+                    chartVIn.data.datasets[2].hidden = isMono; 
+                    chartVIn.update('none');
+                }
+                if (chartVOut && chartVOut.data.datasets.length >= 3) {
+                    chartVOut.data.datasets[1].hidden = isMono; 
+                    chartVOut.data.datasets[2].hidden = isMono;
+                    chartVOut.update('none');
+                }
+
+                const setTxt = (id, val) => {
+                    const el = document.getElementById(id);
+                    if(el) el.textContent = (val !== undefined && val !== null) ? val : '--';
+                };
+
+                setTxt('val_vin_l1', d.voltaje_in_l1);
+                setTxt('val_vin_l2', d.voltaje_in_l2);
+                setTxt('val_vin_l3', d.voltaje_in_l3);
+                setTxt('val_freq_in', d.frecuencia_in);
+                
+                // Input/Output Voltages
+                setTxt('val_vout_l1', d.voltaje_out_l1);
+                setTxt('val_vout_l2', d.voltaje_out_l2);
+                setTxt('val_vout_l3', d.voltaje_out_l3);
+                
+                // Current
+                setTxt('val_iout_l1', d.corriente_out_l1);
+                setTxt('val_iout_l2', d.corriente_out_l2);
+                setTxt('val_iout_l3', d.corriente_out_l3);
+
+                setTxt('val_pf', d.power_factor);
+                setTxt('val_pwr_active', d.active_power);
+                setTxt('val_pwr_apparent', d.apparent_power);
+                
+                setTxt('val_remain_time', d.battery_remain_time);
+
+                // Battery
+                const bPct = d.bateria_pct || 0;
+                setTxt('val_bat', bPct);
+                setTxt('val_vbat', d.voltaje_bateria);
+                setTxt('val_ibat', d.corriente_bateria);
+                setTxt('val_temp', d.temperatura);
+                
+                // Progress Bar Battery
+                const progBat = document.getElementById('prog_bat');
+                if(progBat) {
+                     progBat.style.width = `${bPct}%`;
+                     progBat.className = `progress-bar bg-${bPct < 30 ? 'danger' : (bPct < 70 ? 'warning' : 'success')}`;
+                }
+
+                // Load Progress
+                setTxt('val_load', d.carga_pct || 0);
+
+                // Environment
+                if (d.env_temperature || d.env_humidity) {
+                    document.getElementById('envSection').style.display = 'block';
+                    setTxt('val_env_temp', d.env_temperature);
+                    setTxt('val_env_hum', d.env_humidity);
+                    const wl = d.water_leak || 0;
+                    const wlEl = document.getElementById('val_water_leak');
+                    if(wlEl) {
+                        wlEl.textContent = wl > 0 ? 'FUGA DETECTADA' : 'SECO';
+                        wlEl.style.color = wl > 0 ? 'var(--status-err)' : 'var(--status-ok)';
+                    }
+                }
+
+                if (d.modules) renderModules(d.modules);
+                renderAlarms(data.alarms || []);
+
+                // --- HISTORIAL DE DATOS (Optimización RAM + Persistencia) ---
+                if (!devices[data.id].history) {
+                    // Intentar recuperar de SessionStorage (si venimos de otra pestaña)
+                    try {
+                        const saved = sessionStorage.getItem(`ups_hist_${data.id}`);
+                        if (saved) {
+                            devices[data.id].history = JSON.parse(saved);
+                        }
+                    } catch(e) { console.error("Error loading history", e); }
+
+                    // Si aun no existe, crear nuevo
+                    if (!devices[data.id].history) {
+                        devices[data.id].history = {
+                            labels: [],
+                            vInL1: [], vInL2: [], vInL3: [],
+                            vOutL1: [], vOutL2: [], vOutL3: [],
+                            freqIn: [], freqOut: [],
+                            temp: [], envTemp: []
+                        };
+                    }
+                }
+                
+                const hist = devices[data.id].history;
+                const timeStr = getTimeString();
+                const MAX_POINTS = 50;
+                
+                // Helper para agregar y rotar
+                const addPoint = (arr, val) => {
+                    arr.push(val);
+                    if (arr.length > MAX_POINTS) arr.shift();
+                };
+                
+                addPoint(hist.labels, timeStr);
+                addPoint(hist.vInL1, d.voltaje_in_l1); addPoint(hist.vInL2, d.voltaje_in_l2); addPoint(hist.vInL3, d.voltaje_in_l3);
+                addPoint(hist.vOutL1, d.voltaje_out_l1); addPoint(hist.vOutL2, d.voltaje_out_l2); addPoint(hist.vOutL3, d.voltaje_out_l3);
+                addPoint(hist.freqIn, d.frecuencia_in); addPoint(hist.freqOut, d.frecuencia_out);
+                addPoint(hist.temp, d.temperatura); addPoint(hist.envTemp, d.env_temperature || 0);
+
+                // Si es el dispositivo actual, actualizar gráficos visualmente
+                const now = timeStr;
+                if (currentDevId === data.id) {
+                    if (chartVIn) pushChartData(chartVIn, now, [d.voltaje_in_l1, d.voltaje_in_l2, d.voltaje_in_l3]);
+                    if (chartVOut) pushChartData(chartVOut, now, [d.voltaje_out_l1, d.voltaje_out_l2, d.voltaje_out_l3]);
+                    if (chartFreq) pushChartData(chartFreq, now, [d.frecuencia_in, d.frecuencia_out]);
+                    if (chartTemp) pushChartData(chartTemp, now, [d.temperatura, d.env_temperature || 0]);
+                }
+            }
+        });
+
+        initCharts();
+
+        // System Status Marquee Logic
+        const statusMessages = [
+            "SISTEMA NOMINAL", "ENLACE DE DATOS ESTABLE", "ENCRIPTACIÓN: AES-256", 
+            "ESPERANDO HEARTBEAT...", "VERIFICANDO REDUNDANCIA...", "SALUD DE BATERÍA: OK",
+            "FRECUENCIA DE RED ESTABLE", "SISTEMA DE ENFRIAMIENTO ACTIVO"
+        ];
+        
+        setInterval(() => {
+            const marquee = document.getElementById('sys-status-marquee');
+            if(marquee) {
+                const msg = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+                const time = getTimeString();
+                const linkStatus = currentDevId ? (devices[currentDevId]?.status === 'online' ? 'CONECTADO' : 'SIN CONEXIÓN') : 'ESPERA';
+                marquee.textContent = `HORA DEL SISTEMA: ${time} | ESTADO: ${msg} | MONITOREO ACTIVO | ENLACE UPS: ${linkStatus}`;
+            }
+        }, 5000);
+        
+        // Status Log Functions
+        let statusLogMessages = [];
+        const MAX_LOG_MESSAGES = 50;
+        
+        function addStatusLog(message, type = 'info') {
+            const timestamp = getTimeString();
+            const color = type === 'error' ? '#ff4444' : type === 'warning' ? '#ffaa00' : type === 'success' ? '#00ff88' : '#88aaff';
+            const icon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️';
+            
+            statusLogMessages.unshift({
+                time: timestamp,
+                message: message,
+                type: type,
+                color: color,
+                icon: icon
+            });
+            
+            // Limit messages
+            if (statusLogMessages.length > MAX_LOG_MESSAGES) {
+                statusLogMessages.pop();
+            }
+            
+            renderStatusLog();
+        }
+        
+        function renderStatusLog() {
+            const panel = document.getElementById('statusLogPanel');
+            if (!panel) return;
+            
+            if (statusLogMessages.length === 0) {
+                panel.innerHTML = '<div class="text-muted small">Esperando eventos...</div>';
+                return;
+            }
+            
+            panel.innerHTML = statusLogMessages.map(log => `
+                <div style="margin-bottom: 0.3rem; color: ${log.color};">
+                    <span class="text-muted">[${log.time}]</span> ${log.icon} ${log.message}
+                </div>
+            `).join('');
+            
+            // Auto-scroll to top (las últimas líneas)
+            panel.scrollTop = 0;
+        }
+        
+        function clearStatusLog() {
+            statusLogMessages = [];
+            renderStatusLog();
+        }
+        
+        // Log connection events
+        let lastDeviceStatus = {};
+        function logConnectionStatus(devId, status, data) {
+            if (!devId) return;
+            
+            const prevStatus = lastDeviceStatus[devId];
+            
+            if (prevStatus !== status) {
+                if (status === 'online') {
+                    const version = data?.snmp_version || 'N/A';
+                    const upsType = data?._ups_type || data?._phases === 1 ? 'Monofásico' : 'Trifásico';
+                    addStatusLog(`🟢 UPS ${devId} ONLINE (${version}, ${upsType})`, 'success');
+                } else {
+                    addStatusLog(`🔴 UPS ${devId} DESCONECTADO`, 'error');
+                }
+                lastDeviceStatus[devId] = status;
+            }
+        }
+        
+        // Optimización RAM: Guardar historial al cerrar/navegar
+        window.addEventListener('beforeunload', () => {
+             Object.keys(devices).forEach(id => {
+                 if(devices[id].history) {
+                     try {
+                        sessionStorage.setItem(`ups_hist_${id}`, JSON.stringify(devices[id].history));
+                     } catch(e) {}
+                 }
+             });
+        });
+    </script>
+    <!-- Version added to force cache reload -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2"></script>
+    <script>
+        // Emergency Clock Override (Anti-Flicker)
+        // Sobrescribe cualquier logica anterior para garantizar formato 24h H:M:S sin AM/PM
+        setInterval(() => {
+            const el = document.getElementById('clock');
+            if(el) {
+                 const now = new Date();
+                 const h = String(now.getHours()).padStart(2, '0');
+                 const m = String(now.getMinutes()).padStart(2, '0');
+                 const s = String(now.getSeconds()).padStart(2, '0');
+                 el.textContent = `${h}:${m}:${s}`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

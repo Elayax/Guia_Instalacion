@@ -1,14 +1,35 @@
 # Ignorar entorno virtual
 venv/
+.venv/
 env/
 
 # Ignorar archivos compilados de Python
 __pycache__/
 *.py[cod]
+*.pyo
 
-# Ignorar bases de datos (Recomendado si tienen datos reales)
+# Ignorar bases de datos
 *.db
 *.sqlite3
 
+# Ignorar logs
+logs/*.log
+
+# Ignorar archivos temporales
+app/static/temp/
+*.tmp
+
 # Ignorar archivos de sistema
 .DS_Store
+Thumbs.db
+
+# Ignorar PDFs generados de muestra
+Reportes/output/*.pdf
+reporte_generado_lbs.pdf
+
+# Ignorar archivos de IDE
+.vscode/
+.idea/
+
+# Ignorar archivos de lock de OneDrive/Affinity
+*~lock~

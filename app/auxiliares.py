@@ -30,6 +30,8 @@ def procesar_post_gestion(db, request, state):
             _procesar_acciones_ups(db, request, state, accion)
         elif 'bateria' in accion or accion in ['subir_curvas', 'guardar_curvas', 'cambiar_unidad_curva_W', 'cambiar_unidad_curva_A']:
             _procesar_acciones_bateria(db, request, state, accion)
+        elif 'personal' in accion:
+            _procesar_acciones_personal(db, request, state, accion)
 
 def _procesar_acciones_tipo(db, request, state, tipo):
     """Maneja add_cliente, del_cliente, del_ups, del_bateria, add_tipo_vent, del_tipo_vent"""
@@ -48,6 +50,29 @@ def _procesar_acciones_tipo(db, request, state, tipo):
     elif tipo == 'del_bateria':
         db.eliminar_bateria(request.form.get('id'))
         state['active_tab'] = 'baterias'
+        return True
+    elif tipo == 'add_personal':
+        db.agregar_personal(request.form)
+        state['active_tab'] = 'personal'
+        return True
+    elif tipo == 'edit_personal':
+        id_personal = request.form.get('id_personal')
+        state['personal_seleccionado'] = db.obtener_personal_id(id_personal)
+        state['active_tab'] = 'personal'
+        return True
+    elif tipo == 'update_personal':
+        db.actualizar_personal(request.form.get('id'), request.form)
+        state['active_tab'] = 'personal'
+        state['personal_seleccionado'] = None
+        state['mensaje'] = "Personal actualizado correctamente"
+        return True
+    elif tipo == 'cancelar_edit_personal':
+        state['personal_seleccionado'] = None
+        state['active_tab'] = 'personal'
+        return True
+    elif tipo == 'del_personal':
+        db.eliminar_personal(request.form.get('id'))
+        state['active_tab'] = 'personal'
         return True
     elif tipo == 'add_tipo_vent':
         print(f"➕ Agregando nuevo tipo de ventilación")
@@ -280,10 +305,43 @@ def _procesar_acciones_bateria(db, request, state, accion):
         state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
         if state['bateria_seleccionada']:
             state['pivot_data'] = db.obtener_curvas_pivot(id_bat, unidad=state['unidad_curva'])
-    elif not id_bat and accion not in ['iniciar_agregar_bateria', 'guardar_bateria']:
-        # Si no hay ID y no estamos agregando, es probable que la acción sea de la lista (ej. eliminar)
-        # y no necesitamos hacer nada más aquí.
         pass
+
+def _procesar_acciones_personal(db, request, state, accion):
+    """Lógica de estado para Personal"""
+    state['active_tab'] = 'personal'
+    
+    if accion == 'iniciar_agregar_personal':
+        state['agregando_personal'] = True
+        
+    elif accion == 'cancelar_edicion_personal':
+        state['personal_seleccionado'] = None
+        state['agregando_personal'] = False
+        
+    elif accion == 'editar_personal':
+        id_personal = request.form.get('id_personal')
+        # Buscamos en la lista de personal (no hay método específico obtener_personal_id en DB todavía, usamos filtro)
+        todos = db.obtener_personal()
+        found = next((p for p in todos if str(p['id']) == str(id_personal)), None)
+        state['personal_seleccionado'] = found
+        
+    elif accion == 'guardar_personal':
+        nombre = request.form.get('nombre')
+        puesto = request.form.get('puesto')
+        id_personal = request.form.get('id')
+        
+        if id_personal:
+            if db.actualizar_personal(id_personal, nombre, puesto):
+                state['mensaje'] = "✅ Personal actualizado."
+                state['personal_seleccionado'] = None
+            else:
+                 state['mensaje'] = "❌ Error al actualizar personal."
+        else:
+            if db.agregar_personal(nombre, puesto):
+                state['mensaje'] = "✅ Personal agregado."
+                state['agregando_personal'] = False
+            else:
+                state['mensaje'] = "❌ Error al agregar personal."
 
 def guardar_archivo_temporal(file):
     """Guarda un archivo subido en la carpeta uploads y retorna su ruta"""
@@ -317,6 +375,42 @@ def guardar_imagen_proyecto(file, pedido):
     filepath = os.path.join(proyecto_dir, filename_unico)
     file.save(filepath)
     return filename_unico  # Retorna solo el nombre del archivo
+
+def guardar_pdf_proyecto(pdf_bytes, pedido, tipo='guia'):
+    """
+    Guarda un PDF permanentemente en la carpeta del proyecto
+
+    Args:
+        pdf_bytes: bytes del PDF a guardar
+        pedido: número de pedido
+        tipo: 'guia' o 'checklist'
+
+    Returns:
+        ruta relativa del PDF guardado (para almacenar en BD)
+    """
+    from datetime import datetime
+
+    # Crear carpeta del proyecto
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    proyecto_dir = os.path.join(base_dir, 'static', 'pdf', 'proyectos', str(pedido))
+    if not os.path.exists(proyecto_dir):
+        os.makedirs(proyecto_dir)
+
+    # Nombre del archivo con timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if tipo == 'guia':
+        filename = f"Guia_Instalacion_{pedido}_{timestamp}.pdf"
+    else:
+        filename = f"Checklist_{pedido}_{timestamp}.pdf"
+
+    filepath = os.path.join(proyecto_dir, filename)
+
+    # Guardar PDF
+    with open(filepath, 'wb') as f:
+        f.write(pdf_bytes)
+
+    # Retornar ruta relativa desde static
+    return f"pdf/proyectos/{pedido}/{filename}"
 
 def procesar_calculo_ups(db, form):
     """Maneja la lógica de cálculo y publicación del index"""

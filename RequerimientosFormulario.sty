@@ -1,0 +1,379 @@
+######################################################
+Este es un formulario, sera lo  que se le solicite a los tecnicos para que pueda hacer su reporte al final con toda la informacion recavbada mediante los reportes de Python , se requiere que en este documento se detalle cada bloque del formulario que solo se active segun el tipo de servicio se tiene que consiserar que 
+
+######################################################
+REGLAS: 
+
+1.- Siempre con el Folio se puede tener el autorrelleno del formulario 
+
+
+####################
+Folio[
+    Pedido
+    Estado
+    Cliente
+    Sucursal
+    Direccion
+    Tipo de Servicio 
+    Clasificacion
+    Fecha del Servicio
+    Hora del Servicio
+    Servicio por
+    Tiene poliza
+    Serie del equipo
+    Marca del equipo
+    Modelo del Equipo
+    Capacidad del equipo
+    Tecnico 1
+    Tecnico 2
+    Tecnico 3
+    Tecnico 4
+]
+
+####################
+
+
+
+Formulario General{
+    Cliente(autorrelleno)
+    Sucursal(autorrelleno)
+    Area de instalacion:(Formulario Caracateres)
+    Marca de equipo (autorrelleno)
+    Modelo de equipo (autorrelleno)
+    Numero de serie del equipo (autorrelleno)
+    ¿El sistema es GE?
+    Tipo de servicio (autorrelleno)
+    Tipo de Carga (Lineal / No Lineal)
+    Accesorio RPA (SI /NO)
+    Accesorio SNMP (SI /NO)
+
+
+}
+
+
+Entrada_y_Salida (Numero_de_fases){
+
+    Interruptor de entrada [SI/NO]
+        Si si ¿Que Capacidad tiene el interruptor de entrada?
+    
+        Interruptor de salida [SI/NO]
+        Si si ¿Que Capacidad tiene el interruptor de salida?
+    
+    Voltajes Entrada (Fases):
+        Si es monofasico: Fase 1 a Neutro
+        Si es bifasico: Fase 1 a Neutro, Fase 2 a Neutro, Fase 1 a Fase 2
+        Si es trifasico: Fase 1 a Neutro, Fase 2 a Neutro, Fase 3 a Neutro, Fase 1 a Fase 2, Fase 1 a Fase 3, Fase 2 a Fase 3   
+
+    Neutro Entrada :
+        Si es monofasico: Neutro a Tierra
+        Si es bifasico: Neutro a Tierra
+        Si es trifasico: Neutro a Tierra
+
+    Frecuencia de entrada:
+        
+    Voltajes Salida (Fases):
+        Si es monofasico: Fase 1 a Neutro
+        Si es bifasico: Fase 1 a Neutro, Fase 2 a Neutro, Fase 1 a Fase 2
+        Si es trifasico: Fase 1 a Neutro, Fase 2 a Neutro, Fase 3 a Neutro, Fase 1 a Fase 2, Fase 1 a Fase 3, Fase 2 a Fase 3   
+    
+    Neutro Salida :
+        Si es monofasico: Neutro a Tierra
+        Si es bifasico: Neutro a Tierra
+        Si es trifasico: Neutro a Tierra
+
+    Frecuencia de salida
+
+}
+
+Operacion del sistema UPS{
+    Estado incial
+    Estado en de mantenimiento
+    ¿DIAGNOSTICO?
+    ¿ANTES DE APAGAR SISTEMA?
+    Revicion del sistema 
+        Inversor:
+            Funciona correctamente(si/no) 
+        Rectificador
+            Funciona correctamente(si/no)
+        Cargador
+            Funciona correctamente(si/no)
+        baterias
+            Funciona correctamente(si/no)
+        Otra etapa del sistema
+            ¿Que etapa es?
+            Funciona correctamente(si/no)
+    Partes del sistema
+        UPS (si/no)
+        gabinete de baterias (si/no)
+        gabinete de transformador (si/no)
+    
+    Cuantos modulo tienes:
+        Numero de serie de cada modullo 
+}
+
+
+Condicion de ventiladores y capacitores{
+
+    Ventiiladores:
+        Giran libremente (si/no)
+        Tiene ruido de rodamiento (si/no) 
+        Sustitucion de ventiladores por operacion (si/no)
+            ¿Que daño presenta?
+        Sustitucion de ventilacion por daño (Si/no/No aplica)
+            ¿Que daño presenta?
+    Capacitores:
+        Estado de capacitores (Buen estado/ Mal estado)
+        Se requiere sustitucion de capacitores por tiempo de operacion (si/no)
+        Sustitucion de capacitores por daño (si/no)
+            ¿Que daño presenta?
+        
+}
+
+
+Limpieza {
+    Se realizo limpieza del rectificador (si/no)
+    Se realizo limpieza del inversor (si/no)
+    Se realizo limpieza del cargador (si/no)
+    Se realizo limpieza del en otras secciones (si/no)
+        En que seccion se realizo
+
+    Se dectecto humedad en el sistema (si/no)
+        si si observaciones de la humedad encontrada
+    se detecto liquidos en el sistema (si/no)
+        si si observaciones de los liquidos encontrados
+    Se detecto rastros de roedores o plagas (si/no)
+        si si observaciones de los rastros encontrados
+    Cables rotos
+        si si observaciones de los cables rotos encontrados
+
+}
+
+
+
+Revision de cableados{
+    Revision en cable de señal y control ; Buen estado, Daño en el forro , calentamiento 
+    Revision de cable de potencia ; Buen estado, Daño en el forro , calentamiento
+    Se requiere cambio de cable o arnes (si/no)
+        Si si numero de piezas y descripcion 
+}   
+
+Revision visual y apriete de conexiones de entrada y salida{
+
+
+    Revision de conexiones de entrada (Conexion bien apretada, Conexion floja)
+    Se presento problemas en conexiones de entrada (si/no)
+        Si si opciones (No se torqueo, se paso de torque y se barrio , cabeza del tornillo rota, otro daño)
+            Si otro daño  observacciones
+    Se requiere cambio de piezas para conexiones de entrada (si/no)
+        si si numero de piezas y descripcion
+    
+
+    Revision de conexiones de Salida (Conexion bien apretada, Conexion floja)
+    Se presento problemas en conexiones de Salida (si/no)
+        Si si opciones (No se torqueo, se paso de torque y se barrio , cabeza del tornillo rota, otro daño)
+            Si otro daño  observacciones
+    Se requiere cambio de piezas para conexiones de salida (si/no)
+        si si numero de piezas y descripcion
+    
+
+    Revicion visual de los componentes internos (PCB)
+        
+        las placas se encuentran fijas 
+        Se requiere cambio de de piezas
+            si si numero de piezas y descripcion
+
+}
+
+
+Requerimiento de refracciones{
+
+    Se require cambio de piezas (si/no)
+        si si numero de piezas y descripcion
+            Numero de piezas de todas las piezas 
+
+}
+
+
+
+Mantenimiento Exterior e interior {
+
+    Manteniemiento [Las partes que se mensionaron , UPS , Gabinete de baterias, gabinente de transformadores]
+    Limpieza de tapa internas [Si/NO]
+
+    Gabinete de baterias si aplica (Si aplica si)
+        Se detecto humedad  en el interior[Si/no]
+
+    Gabinete de transformadores (si aplica)
+        Se detecto humedad  en el interior[Si/no]
+    
+    UPS (si aplica)
+        Se detecto humedad  en el interior[Si/no]
+
+
+}
+
+
+Revision de Baterias{
+    Tipo de bateria (PB Acido,  Litio , otro)
+    Marca
+    Modelo 
+    Capacidad
+    No de Bancos 
+    ¿La conexion de baterias es? [Correcta o teminal floja]
+
+    Condicion de baterias [Buen estado, Suelta, Sulfatada]
+        si estan dañadas o ulfatas espesificar los numeros
+    
+    Numero de baterias, numero de bancos y numero de gabinetes
+    Voltaje de los bancos 
+
+
+}
+    
+
+
+Revision  transformadores  (Si aplican transformadores ){
+
+    En donde se tiene los transformadores (Entrada, Salida , ambos)
+
+    Tipo de tranformador
+        Entrada (Transformado)
+        conexion de entrada de transformador (Delta-Estrella, Estrella-Delta) 
+        Voltajes de transformador de entrada
+            Voltajes que apliquen a la entrada
+            Voltajes que apliquen a la salida 
+
+        Salida (AutoTransformador)
+        conexion de Salida de transformador (Delta-Estrella, Estrella-Delta) 
+        Voltajes de transformador de salida
+            Voltajes que apliquen a la entrada
+            Voltajes que apliquen a la salida 
+        
+        
+
+
+}
+
+
+Reparacion del sistema{
+
+    Se realiza reparacion del sistema (si/no)
+    Numero de piezas
+        De cada pieza Nombre y numero de piezas
+
+}
+
+Pruebas(Se realiza las pruebas){
+    Se realiza la prueba de Bypass a inversor (si/no)
+    Se realiza la prueba de inversor a bypass (si/no)
+    Se descarga correctamente los eventos del sistema (si/no)
+        Observaciones de los eventos descargados
+    Pruebas de baterias (si/no)
+        Prueba 1
+            Metodo de prueba (test por el ups/ bajando el interruptor de entrada)
+            Carga (Vacio / Carga parcial / Carga completa)
+             Observaciones de la prueba 1
+        Prueba 2 
+            Metodo de prueba (test por el ups/ bajando el interruptor de entrada)
+            Carga (Vacio / Carga parcial / Carga completa)
+             Observaciones de la prueba 2
+        Prueba 3
+            Metodo de prueba (test por el ups/ bajando el interruptor de entrada)
+            Carga (Vacio / Carga parcial / Carga completa)
+             Observaciones de la prueba 3
+}   
+
+Condiciones del cuarto donde se encientra el sistema ups{
+
+    Que tipode cuarto es (Cuarto de cerrado, cuarto hermetico)
+        observaciones del cuarto
+    
+    Tipo de piso ( falso, concreto, azulejo , epoxico)
+
+    Temperatura de cuarto
+
+    se detecta humedad en el cuarto (si/no)
+        si si observaciones de la humedad encontrada
+
+    se detecta polvo en el cuarto (si/no)
+        si si observaciones del polvo encontrado
+    se dectecta indicios de particulas voltailes en el cuarto (si/no)
+        si si observaciones de las particulas encontradas
+    Cuenta con aire acondicionado (si/no)
+        Funciona el sistema de aire acondicionado (si/no)
+    Se encuentra el cuarto de ups limpio
+    exixtes objetos que obstruyan el UPS (si/no)
+        si si observaciones de los objetos encontrados
+    existen objets que intefieran con la ventilacion del sistema (si/no)
+        si si observaciones de los objetos encontrados
+    Existen objetos que interfieran con el acceso al sistema (si/no)
+        si si observaciones de los objetos encontrados
+    existe evidencia que hay roedores 
+        si si observaciones de los roedores encontrados
+    En que condiciones esta la instalacion del sistema [En condiciones optimas, buenas condiciones, maas condiciones , instalacion electtrica pprovicional , no existe instalacion electrica]
+    
+    En la parte atras del UPS esta libre para sirculacion de aire (si/no)
+        si No observaciones de la parte atras del UPS
+
+    esiste en el costado de ups esta libre para la circulacion de aire (si/no)
+        si No observaciones del costado del UPS
+
+     esiste en la parte superior del UPS esta libre para la circulacion de aire (si/no)
+        si No observaciones de la parte superior del UPS
+    
+    existen ratros de incendio en el sistema 
+
+
+}
+
+
+pruebas y mediciones GE{
+
+    Revisa los parametro de configuracion ; 
+    Revisar parametros de conectividad con equipos perifericos (si/no)
+    Revisar parametros de conectividad con  moniotoreores ,CPU y/o estaciones de trbajo (si/no)
+    revisar la operatividad de conexion con monitoreos , CPU y(o estaciones de trabajo (si/no)
+    Revisar la operatividad y configuracion de puertos de comunnicacion de datos 
+    pruebas de conectividad (si /no)
+    continuidad de la proteccion de electrodo a la puesta de tierra (si/no)
+    prueba de resistencia de aislamiento del equipo 
+    meidicion de la corriente de fuga a tierra (si/no)
+
+}
+
+Observaciones generales{
+    Observaciones generales del servicio
+}
+
+
+Entrega y Maniobra{
+
+    Servivio de entrega (si/no)
+        se entrega con sistema propio o personal externo
+            Si es externo ¿Que servicio es ?
+
+            Que se entrega
+                UPS, Gabinete de baterias, Gabinete de transformadores, bateria , tableros y subestacion 
+            En donde se entrega ( Pie de camion , sitio final , cliente hace descarga de bateria)
+            Donde se deja el material entregado  (A sitio final , bodega almacen cliente, cuarto UPS, cuarto subestacion)
+
+
+
+    Servicio de maniobra (si/no)
+        se realiza maniobra con personal externo (si/no)
+            si si ¿Que servicio es?
+
+        Se cambio de lugar (si/no)
+           Que se cambio de lugar : UPs, Gabinete de baterias, Gabinete de transformadores, bateria , tableros y subestacion
+
+        La maniobra se hace: a difetente ubicacion 
+
+        retiro y maniobde materiales de cuarto (si, no , no aplica)
+        maniobra de subir manterial a camioneta o camion (si/no/no aplica)
+        maniobra de bajar material a sitio final (si/no/no aplica)
+        Maniobra de entrega en sitio final (si/no/no aplica)
+        maniobra subur escaleras (si/no/no aplica)
+        maniobra de obstaculos (si/no/no aplica)
+        movimiento de camper en el mismo complejo (si/no/no aplica)
+
+}

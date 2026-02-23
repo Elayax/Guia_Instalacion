@@ -66,10 +66,11 @@ def get_tipos_ventilacion():
 # --- DASHBOARD PRINCIPAL (POR PEDIDO) ---
 @main.route('/', methods=['GET', 'POST'])
 def dashboard():
-    pedido_data = None
-    estado_pedido = None
+    pedido_data = {} # Inicializar como diccionario vacío
+    estado_pedido = {} # Inicializar como diccionario vacío
     pedido_buscado = None
     clientes = db.obtener_clientes_unicos()
+    ultimos_pedidos = db.obtener_ultimos_proyectos()
 
     if request.method == 'POST':
         accion = request.form.get('accion')
@@ -84,6 +85,9 @@ def dashboard():
                 pedido_data = db.obtener_proyecto_por_pedido(pedido_num)
 
                 if pedido_data:
+                    # Limpiar valores None para evitar que aparezcan en la vista
+                    pedido_data = {k: (v if v is not None else '') for k, v in pedido_data.items()}
+
                     # Determinar el estado del pedido
                     estado_pedido = {
                         'tiene_ups': False,
@@ -113,33 +117,44 @@ def dashboard():
 
         elif accion == 'crear_proyecto':
             # Crear nuevo proyecto
-            pedido = request.form.get('pedido')
+            pedido_num = request.form.get('pedido')
             cliente_nombre = request.form.get('cliente_nombre')
             sucursal_nombre = request.form.get('sucursal_nombre')
 
             # Insertar proyecto en BD
             try:
                 conn = db._conectar()
-                cursor = conn.cursor()
-                cursor.execute('''
+                conn.execute('''
                     INSERT INTO proyectos_publicados (pedido, cliente_snap, sucursal_snap)
                     VALUES (?, ?, ?)
-                ''', (pedido, cliente_nombre, sucursal_nombre))
+                ''', (pedido_num, cliente_nombre, sucursal_nombre))
                 conn.commit()
                 conn.close()
-
-                # Redirigir a calculadora para generar la guía directamente
-                return redirect(url_for('main.calculadora') + f'?pedido={pedido}')
             except Exception as e:
                 print(f"Error al crear proyecto: {e}")
-                # Si hay error (ej: pedido duplicado), mostrar el proyecto existente
-                return redirect(url_for('main.dashboard'))
+                # Si hay error (ej: pedido duplicado), no hacemos nada,
+                # simplemente buscaremos el proyecto existente a continuación.
+                pass
+
+            # Después de crear, mostrar inmediatamente su estado
+            pedido_buscado = pedido_num
+            if pedido_num:
+                pedido_data = db.obtener_proyecto_por_pedido(pedido_num)
+                if pedido_data:
+                    pedido_data = {k: (v if v is not None else '') for k, v in pedido_data.items()}
+                    estado_pedido = {
+                        'tiene_ups': bool(pedido_data.get('modelo_snap')),
+                        'tiene_calculos': bool(pedido_data.get('fecha_publicacion')),
+                        'tiene_aviso': False, # Un proyecto nuevo no tendrá aviso
+                        'modelo_ups': pedido_data.get('modelo_snap')
+                    }
 
     return render_template('dashboard.html',
                          pedido=pedido_data,
                          estado=estado_pedido,
                          pedido_buscado=pedido_buscado,
-                         clientes=clientes)
+                         clientes=clientes,
+                         ultimos_pedidos=ultimos_pedidos)
 
 @main.route('/calculadora', methods=['GET', 'POST'])
 def calculadora():
@@ -437,7 +452,9 @@ def gestion():
         'bateria_seleccionada': None,
         'agregando_bateria': False,
         'pivot_data': None,
-        'unidad_curva': 'W'
+        'unidad_curva': 'W',
+        'personal_seleccionado': None,
+        'agregando_personal': False
     }
 
     if request.method == 'POST':
@@ -449,12 +466,15 @@ def gestion():
                            proyectos=db.obtener_proyectos(),
                            baterias=db.obtener_baterias_modelos(),
                            tipos_ventilacion=db.obtener_tipos_ventilacion(),
+                           personal=db.obtener_personal(),
                            msg=state['mensaje'],
                            error_logs=state['error_logs'],
                            ups_seleccionado=state['ups_seleccionado'],
                            agregando_ups=state['agregando_ups'],
                            bateria_seleccionada=state['bateria_seleccionada'],
                            agregando_bateria=state['agregando_bateria'],
+                           personal_seleccionado=state['personal_seleccionado'],
+                           agregando_personal=state['agregando_personal'],
                            unidad_curva=state['unidad_curva'],
                            pivot_data=state['pivot_data'],
                            active_tab=state['active_tab'],

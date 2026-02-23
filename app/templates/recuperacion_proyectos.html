@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperación de Proyectos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+            </div>
+        </div>
+        <nav class="d-flex gap-4">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid p-4">
+        {% if msg %}
+        <div class="alert alert-{{ msg_type if msg_type else 'info' }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <div class="tech-matrix">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="control-title mb-1"><i class="fas fa-heartbeat me-2"></i> RECUPERACIÓN DE PROYECTOS</h3>
+                    <p class="text-muted mb-0">Completa los datos faltantes de proyectos recuperados (voltaje, fases,
+                        longitud)</p>
+                </div>
+                <div>
+                    <span
+                        class="status-badge {% if proyectos_incompletos|length > 0 %}status-incomplete{% else %}status-complete{% endif %}">
+                        {{ proyectos_incompletos|length }} PROYECTOS PENDIENTES
+                    </span>
+                </div>
+            </div>
+
+            {% if proyectos_incompletos|length == 0 %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                ¡Excelente! Todos los proyectos tienen sus datos completos.
+            </div>
+            {% else %}
+            <div style="height: 600px; overflow-y: auto;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>UPS</th>
+                            <th>Voltaje</th>
+                            <th>Fases</th>
+                            <th>Longitud</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proyecto in proyectos_incompletos %}
+                        <tr>
+                            <td><strong>{{ proyecto.pedido }}</strong></td>
+                            <td>{{ proyecto.cliente_snap }}<br><small class="text-muted">{{ proyecto.sucursal_snap
+                                    }}</small></td>
+                            <td>{{ proyecto.modelo_snap }}<br><small class="text-muted">{{ proyecto.potencia_snap }}
+                                    kVA</small></td>
+                            <td>
+                                {% if proyecto.voltaje %}
+                                <span class="badge bg-success">{{ proyecto.voltaje }} V</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Faltante</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if proyecto.fases %}
+                                <span class="badge bg-success">{{ proyecto.fases }}F</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Faltante</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if proyecto.longitud %}
+                                <span class="badge bg-success">{{ proyecto.longitud }} m</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Faltante</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-primary"
+                                    onclick='editarProyecto("{{ proyecto.pedido }}", {{ proyecto|tojson }})'>
+                                    <i class="fas fa-edit me-1"></i> Completar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MODAL DE EDICIÓN -->
+    <div class="modal fade" id="modalEdicion" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content"
+                style="background-color: rgba(30, 30, 30, 0.95); color: var(--text-main); border: 1px solid var(--glass-border);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--glass-border);">
+                    <h5 class="modal-title">Completar Datos del Proyecto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formEdicion" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="pedido" id="edit_pedido">
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Pedido:</strong> <span id="display_pedido"></span></label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Cliente:</strong> <span
+                                    id="display_cliente"></span></label>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="edit_voltaje" class="form-label">Voltaje (V) *</label>
+                                <input type="number" class="form-control" id="edit_voltaje" name="voltaje" required>
+                                <div class="invalid-feedback">El voltaje debe ser un número positivo</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="edit_fases" class="form-label">Fases *</label>
+                                <select class="form-select" id="edit_fases" name="fases" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="1">1 Fase</option>
+                                    <option value="3">3 Fases</option>
+                                </select>
+                                <div class="invalid-feedback">Seleccione 1 o 3 fases</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="edit_longitud" class="form-label">Longitud (m) *</label>
+                                <input type="number" step="0.1" class="form-control" id="edit_longitud" name="longitud"
+                                    required>
+                                <div class="invalid-feedback">La longitud debe ser un número positivo</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label for="edit_tiempo_respaldo" class="form-label">Tiempo de Respaldo (min) <small
+                                        class="text-muted">(Opcional)</small></label>
+                                <input type="number" step="0.1" class="form-control" id="edit_tiempo_respaldo"
+                                    name="tiempo_respaldo">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid var(--glass-border);">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let modalEdicion;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            modalEdicion = new bootstrap.Modal(document.getElementById('modalEdicion'));
+
+            // Validación en tiempo real
+            const form = document.getElementById('formEdicion');
+            const voltajeInput = document.getElementById('edit_voltaje');
+            const fasesSelect = document.getElementById('edit_fases');
+            const longitudInput = document.getElementById('edit_longitud');
+
+            voltajeInput.addEventListener('input', function () {
+                const val = parseFloat(this.value);
+                if (isNaN(val) || val <= 0) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            longitudInput.addEventListener('input', function () {
+                const val = parseFloat(this.value);
+                if (isNaN(val) || val <= 0) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            fasesSelect.addEventListener('change', function () {
+                if (this.value === '' || (this.value !== '1' && this.value !== '3')) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                } else {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+
+        function editarProyecto(pedido, datos) {
+            document.getElementById('edit_pedido').value = pedido;
+            document.getElementById('display_pedido').textContent = pedido;
+            document.getElementById('display_cliente').textContent = datos.cliente_snap + ' - ' + datos.sucursal_snap;
+
+            // Rellenar valores existentes
+            document.getElementById('edit_voltaje').value = datos.voltaje || '';
+            document.getElementById('edit_fases').value = datos.fases || '';
+            document.getElementById('edit_longitud').value = datos.longitud || '';
+            document.getElementById('edit_tiempo_respaldo').value = datos.tiempo_respaldo || '';
+
+            // Limpiar clases de validación
+            document.querySelectorAll('.form-control, .form-select').forEach(el => {
+                el.classList.remove('is-valid', 'is-invalid');
+            });
+
+            modalEdicion.show();
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
