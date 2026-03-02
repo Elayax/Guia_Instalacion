@@ -79,12 +79,13 @@ class ReportePDF(FPDF):
         except:
             return texto
 
-    def _preparar_imagen(self, ruta_imagen, ancho_mm=190, alto_mm=None):
+    def _preparar_imagen(self, ruta_imagen, ancho_mm=190, alto_mm=None, alto_max_mm=None):
         """
         Redimensiona y optimiza una imagen para el PDF
         - ruta_imagen: Path de la imagen original
         - ancho_mm: Ancho deseado en mm para el PDF
         - alto_mm: Alto deseado en mm (opcional, mantiene proporción si no se especifica)
+        - alto_max_mm: Alto máximo en mm (limita la imagen si excede, ajustando ancho proporcionalmente)
 
         Retorna: Path de la imagen procesada (temporal)
         """
@@ -115,6 +116,14 @@ class ReportePDF(FPDF):
                 # Mantener proporción
                 ratio = img.height / img.width
                 alto_px = int(ancho_px * ratio)
+
+                # Aplicar límite de alto máximo si se especificó
+                if alto_max_mm:
+                    alto_max_px = int(alto_max_mm * dpi / 25.4)
+                    if alto_px > alto_max_px:
+                        alto_px = alto_max_px
+                        ancho_px = int(alto_px / ratio)
+
                 img = img.resize((ancho_px, alto_px), Image.Resampling.LANCZOS)
 
             # Guardar en archivo temporal
@@ -127,6 +136,59 @@ class ReportePDF(FPDF):
         except Exception as e:
             print(f"Error preparando imagen {ruta_imagen}: {e}")
             return ruta_imagen  # Retornar original si falla
+
+    def _insertar_imagen_segura(self, ruta_imagen, ancho_mm=120, centrar=True, margen_inferior=15):
+        """
+        Inserta una imagen en el PDF asegurando que no se corte ni desborde la página.
+        - ruta_imagen: Path de la imagen a insertar
+        - ancho_mm: Ancho deseado en mm
+        - centrar: Si True, centra la imagen horizontalmente
+        - margen_inferior: Margen inferior mínimo en mm (para no pisar el footer)
+
+        Retorna: True si se insertó correctamente, False si falló
+        """
+        try:
+            # Calcular espacio disponible en la página actual
+            espacio_disponible = self.h - self.get_y() - margen_inferior  # alto página - posición Y - margen
+
+            # Obtener dimensiones reales de la imagen para calcular alto proporcional
+            img = Image.open(ruta_imagen)
+            ratio = img.height / img.width
+            alto_proporcional_mm = ancho_mm * ratio
+
+            # Si la imagen es más alta que el espacio disponible, limitar
+            alto_max_mm = None
+            if alto_proporcional_mm > espacio_disponible:
+                alto_max_mm = max(espacio_disponible, 40)  # mínimo 40mm para que se vea algo
+
+            # Preparar imagen con límite de alto
+            img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=ancho_mm, alto_max_mm=alto_max_mm)
+
+            # Calcular posición X para centrar
+            if centrar:
+                # Recalcular ancho real si se limitó por alto
+                if alto_max_mm and alto_proporcional_mm > espacio_disponible:
+                    ancho_real = alto_max_mm / ratio
+                    x = (self.w - ancho_real) / 2
+                    self.image(img_procesada, x=x, w=ancho_real)
+                else:
+                    x = (self.w - ancho_mm) / 2
+                    self.image(img_procesada, x=x, w=ancho_mm)
+            else:
+                self.image(img_procesada, x=10, w=ancho_mm)
+
+            # Limpiar archivo temporal
+            if img_procesada != ruta_imagen:
+                try:
+                    os.unlink(img_procesada)
+                except:
+                    pass
+
+            return True
+
+        except Exception as e:
+            print(f"Error insertando imagen segura {ruta_imagen}: {e}")
+            return False
 
     def generar_cuerpo(self, datos, res, es_publicado=False, ups=None, bateria=None, imagenes_temp=None):
 
@@ -567,26 +629,14 @@ class ReportePDF(FPDF):
         self.set_font('Arial', 'B', 10)
         self.cell(0, 8, "Esquema de Espacios Mínimos:", 0, 1)
 
-        draw_placeholder = True
+        imagen_insertada = False
         if ups and ups.get('imagen_instalacion_url'):
             img_filename = os.path.basename(ups['imagen_instalacion_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-
             if os.path.exists(ruta_imagen):
-                try:
-                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=120)
-                    self.image(img_procesada, x=45, w=120)
-                    draw_placeholder = False
-                    # Limpiar archivo temporal
-                    if img_procesada != ruta_imagen:
-                        try:
-                            os.unlink(img_procesada)
-                        except:
-                            pass
-                except Exception as e:
-                    print(f"Error cargando imagen de instalación: {e}")
-        
-        if draw_placeholder:
+                imagen_insertada = self._insertar_imagen_segura(ruta_imagen, ancho_mm=120)
+
+        if not imagen_insertada:
             y = self.get_y()
             self.set_fill_color(230, 230, 230)
             self.rect(45, y, 120, 80, 'F')
@@ -623,23 +673,13 @@ class ReportePDF(FPDF):
         self.ln(3)
         self.set_text_color(*COLOR_NEGRO)
 
-        draw_placeholder_unifilar = True
+        imagen_unifilar_ok = False
         if self.imagenes_temp.get('unifilar_ac'):
-            # Usar imagen temporal cargada - REDIMENSIONADA
-            try:
-                img_procesada = self._preparar_imagen(self.imagenes_temp['unifilar_ac'], ancho_mm=190)
-                self.image(img_procesada, x=10, w=190)
-                draw_placeholder_unifilar = False
-                # Limpiar archivo temporal
-                if img_procesada != self.imagenes_temp['unifilar_ac']:
-                    try:
-                        os.unlink(img_procesada)
-                    except:
-                        pass
-            except Exception as e:
-                print(f"Error cargando imagen temporal unifilar AC: {e}")
+            imagen_unifilar_ok = self._insertar_imagen_segura(
+                self.imagenes_temp['unifilar_ac'], ancho_mm=190, centrar=False
+            )
 
-        if draw_placeholder_unifilar:
+        if not imagen_unifilar_ok:
             self.set_fill_color(230, 230, 230)
             y = self.get_y()
             self.rect(10, y, 190, 80, 'F')
@@ -670,42 +710,21 @@ class ReportePDF(FPDF):
         self.multi_cell(0, 5, "En el siguiente diagrama se muestra la manera recomendada de conexión de baterías en serie así como la conexión del interruptor de DC.")
         self.ln(3)
 
-        draw_placeholder = True
+        imagen_bat_ok = False
 
-        # Prioridad 1: Imagen temporal cargada - REDIMENSIONADA
+        # Prioridad 1: Imagen temporal cargada
         if self.imagenes_temp.get('baterias_dc'):
-            try:
-                img_procesada = self._preparar_imagen(self.imagenes_temp['baterias_dc'], ancho_mm=120)
-                self.image(img_procesada, x=45, w=120)
-                draw_placeholder = False
-                # Limpiar archivo temporal
-                if img_procesada != self.imagenes_temp['baterias_dc']:
-                    try:
-                        os.unlink(img_procesada)
-                    except:
-                        pass
-            except Exception as e:
-                print(f"Error cargando imagen temporal baterías DC: {e}")
-        # Prioridad 2: Imagen desde BD del UPS - REDIMENSIONADA
+            imagen_bat_ok = self._insertar_imagen_segura(
+                self.imagenes_temp['baterias_dc'], ancho_mm=120
+            )
+        # Prioridad 2: Imagen desde BD del UPS
         elif ups and ups.get('imagen_baterias_url'):
             img_filename = os.path.basename(ups['imagen_baterias_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-
             if os.path.exists(ruta_imagen):
-                try:
-                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=120)
-                    self.image(img_procesada, x=45, w=120)
-                    draw_placeholder = False
-                    # Limpiar archivo temporal
-                    if img_procesada != ruta_imagen:
-                        try:
-                            os.unlink(img_procesada)
-                        except:
-                            pass
-                except Exception as e:
-                    print(f"Error cargando imagen de conexion de baterias: {e}")
+                imagen_bat_ok = self._insertar_imagen_segura(ruta_imagen, ancho_mm=120)
 
-        if draw_placeholder:
+        if not imagen_bat_ok:
             y = self.get_y()
             self.set_fill_color(230, 230, 230)
             self.rect(45, y, 120, 80, 'F')
@@ -744,42 +763,21 @@ class ReportePDF(FPDF):
         self.ln(5)
         self.set_text_color(*COLOR_NEGRO)
 
-        draw_placeholder = True
+        imagen_ok = False
 
-        # Si el título es "DISPOSICION DE LOS EQUIPOS", usar imagen temporal si existe - REDIMENSIONADA
+        # Si el título es "DISPOSICION DE LOS EQUIPOS", usar imagen temporal si existe
         if "DISPOSICIÓN" in titulo.upper() and self.imagenes_temp.get('layout_equipos'):
-            try:
-                img_procesada = self._preparar_imagen(self.imagenes_temp['layout_equipos'], ancho_mm=120)
-                self.image(img_procesada, x=45, w=120)
-                draw_placeholder = False
-                # Limpiar archivo temporal
-                if img_procesada != self.imagenes_temp['layout_equipos']:
-                    try:
-                        os.unlink(img_procesada)
-                    except:
-                        pass
-            except Exception as e:
-                print(f"Error cargando imagen temporal layout: {e}")
-        # Si no hay imagen temporal, usar imagen desde BD - REDIMENSIONADA
+            imagen_ok = self._insertar_imagen_segura(
+                self.imagenes_temp['layout_equipos'], ancho_mm=120
+            )
+        # Si no hay imagen temporal, usar imagen desde BD
         elif imagen_url:
             img_filename = os.path.basename(imagen_url)
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
-
             if os.path.exists(ruta_imagen):
-                try:
-                    img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=120)
-                    self.image(img_procesada, x=45, w=120)
-                    draw_placeholder = False
-                    # Limpiar archivo temporal
-                    if img_procesada != ruta_imagen:
-                        try:
-                            os.unlink(img_procesada)
-                        except:
-                            pass
-                except Exception as e:
-                    print(f"Error cargando imagen de sección '{titulo}': {e}")
+                imagen_ok = self._insertar_imagen_segura(ruta_imagen, ancho_mm=120)
 
-        if draw_placeholder:
+        if not imagen_ok:
             y = self.get_y()
             self.set_fill_color(230, 230, 230)
             self.rect(45, y, 120, 80, 'F')
@@ -832,31 +830,19 @@ class ReportePDF(FPDF):
                 self.ln(3)
 
             # IMAGEN DEL SISTEMA DE VENTILACIÓN
-            draw_placeholder = True
+            imagen_vent_ok = False
             if tipo_ventilacion_data and tipo_ventilacion_data.get('imagen_url'):
                 img_filename = os.path.basename(tipo_ventilacion_data['imagen_url'])
                 ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
 
                 if os.path.exists(ruta_imagen):
-                    try:
-                        self.set_font('Arial', 'B', 10)
-                        self.set_text_color(*COLOR_NEGRO)
-                        self.cell(0, 6, "Diagrama de Referencia:", 0, 1)
-                        self.ln(3)
+                    self.set_font('Arial', 'B', 10)
+                    self.set_text_color(*COLOR_NEGRO)
+                    self.cell(0, 6, "Diagrama de Referencia:", 0, 1)
+                    self.ln(3)
+                    imagen_vent_ok = self._insertar_imagen_segura(ruta_imagen, ancho_mm=140)
 
-                        img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=140)
-                        self.image(img_procesada, x=35, w=140)
-                        draw_placeholder = False
-                        # Limpiar archivo temporal
-                        if img_procesada != ruta_imagen:
-                            try:
-                                os.unlink(img_procesada)
-                            except:
-                                pass
-                    except Exception as e:
-                        print(f"Error cargando imagen de ventilación: {e}")
-
-            if draw_placeholder:
+            if not imagen_vent_ok:
                 self.ln(3)
 
             # CONSIDERACIONES ADICIONALES

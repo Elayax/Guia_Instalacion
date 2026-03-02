@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Rápida - Sistema UPS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .section-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .section-title {
+            color: var(--accent-red, #dc3545);
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .section-title i {
+            margin-right: 0.5rem;
+        }
+        .form-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .form-control, .form-select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(0,0,0,0.4);
+            border-color: var(--accent-red, #dc3545);
+            color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+        }
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+        .autofill-badge {
+            display: inline-block;
+            background: rgba(13, 202, 240, 0.15);
+            color: #0dcaf0;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.3rem;
+            vertical-align: middle;
+        }
+        .guia-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .btn-action-group {
+            position: sticky;
+            bottom: 0;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 1.5rem;
+            margin: 0 -1.5rem;
+            z-index: 100;
+        }
+        .ups-specs-mini {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            display: none;
+        }
+        .ups-specs-mini .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.15rem 0;
+        }
+        .ups-specs-mini .spec-label {
+            color: rgba(255,255,255,0.5);
+        }
+        .ups-specs-mini .spec-value {
+            color: var(--accent-red, #dc3545);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+            </div>
+        </div>
+        <nav class="d-flex gap-4">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+            <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
+            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="guia-container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="fw-bold text-white mb-1"><i class="bi bi-lightning-fill text-danger me-2"></i>Guía Rápida de Instalación</h4>
+                <p class="text-muted mb-0" style="font-size:0.85rem;">Ingrese los datos manualmente para generar la memoria técnica PDF. Los campos con <span class="autofill-badge">AUTO</span> se completan al seleccionar un equipo de la BD.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('guia_rapida.generar_pdf_guia_rapida') }}" enctype="multipart/form-data" id="guiaForm" target="_blank">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="accion" id="accion_hidden" value="preview">
+
+            <!-- =================== SECCIÓN 1: PROYECTO =================== -->
+            <div class="section-card">
+                <div class="section-title"><i class="bi bi-folder2-open"></i>Datos del Proyecto</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">No. Pedido</label>
+                        <input type="text" name="pedido" class="form-control" placeholder="OC-2024-001" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cliente</label>
+                        <input type="text" name="cliente_texto" id="input_cliente" class="form-control" list="lista_clientes" placeholder="Nombre del cliente" autocomplete="off">
+                        <datalist id="lista_clientes">
+                            {% for c in clientes %}
+                            <option value="{{ c }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Sucursal / Proyecto</label>
+                        <input type="text" name="sucursal_texto" id="input_sucursal" class="form-control" list="lista_sucursales" placeholder="Sucursal o proyecto" autocomplete="off">
+                        <datalist id="lista_sucursales"></datalist>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================== SECCIÓN 2: EQUIPO UPS =================== -->
+            <div class="section-card">
+                <div class="section-title"><i class="bi bi-box-seam"></i>Equipo UPS</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Modelo UPS (desde BD) <span class="autofill-badge">AUTO</span></label>
+                        <select name="id_ups" id="sel_ups" class="form-select" required>
+                            <option value="">Seleccionar modelo...</option>
+                            {% for u in ups %}
+                            <option value="{{ u.id }}" data-kva="{{ u.Capacidad_kVA }}" data-kw="{{ u.Capacidad_kW }}">
+                                {{ u.Serie }} {{ u.Nombre_del_Producto }} ({{ u.Capacidad_kVA }} kVA)
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Mini ficha técnica -->
+                        <div class="ups-specs-mini mt-2" id="ups_specs_mini">
+                            <div class="spec-row"><span class="spec-label">kVA:</span><span class="spec-value" id="sp_kva">--</span></div>
+                            <div class="spec-row"><span class="spec-label">kW:</span><span class="spec-value" id="sp_kw">--</span></div>
+                            <div class="spec-row"><span class="spec-label">Eficiencia:</span><span class="spec-value" id="sp_eff">--%</span></div>
+                            <div class="spec-row"><span class="spec-label">VDC Baterías:</span><span class="spec-value" id="sp_vdc">--</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre Modelo (para PDF) <span class="autofill-badge">AUTO</span></label>
+                        <input type="text" name="modelo_nombre" id="input_modelo_nombre" class="form-control" placeholder="Ej: Dragon Power Plus 60">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Capacidad (kVA) <span class="autofill-badge">AUTO</span></label>
+                        <input type="number" name="kva" id="input_kva" class="form-control" step="0.1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Peso (kg) <span class="autofill-badge">AUTO</span></label>
+                        <input type="number" name="peso" id="input_peso" class="form-control" step="0.1" placeholder="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Largo (mm) <span class="autofill-badge">AUTO</span></label>
+                        <input type="number" name="dim_largo" id="input_dim_largo" class="form-control" placeholder="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ancho (mm) <span class="autofill-badge">AUTO</span></label>
+                        <input type="number" name="dim_ancho" id="input_dim_ancho" class="form-control" placeholder="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Alto (mm) <span class="autofill-badge">AUTO</span></label>
+                        <input type="number" name="dim_alto" id="input_dim_alto" class="form-control" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================== SECCIÓN 3: CONFIG ELÉCTRICA =================== -->
+            <div class="section-card">
+                <div class="section-title"><i class="bi bi-lightning-charge"></i>Configuración Eléctrica <small class="text-muted fw-normal" style="letter-spacing:0;">(todos los campos son manuales)</small></div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Voltaje (V)</label>
+                        <select name="voltaje" class="form-select">
+                            <option value="220">220V</option>
+                            <option value="208">208V</option>
+                            <option value="480">480V</option>
+                            <option value="127">127V</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fases</label>
+                        <select name="fases" class="form-select">
+                            <option value="3">3 Fases</option>
+                            <option value="2">2 Fases</option>
+                            <option value="1">1 Fase</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Longitud Circuito (m)</label>
+                        <input type="number" name="longitud" class="form-control" step="0.1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Corriente Nominal (A)</label>
+                        <input type="number" name="i_nom" class="form-control" step="0.01" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Corriente Diseño +25% (A)</label>
+                        <input type="number" name="i_diseno" class="form-control" step="0.01" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Caída de Tensión (%)</label>
+                        <input type="number" name="dv_pct" class="form-control" step="0.01" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Calibre Fases (AWG/kcmil)</label>
+                        <input type="text" name="fase_sel" class="form-control" placeholder="Ej: 6, 4, 2, 1/0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Calibre Tierra (AWG)</label>
+                        <input type="text" name="gnd_sel" class="form-control" placeholder="Ej: 8, 6, 4">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Protección Breaker (A)</label>
+                        <input type="number" name="breaker_sel" class="form-control" step="1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Corriente Real Cable (A)</label>
+                        <input type="number" name="i_real_cable" class="form-control" step="0.01" placeholder="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nota de Altitud (opcional)</label>
+                        <input type="text" name="nota_altitud" class="form-control" placeholder="Ej: Sitio a 2200 msnm, aplicar factor de corrección">
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================== SECCIÓN 4: BATERÍAS =================== -->
+            <div class="section-card">
+                <div class="section-title">
+                    <i class="bi bi-battery-charging"></i>Banco de Baterías
+                    <small class="text-muted fw-normal" style="letter-spacing:0;">(opcional — dejar vacío si no aplica)</small>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Modelo Batería (desde BD) <span class="autofill-badge">AUTO</span></label>
+                        <select name="id_bateria" id="sel_bateria" class="form-select">
+                            <option value="">Sin baterías</option>
+                            {% for b in baterias %}
+                            <option value="{{ b.id }}">{{ b.modelo }} ({{ b.capacidad_nominal_ah if b.capacidad_nominal_ah else b.capacidad_ah }}Ah)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Modelo Batería (texto PDF) <span class="autofill-badge">AUTO</span></label>
+                        <input type="text" name="bateria_modelo" id="input_bateria_modelo" class="form-control" placeholder="Se llena al seleccionar">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Baterías por String</label>
+                        <input type="number" name="baterias_por_string" class="form-control" step="1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Número de Strings</label>
+                        <input type="number" name="numero_strings" class="form-control" step="1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Total Baterías</label>
+                        <input type="number" name="baterias_total" class="form-control" step="1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tiempo Respaldo (min)</label>
+                        <input type="number" name="tiempo_respaldo" class="form-control" step="0.1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Autonomía Calculada (min)</label>
+                        <input type="number" name="autonomia_calculada_min" class="form-control" step="0.1" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Autonomía Deseada (min)</label>
+                        <input type="number" name="autonomia_deseada_min" class="form-control" step="0.1" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================== SECCIÓN 5: IMÁGENES =================== -->
+            <div class="section-card">
+                <div class="section-title"><i class="bi bi-image"></i>Imágenes para el Reporte</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-danger"><i class="bi bi-diagram-3-fill me-1"></i>Diagrama Unifilar AC</label>
+                        <input type="file" name="imagen_unifilar_ac" class="form-control" accept="image/*">
+                        <small class="text-muted">PNG, JPG. Máximo 5MB</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-danger"><i class="bi bi-battery-charging me-1"></i>Diagrama Baterías DC</label>
+                        <input type="file" name="imagen_baterias_dc" class="form-control" accept="image/*">
+                        <small class="text-muted">PNG, JPG. Máximo 5MB</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-danger"><i class="bi bi-grid-3x3 me-1"></i>Disposición de Equipos</label>
+                        <input type="file" name="imagen_layout_equipos" class="form-control" accept="image/*">
+                        <small class="text-muted">PNG, JPG. Máximo 5MB</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================== BOTONES DE ACCIÓN =================== -->
+            <div class="btn-action-group d-flex justify-content-between align-items-center">
+                <div class="text-muted" style="font-size:0.8rem;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Vista Previa genera un borrador con marca de agua. Publicar guarda el PDF final.
+                </div>
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-warning btn-lg px-4 fw-bold shadow" onclick="document.getElementById('accion_hidden').value='preview';">
+                        <i class="bi bi-eye me-2"></i>VISTA PREVIA PDF
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg px-4 fw-bold shadow" onclick="document.getElementById('accion_hidden').value='publicar';">
+                        <i class="bi bi-printer-fill me-2"></i>PUBLICAR PDF
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // =================== RELOJ ===================
+        function actualizarReloj() {
+            const now = new Date();
+            const clockEl = document.getElementById('clock');
+            const dateEl = document.getElementById('date');
+            if (clockEl) clockEl.textContent = now.toLocaleTimeString('es-MX', { hour12: false });
+            if (dateEl) dateEl.textContent = now.toLocaleDateString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+
+        // =================== UPS AUTOCOMPLETE ===================
+        const selUps = document.getElementById('sel_ups');
+        if (selUps) {
+            selUps.addEventListener('change', function() {
+                const id = this.value;
+                if (!id) {
+                    document.getElementById('ups_specs_mini').style.display = 'none';
+                    return;
+                }
+
+                fetch(`/api/ups/${id}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        // Llenar ficha mini
+                        const mini = document.getElementById('ups_specs_mini');
+                        if (mini) mini.style.display = 'block';
+                        document.getElementById('sp_kva').textContent = data.Capacidad_kVA || '--';
+                        document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--';
+                        document.getElementById('sp_eff').textContent = (data.Eficiencia_Modo_AC_pct || '--') + '%';
+                        document.getElementById('sp_vdc').textContent = (data.Bateria_Vdc || '--') + ' VDC';
+
+                        // Auto-fill campos del formulario
+                        document.getElementById('input_modelo_nombre').value = data.Nombre_del_Producto || '';
+                        document.getElementById('input_kva').value = data.Capacidad_kVA || '';
+                        document.getElementById('input_peso').value = data.Peso_Gabinete_kg || '';
+                        document.getElementById('input_dim_largo').value = data.Dim_Largo_mm || '';
+                        document.getElementById('input_dim_ancho').value = data.Dim_Ancho_mm || '';
+                        document.getElementById('input_dim_alto').value = data.Dim_Alto_mm || '';
+                    })
+                    .catch(err => console.error('Error cargando datos UPS:', err));
+            });
+        }
+
+        // =================== BATERÍA AUTOCOMPLETE ===================
+        const selBateria = document.getElementById('sel_bateria');
+        if (selBateria) {
+            selBateria.addEventListener('change', function() {
+                const id = this.value;
+                if (!id) {
+                    document.getElementById('input_bateria_modelo').value = '';
+                    return;
+                }
+
+                fetch(`/api/bateria/${id}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        document.getElementById('input_bateria_modelo').value = data.modelo || '';
+                    })
+                    .catch(err => console.error('Error cargando datos batería:', err));
+            });
+        }
+
+        // =================== CLIENTE → SUCURSAL AUTOCOMPLETE ===================
+        const inputCliente = document.getElementById('input_cliente');
+        if (inputCliente) {
+            inputCliente.addEventListener('change', function() {
+                const cliente = this.value.trim();
+                const datalist = document.getElementById('lista_sucursales');
+                datalist.innerHTML = '';
+
+                if (!cliente) return;
+
+                fetch(`/api/sucursales/${encodeURIComponent(cliente)}`)
+                    .then(r => r.json())
+                    .then(sucursales => {
+                        sucursales.forEach(s => {
+                            const opt = document.createElement('option');
+                            opt.value = s.sucursal || s;
+                            datalist.appendChild(opt);
+                        });
+                    })
+                    .catch(err => console.error('Error cargando sucursales:', err));
+            });
+        }
+    </script>
+</body>
+</html>

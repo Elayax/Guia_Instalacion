@@ -51,9 +51,16 @@ def gestion():
         **state)
 
 
-@management_bp.route('/carga-masiva')
+@management_bp.route('/carga-masiva', methods=['GET', 'POST'])
 @login_required
 def carga_masiva():
+    if request.method == 'POST':
+        from app.auxiliares import _procesar_carga_masiva
+        file = request.files.get('archivo_csv')
+        tipo_carga = request.form.get('tipo_carga')
+        if file and tipo_carga:
+            mensaje, logs = _procesar_carga_masiva(current_app.db, file, tipo_carga)
+            return render_template('carga_masiva.html', mensaje=mensaje, error_logs=logs)
     return render_template('carga_masiva.html')
 
 

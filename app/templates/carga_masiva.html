@@ -31,6 +31,25 @@
             <p class="text-muted">Importación de datos mediante archivos CSV (UTF-8)</p>
         </div>
 
+        {% if mensaje %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ mensaje }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        {% if error_logs %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Detalles:</strong>
+            <ul>
+                {% for log in error_logs %}
+                <li>{{ log }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
         <div class="row g-4">
             <!-- 1. UPS -->
             <div class="col-md-6 col-lg-3">
@@ -45,6 +64,7 @@
                             class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
                             Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="tipo_carga" value="ups">
                             <input type="file" name="archivo_csv" id="csv_ups" class="d-none" accept=".csv"
                                 onchange="this.form.submit()">
@@ -69,6 +89,7 @@
                             class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
                             Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="tipo_carga" value="clientes">
                             <input type="file" name="archivo_csv" id="csv_clientes" class="d-none" accept=".csv"
                                 onchange="this.form.submit()">
@@ -93,6 +114,7 @@
                             class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
                             Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="tipo_carga" value="baterias_modelos">
                             <input type="file" name="archivo_csv" id="csv_bat_mod" class="d-none" accept=".csv"
                                 onchange="this.form.submit()">
@@ -117,6 +139,7 @@
                             class="btn btn-outline-light btn-sm"><i class="fas fa-file-csv me-1"></i> Descargar
                             Plantilla</a>
                         <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="tipo_carga" value="baterias_curvas">
                             <input type="file" name="archivo_csv" id="csv_bat_curv" class="d-none" accept=".csv"
                                 onchange="this.form.submit()">

@@ -25,8 +25,11 @@
         <nav class="d-flex gap-4">
             <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
             <a href="{{ url_for('calculator.calculadora') }}" class="nav-link active"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+            <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
             <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            {% if current_user.role != 'user' %}
             <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+            {% endif %}
         </nav>
         <div class="d-flex align-items-center gap-3">
             <div class="text-end">
@@ -37,6 +40,7 @@
     </header>
 
     <form method="POST" id="mainForm" class="new-layout" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Ocultos para backend -->
         <input type="hidden" name="cliente_texto" id="h_cliente" value="{{ request.form.get('cliente_texto', '') }}">
         <input type="hidden" name="sucursal_texto" id="h_sucursal" value="{{ request.form.get('sucursal_texto', '') }}">
@@ -443,6 +447,7 @@
                 </div>
                 <form method="POST" action="{{ url_for('calculator.generar_pdf_calculadora') }}"
                     enctype="multipart/form-data" id="formVistaPrevia">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="accion" value="preview">
                     <div class="modal-body">
                         <p class="text-muted mb-3" id="modalDescPreview">Por favor, cargue las imágenes obligatorias

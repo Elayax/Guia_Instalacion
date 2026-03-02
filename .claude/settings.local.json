@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import bcrypt; print\\(bcrypt.hashpw\\(b''admin'', bcrypt.gensalt\\(\\)\\).decode\\(\\)\\)\")",
+      "Bash(where python)",
+      "Bash(\"C:\\\\Users\\\\smartinez\\\\OneDrive - LEMONROY BUSINESS SOLUTIONS SA DE CV\\\\Documents\\\\DEV\\\\Git-Guia-Install\\\\Guia_Instalacion\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import bcrypt; print\\(bcrypt.hashpw\\(b''admin'', bcrypt.gensalt\\(\\)\\).decode\\(\\)\\)\")",
+      "Bash(\".venv\\\\Scripts\\\\python.exe\" -c \"from app import create_app; print\\(''App creada exitosamente''\\)\")",
+      "Bash(\".venv\\\\Scripts\\\\python.exe\" -c \":*)"
+    ]
+  }
+}

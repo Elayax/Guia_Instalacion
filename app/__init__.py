@@ -57,6 +57,7 @@ def create_app(config_name=None):
     from app.routes.api import api_bp
     from app.routes.management import management_bp
     from app.routes.documents import documents_bp
+    from app.routes.guia_rapida import guia_rapida_bp
     from app.routes.monitoreo_routes import monitoreo_bp
     from app.routes.test_snmp_routes import test_snmp_bp
 
@@ -66,6 +67,7 @@ def create_app(config_name=None):
     app.register_blueprint(api_bp)
     app.register_blueprint(management_bp)
     app.register_blueprint(documents_bp)
+    app.register_blueprint(guia_rapida_bp)
     app.register_blueprint(monitoreo_bp)
     app.register_blueprint(test_snmp_bp)
     

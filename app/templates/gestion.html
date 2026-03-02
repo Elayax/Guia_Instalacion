@@ -27,9 +27,13 @@
                 TABLERO</a>
             <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i>
                 CÁLCULOS</a>
+            <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i>
+                GUÍA RÁPIDA</a>
             <a href="{{ url_for('management.gestion') }}" class="nav-link active"><i class="bi bi-database me-1"></i>
                 DATOS</a>
+            {% if current_user.role != 'user' %}
             <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+            {% endif %}
         </nav>
         <div class="d-flex align-items-center gap-3">
             <div class="text-end">
@@ -40,9 +44,9 @@
     </header>
 
     <div class="container-fluid p-0">
-        {% if msg %}
+        {% if mensaje %}
         <div class="alert alert-info alert-dismissible fade show m-3" role="alert">
-            {{ msg }}
+            {{ mensaje }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         {% endif %}
@@ -85,9 +89,6 @@
                     <button class="nav-link {% if active_tab == 'carga' %}active{% endif %}" id="v-pills-carga-tab"
                         data-bs-toggle="pill" data-bs-target="#v-pills-carga" type="button" role="tab"><i
                             class="fas fa-cloud-upload-alt"></i> CARGA MASIVA</button>
-                    <button class="nav-link {% if active_tab == 'personal' %}active{% endif %}"
-                        id="v-pills-personal-tab" data-bs-toggle="pill" data-bs-target="#v-pills-personal" type="button"
-                        role="tab"><i class="fas fa-user-tie"></i> PERSONAL</button>
                 </div>
             </div>
 
@@ -112,6 +113,7 @@
                                     {% endif %}
                                 </h4>
                                 <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="accion" value="cancelar_edicion_ups">
                                     <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Volver a
                                         Lista</button>
@@ -119,6 +121,7 @@
                             </div>
 
                             <form method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="accion" value="guardar_ups">
                                 {% if ups_seleccionado %}
                                 <input type="hidden" name="id" value="{{ ups_seleccionado.id }}">
@@ -433,6 +436,7 @@
                                     CATÁLOGO DE EQUIPOS UPS</div>
                                 <div>
                                     <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="accion" value="iniciar_agregar_ups">
                                         <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
                                             Agregar Nuevo Equipo</button>
@@ -467,6 +471,7 @@
                                             <td class="text-center">
                                                 <!-- BOTÓN EDITAR INTEGRADO -->
                                                 <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="accion" value="editar_ups">
                                                     <input type="hidden" name="id_ups" value="{{ u.id }}">
                                                     <button class="btn btn-warning btn-sm me-2" title="Editar"><i
@@ -475,6 +480,7 @@
                                                 <!-- BOTÓN ELIMINAR -->
                                                 <form method="POST" style="display:inline;"
                                                     onsubmit="return confirm('¿Estás seguro de eliminar este equipo?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="del_ups">
                                                     <input type="hidden" name="id" value="{{ u.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i
@@ -506,6 +512,7 @@
                                 </h4>
                                 <div class="d-flex gap-2">
                                     <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="accion" value="cancelar_edicion_bateria">
                                         <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i>
                                             Volver</button>
@@ -513,6 +520,7 @@
                                 </div>
                             </div>
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="accion" value="guardar_bateria">
                                 {% if bateria_seleccionada %}
                                 <input type="hidden" name="id" value="{{ bateria_seleccionada.id }}">
@@ -643,6 +651,7 @@
                         {% if bateria_seleccionada %}
                         <!-- SECCIÓN DE CURVAS Y EDICIÓN -->
                         <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="tech-matrix">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="control-title mb-0">Curvas de Descarga</div>
@@ -741,6 +750,7 @@
                                     CATÁLOGO DE BATERÍAS</div>
                                 <div>
                                     <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="accion" value="iniciar_agregar_bateria">
                                         <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
                                             Agregar Nueva Batería</button>
@@ -774,6 +784,7 @@
                                             <td>{{ b.peso_kg }} kg</td>
                                             <td class="text-center">
                                                 <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="accion" value="editar_bateria">
                                                     <input type="hidden" name="id_bateria" value="{{ b.id }}">
                                                     <button class="btn btn-warning btn-sm me-2" title="Editar"><i
@@ -781,6 +792,7 @@
                                                 </form>
                                                 <form method="POST" style="display:inline;"
                                                     onsubmit="return confirm('¿Eliminar batería?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="del_bateria">
                                                     <input type="hidden" name="id" value="{{ b.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i
@@ -808,6 +820,7 @@
                             </div>
                             <form method="POST" class="row g-2 mb-3 p-2 border rounded"
                                 style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="add_cliente">
                                 <div class="col-3"><input type="text" name="cliente"
                                         class="form-control form-control-sm" placeholder="Cliente" required></div>
@@ -842,6 +855,7 @@
                                                 </button>
                                                 <form method="POST" style="display:inline;"
                                                     onsubmit="return confirm('¿Eliminar cliente?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="del_cliente">
                                                     <input type="hidden" name="id" value="{{ c.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i
@@ -867,6 +881,7 @@
                                 <h4 class="m-0 fw-bold">Editando: <span class="text-primary">{{
                                         personal_seleccionado.nombre }}</span></h4>
                                 <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="tipo" value="cancelar_edit_personal">
                                     <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Volver a
                                         Lista</button>
@@ -874,6 +889,7 @@
                             </div>
 
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="update_personal">
                                 <input type="hidden" name="id" value="{{ personal_seleccionado.id }}">
 
@@ -910,6 +926,7 @@
                             <!-- Formulario de Agregado Rápido -->
                             <form method="POST" class="row g-2 mb-3 p-2 border rounded"
                                 style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="add_personal">
                                 <div class="col-5">
                                     <input type="text" name="nombre" class="form-control form-control-sm"
@@ -943,6 +960,7 @@
                                             <td>{{ p.puesto }}</td>
                                             <td class="text-center">
                                                 <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="edit_personal">
                                                     <input type="hidden" name="id_personal" value="{{ p.id }}">
                                                     <button class="btn btn-warning btn-sm me-2" title="Editar"><i
@@ -950,6 +968,7 @@
                                                 </form>
                                                 <form method="POST" style="display:inline;"
                                                     onsubmit="return confirm('¿Eliminar a {{ p.nombre }}?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="del_personal">
                                                     <input type="hidden" name="id" value="{{ p.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i
@@ -975,6 +994,7 @@
                                 <h4 class="m-0 fw-bold">Editando: <span class="text-primary">{{
                                         tipo_vent_seleccionado.nombre }}</span></h4>
                                 <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="tipo" value="cancelar_edit_tipo_vent">
                                     <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Volver a
                                         Lista</button>
@@ -982,6 +1002,7 @@
                             </div>
 
                             <form method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="update_tipo_vent">
                                 <input type="hidden" name="id" value="{{ tipo_vent_seleccionado.id }}">
 
@@ -1036,6 +1057,7 @@
 
                             <form method="POST" enctype="multipart/form-data" class="row g-2 mb-3 p-2 border rounded"
                                 style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="add_tipo_vent">
                                 <div class="col-3">
                                     <input type="text" name="nombre" class="form-control form-control-sm"
@@ -1082,6 +1104,7 @@
                                             </td>
                                             <td class="text-center">
                                                 <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="edit_tipo_vent">
                                                     <input type="hidden" name="id_tipo_vent" value="{{ tv.id }}">
                                                     <button class="btn btn-warning btn-sm me-2" title="Editar"><i
@@ -1089,6 +1112,7 @@
                                                 </form>
                                                 <form method="POST" style="display:inline;"
                                                     onsubmit="return confirm('¿Eliminar este tipo de ventilación?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="del_tipo_vent">
                                                     <input type="hidden" name="id" value="{{ tv.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i
@@ -1168,6 +1192,7 @@
                                         <a href="{{ url_for('management.descargar_plantilla', tipo='ups') }}"
                                             class="btn btn-outline-light btn-sm">Plantilla</a>
                                         <form method="POST" enctype="multipart/form-data">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="tipo_carga" value="ups">
                                             <input type="file" name="archivo_csv" id="csv_ups" class="d-none"
                                                 accept=".csv" onchange="this.form.submit()">
@@ -1187,6 +1212,7 @@
                                         <a href="{{ url_for('management.descargar_plantilla', tipo='clientes') }}"
                                             class="btn btn-outline-light btn-sm">Plantilla</a>
                                         <form method="POST" enctype="multipart/form-data">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="tipo_carga" value="clientes">
                                             <input type="file" name="archivo_csv" id="csv_cli" class="d-none"
                                                 accept=".csv" onchange="this.form.submit()">
@@ -1206,6 +1232,7 @@
                                         <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_modelos') }}"
                                             class="btn btn-outline-light btn-sm">Plantilla</a>
                                         <form method="POST" enctype="multipart/form-data">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="tipo_carga" value="baterias_modelos">
                                             <input type="file" name="archivo_csv" id="csv_bat" class="d-none"
                                                 accept=".csv" onchange="this.form.submit()">
@@ -1225,6 +1252,7 @@
                                         <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_curvas') }}"
                                             class="btn btn-outline-light btn-sm">Plantilla</a>
                                         <form method="POST" enctype="multipart/form-data">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <input type="hidden" name="tipo_carga" value="baterias_curvas">
                                             <input type="file" name="archivo_csv" id="csv_cur" class="d-none"
                                                 accept=".csv" onchange="this.form.submit()">
@@ -1252,12 +1280,14 @@
                                     {% endif %}
                                 </h4>
                                 <form method="POST" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="accion" value="cancelar_edicion_personal">
                                     <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i>
                                         Volver</button>
                                 </form>
                             </div>
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="accion" value="guardar_personal">
                                 {% if personal_seleccionado %}
                                 <input type="hidden" name="id" value="{{ personal_seleccionado.id }}">
@@ -1292,6 +1322,7 @@
                                     DIRECTORIO DE PERSONAL</div>
                                 <div>
                                     <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="accion" value="iniciar_agregar_personal">
                                         <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
                                             Agregar Personal</button>
@@ -1316,6 +1347,7 @@
                                             <td>{{ p.puesto }}</td>
                                             <td class="text-center">
                                                 <form method="POST" style="display:inline;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="accion" value="editar_personal">
                                                     <input type="hidden" name="id_personal" value="{{ p.id }}">
                                                     <button class="btn btn-warning btn-sm me-2" title="Editar"><i
@@ -1323,6 +1355,7 @@
                                                 </form>
                                                 <form method="POST" style="display:inline;"
                                                     onsubmit="return confirm('¿Eliminar personal?');">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="hidden" name="tipo" value="del_personal">
                                                     <input type="hidden" name="id" value="{{ p.id }}">
                                                     <button class="btn btn-danger btn-sm" title="Eliminar"><i

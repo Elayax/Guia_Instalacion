@@ -24,8 +24,11 @@
         <nav class="d-flex gap-4">
             <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link active"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
             <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+            <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
             <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+            {% if current_user.role != 'user' %}
             <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+            {% endif %}
         </nav>
         <div class="d-flex align-items-center gap-3">
             <div class="text-end">
@@ -43,6 +46,7 @@
                 Buscar Pedido
             </div>
             <form method="POST" action="{{ url_for('dashboard.dashboard') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="accion" value="buscar_pedido">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-8">
@@ -311,6 +315,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="{{ url_for('dashboard.dashboard') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="accion" value="crear_proyecto">
                     <div class="modal-body">
                         <div class="row g-3">
