@@ -1,134 +1,120 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - UPS Manager</title>
+    <title>Login - SISTEMA UPS MANAGER</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Fonts -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+    <!-- Estilos Corporativos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .login-wrapper {
             min-height: 100vh;
-            color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        .login-container {
-            background: #16213e;
-            border-radius: 12px;
+
+        .login-card {
+            width: 100%;
+            max-width: 450px;
             padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid #0f3460;
+            animation: fadeIn 0.8s ease-out;
         }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-header h1 {
-            font-size: 24px;
-            color: #e94560;
-            margin-bottom: 5px;
-        }
-        .login-header p {
-            color: #888;
-            font-size: 14px;
-        }
-        .form-group {
+
+        .login-logo {
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #aaa;
+
+        .form-floating>.form-control:focus~label,
+        .form-floating>.form-control:not(:placeholder-shown)~label {
+            color: var(--accent-red);
         }
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #0f3460;
-            border-radius: 8px;
-            background: #1a1a2e;
-            color: #e0e0e0;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        .form-group input:focus {
-            border-color: #e94560;
-        }
+
         .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: #e94560;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
+            padding: 15px;
+            font-size: 1.1rem;
+            margin-top: 10px;
         }
-        .btn-login:hover {
-            background: #c73e54;
-        }
-        .flash-messages {
-            margin-bottom: 15px;
-        }
-        .flash-msg {
-            padding: 10px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-        .flash-danger {
-            background: rgba(233, 69, 96, 0.15);
-            color: #e94560;
-            border: 1px solid rgba(233, 69, 96, 0.3);
-        }
-        .flash-warning {
-            background: rgba(255, 193, 7, 0.15);
-            color: #ffc107;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-        }
-        .flash-info {
-            background: rgba(0, 123, 255, 0.15);
-            color: #4da8ff;
-            border: 1px solid rgba(0, 123, 255, 0.3);
+
+        .auth-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-sec);
         }
     </style>
 </head>
+
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>UPS Manager</h1>
-            <p>Sistema de Gestion de UPS</p>
-        </div>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-            <div class="flash-msg flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('auth.login') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="form-group">
-                <label for="username">Usuario</label>
-                <input type="text" id="username" name="username" required autocomplete="username" autofocus>
+    <div class="login-wrapper">
+        <div class="glass-card login-card text-center">
+            <div class="mb-4">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="45" class="login-logo">
+                <h2 class="fw-bold text-white mb-1">UPS MANAGER</h2>
+                <small style="color:var(--accent-red); letter-spacing:3px; font-size:0.75rem; font-weight:700;">ACCESO
+                    AL SISTEMA</small>
             </div>
-            <div class="form-group">
-                <label for="password">Contrasena</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password">
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-4 text-start">
+                {% for category, message in messages %}
+                <div
+                    class="alert alert-{{ 'danger' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }} bg-dark border-{{ category }} text-white py-2 px-3 small animate-pulse">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ message }}
+                </div>
+                {% endfor %}
             </div>
-            <button type="submit" class="btn-login">Iniciar Sesion</button>
-        </form>
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}" class="text-start">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Usuario" required
+                        autocomplete="username" autofocus>
+                    <label for="username">USUARIO</label>
+                </div>
+
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña"
+                        required autocomplete="current-password">
+                    <label for="password">CONTRASEÑA</label>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-login">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> INICIAR SESIÓN
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-footer border-top border-secondary pt-3">
+                <p class="mb-0">&copy; 2026 LEMONROY BUSINESS SOLUTIONS</p>
+                <small class="text-muted">Consola de Ingeniería v3.1</small>
+            </div>
+        </div>
     </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
