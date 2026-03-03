@@ -9,7 +9,9 @@
       "Bash(find \"/c/Users/smartinez/OneDrive - LEMONROY BUSINESS SOLUTIONS SA DE CV/Documents/DEV/Git-Guia-Install/Guia_Instalacion\" -name \"*.html\" -exec grep -l \"logout\\\\|salir\\\\|cerrar sesión\" {} ;)",
       "mcp__Claude_Preview__preview_start",
       "Bash(py --version)",
-      "Bash(py -3 --version)"
+      "Bash(py -3 --version)",
+      "Bash(python:*)",
+      "Bash(.venv/Scripts/python:*)"
     ]
   }
 }

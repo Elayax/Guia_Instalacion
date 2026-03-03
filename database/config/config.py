@@ -23,8 +23,25 @@ class BaseConfig:
     ALLOWED_EXTENSIONS = {'csv', 'png', 'jpg', 'jpeg', 'gif', 'pdf'}
     ALLOWED_IMAGE_TYPES = {'image/png', 'image/jpeg', 'image/gif'}
 
-    # SocketIO CORS (red local)
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
+    # --- DNS / Red ---
+    APP_DOMAIN = os.environ.get('APP_DOMAIN', 'apa.lbs.local')
+    APP_HOST = os.environ.get('APP_HOST', '0.0.0.0')
+    APP_PORT = int(os.environ.get('APP_PORT', '5000'))
+
+    # SocketIO CORS (red local + dominio)
+    _cors_env = os.environ.get('CORS_ORIGINS', '')
+    _domain = os.environ.get('APP_DOMAIN', 'apa.lbs.local')
+    _port = os.environ.get('APP_PORT', '5000')
+    CORS_ORIGINS = (
+        _cors_env.split(',') if _cors_env
+        else [
+            '*',
+            f'http://{_domain}',
+            f'http://{_domain}:{_port}',
+            f'https://{_domain}',
+            f'https://{_domain}:{_port}',
+        ]
+    )
 
     # InfluxDB (monitoreo)
     INFLUXDB_URL = os.environ.get('INFLUXDB_URL', 'http://localhost:8086')
