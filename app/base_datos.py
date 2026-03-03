@@ -1053,15 +1053,101 @@ class GestorDB:
             return cursor.fetchone()
 
     def crear_usuario(self, username, password_hash, role='user'):
-        """Crea un nuevo usuario."""
+        """Crea un nuevo usuario. Retorna el id del usuario creado o None si falla."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+                cursor.execute(
+                    "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s) RETURNING id",
+                    (username, password_hash, role)
+                )
+                row = cursor.fetchone()
+                return row['id'] if row else None
+        except Exception as e:
+            logger.error("Error creando usuario: %s", e)
+            return None
+
+    def actualizar_password(self, user_id, new_password_hash):
+        """Actualiza el hash de contraseña de un usuario."""
         try:
             with self.pool.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
-                    (username, password_hash, role)
+                    "UPDATE users SET password_hash = %s WHERE id = %s",
+                    (new_password_hash, user_id)
                 )
                 return True
         except Exception as e:
-            logger.error("Error creando usuario: %s", e)
+            logger.error("Error actualizando contraseña: %s", e)
+            return False
+
+    # =========================================================================
+    # PERMISOS DE USUARIO
+    # =========================================================================
+    def obtener_permisos_usuario(self, user_id):
+        """Obtiene los permisos de un usuario como dict {seccion: bool}."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            cursor.execute(
+                "SELECT seccion, permitido FROM user_permissions WHERE user_id = %s",
+                (user_id,)
+            )
+            return {row['seccion']: row['permitido'] for row in cursor.fetchall()}
+
+    def establecer_permisos_usuario(self, user_id, permisos_dict):
+        """Establece permisos para un usuario (UPSERT por sección)."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor()
+                for seccion, permitido in permisos_dict.items():
+                    cursor.execute(
+                        """INSERT INTO user_permissions (user_id, seccion, permitido)
+                           VALUES (%s, %s, %s)
+                           ON CONFLICT (user_id, seccion)
+                           DO UPDATE SET permitido = EXCLUDED.permitido""",
+                        (user_id, seccion, bool(permitido))
+                    )
+                return True
+        except Exception as e:
+            logger.error("Error estableciendo permisos: %s", e)
+            return False
+
+    def inicializar_permisos_usuario(self, user_id, role='user'):
+        """Inicializa permisos por defecto según el rol."""
+        from app.permisos import SECCIONES_DISPONIBLES
+        if role == 'admin':
+            permisos = {s: True for s in SECCIONES_DISPONIBLES}
+        else:
+            permisos = {s: (s != 'scada') for s in SECCIONES_DISPONIBLES}
+        return self.establecer_permisos_usuario(user_id, permisos)
+
+    def obtener_todos_usuarios_con_permisos(self):
+        """Obtiene todos los usuarios con sus permisos agregados."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            cursor.execute("""
+                SELECT u.id, u.username, u.role, u.created_at,
+                       COALESCE(json_object_agg(up.seccion, up.permitido)
+                                FILTER (WHERE up.seccion IS NOT NULL), '{}') AS permisos
+                FROM users u
+                LEFT JOIN user_permissions up ON u.id = up.user_id
+                GROUP BY u.id, u.username, u.role, u.created_at
+                ORDER BY u.id
+            """)
+            rows = cursor.fetchall()
+            import json
+            for row in rows:
+                if isinstance(row['permisos'], str):
+                    row['permisos'] = json.loads(row['permisos'])
+            return rows
+
+    def eliminar_usuario(self, user_id):
+        """Elimina un usuario (CASCADE borra sus permisos)."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                return True
+        except Exception as e:
+            logger.error("Error eliminando usuario: %s", e)
             return False

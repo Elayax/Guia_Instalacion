@@ -33,7 +33,7 @@ class ReportePDF(FPDF):
 
         try:
             if os.path.exists(ruta_logo):
-                self.image(ruta_logo, 10, 10, 33) 
+                self.image(ruta_logo, 10, 10, 33)
             else:
                 self.set_fill_color(*COLOR_ROJO)
                 self.rect(10, 10, 33, 15, 'F')
@@ -42,16 +42,23 @@ class ReportePDF(FPDF):
 
         # 2. ENCABEZADO
         self.set_y(10)
-        self.set_x(50) 
+        self.set_x(50)
         self.set_font('Arial', 'B', 16)
         self.set_text_color(*COLOR_ROJO)
-        self.cell(0, 8, 'GUÍA DE INSTALACIÓN Y MEMORIA TÉCNICA', 0, 1, 'L') 
-        
+        self.cell(0, 8, 'GUÍA DE INSTALACIÓN Y MEMORIA TÉCNICA', 0, 1, 'L')
+
         self.set_x(50)
         self.set_font('Arial', 'B', 10)
         self.set_text_color(*COLOR_GRIS_CLARO)
         self.cell(0, 5, 'SISTEMA DE ENERGÍA ININTERRUMPIDA (UPS) - BAJA TENSIÓN', 0, 1, 'L')
-        
+
+        # Fecha en la esquina superior derecha
+        self.set_xy(150, 10)
+        self.set_font('Arial', '', 7)
+        self.set_text_color(*COLOR_GRIS_CLARO)
+        fecha = datetime.now().strftime("%d/%m/%Y")
+        self.cell(50, 5, fecha, 0, 0, 'R')
+
         self.ln(4)
         self.set_draw_color(*COLOR_ROJO)
         self.set_line_width(0.4)
@@ -63,8 +70,9 @@ class ReportePDF(FPDF):
         self.set_font('Arial', 'I', 7)
         self.set_text_color(*COLOR_GRIS_CLARO)
         fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
-        texto = f"Página {self.page_no()}"
-        self.cell(0, 10, texto, 0, 0, 'C')
+        self.cell(60, 10, "Doc. v1.0 | LBS", 0, 0, 'L')
+        self.cell(70, 10, fecha, 0, 0, 'C')
+        self.cell(60, 10, f"Página {self.page_no()}", 0, 0, 'R')
 
     # ==========================================================================
     # EL DIRECTOR DE ORQUESTA
@@ -195,66 +203,68 @@ class ReportePDF(FPDF):
         # Almacenar imágenes temporales como atributo de la instancia
         self.imagenes_temp = imagenes_temp or {}
 
-        # NO convertir datos ni res, dejar los valores originales
-        # La conversión UTF-8 se hará solo cuando sea necesario en cell/multi_cell
-
-        # Portada
+        # Portada — siempre
         self.add_page()
         self._hoja_portada(datos, res, ups)
 
-        # HOJA 1
+        # Normas de seguridad — siempre
         self.add_page()
         if not es_publicado:
-            self.set_font('Arial', 'B', 40) # Bajé un poco la fuente para que quepa mejor
-            self.set_text_color(230, 230, 230) # Más clarito para que no estorbe
+            self.set_font('Arial', 'B', 40)
+            self.set_text_color(230, 230, 230)
             self.set_xy(10, 100)
             self.cell(0, 10, "VISTA PREVIA - BORRADOR", 0, 0, 'C')
             self.set_xy(10, 120)
             self.cell(0, 10, "NO VALIDO PARA INSTALACIÓN", 0, 0, 'C')
-
-            # Restauramos color normal
             self.set_text_color(*COLOR_NEGRO)
             self.set_y(40)
         self._hoja_1_seguridad_instalacion()
 
-        # HOJA 2 Y 3 COMBINADAS
+        # Datos del sitio + Ingeniería — siempre
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
         self._hoja_2_datos_sitio(datos, ups)
-
-        # Continuar con página 3 en la misma hoja (sin add_page)
-        self.ln(8)  # Espacio entre secciones
+        self.ln(8)
         self._hoja_3_ingenieria(datos, res)
 
-        # Baterias
+        # Baterías — SOLO si hay datos de baterías
         if res.get('baterias_total'):
             self.add_page()
             if not es_publicado: self._marca_agua_preview()
             self._seccion_baterias(bateria, res)
 
-            self.add_page()
-            if not es_publicado: self._marca_agua_preview()
-            self._seccion_fotografia("CONEXIÓN DE BATERÍAS", ups.get('imagen_baterias_url'))
-
-        # Notas de Instalación
+        # Notas de instalación — siempre (tiene texto fijo útil)
         self.add_page()
         if not es_publicado: self._marca_agua_preview()
         self._seccion_notas_instalacion(ups)
 
-        # Diagrama de Conexión
-        self.add_page()
-        if not es_publicado: self._marca_agua_preview()
-        self._hoja_4_diagrama(ups)
+        # Diagramas — SOLO si hay imagen temporal o de BD
+        tiene_unifilar = bool(self.imagenes_temp.get('unifilar_ac'))
+        tiene_bat_dc = bool(self.imagenes_temp.get('baterias_dc')) or (ups and ups.get('imagen_baterias_url'))
 
-        # Sección de Tipo de Ventilación
-        self.add_page()
-        if not es_publicado: self._marca_agua_preview()
-        self._seccion_tipo_ventilacion(res.get('tipo_ventilacion'), res.get('tipo_ventilacion_data'))
+        if tiene_unifilar or tiene_bat_dc:
+            self.add_page()
+            if not es_publicado: self._marca_agua_preview()
+            self._hoja_4_diagrama(ups)
 
-        # Sección de Disposición de los Equipos
-        self.add_page()
-        if not es_publicado: self._marca_agua_preview()
-        self._seccion_fotografia("DISPOSICIÓN DE LOS EQUIPOS", ups.get('imagen_layout_url'))
+        # Ventilación — SOLO si hay tipo_ventilacion definido
+        if res.get('tipo_ventilacion'):
+            self.add_page()
+            if not es_publicado: self._marca_agua_preview()
+            self._seccion_tipo_ventilacion(res.get('tipo_ventilacion'), res.get('tipo_ventilacion_data'))
+
+        # Disposición equipos — SOLO si hay imagen
+        tiene_layout = bool(self.imagenes_temp.get('layout_equipos')) or (ups and ups.get('imagen_layout_url'))
+        if tiene_layout:
+            self.add_page()
+            if not es_publicado: self._marca_agua_preview()
+            self._seccion_fotografia("DISPOSICIÓN DE LOS EQUIPOS", ups.get('imagen_layout_url') if ups else None)
+
+        # Conexión baterías foto — SOLO si hay baterías Y imagen
+        if res.get('baterias_total') and (ups and ups.get('imagen_baterias_url')):
+            self.add_page()
+            if not es_publicado: self._marca_agua_preview()
+            self._seccion_fotografia("CONEXIÓN DE BATERÍAS", ups.get('imagen_baterias_url'))
 
         return self.output()
 
@@ -263,12 +273,24 @@ class ReportePDF(FPDF):
     # ==========================================================================
     def _hoja_portada(self, datos, res, ups=None):
         self.ln(20)
-        
+
         y_pos_after_image = self.get_y() + 85
-        
-        draw_black_box = True
-        
-        if ups and ups.get('imagen_url'):
+        imagen_colocada = False
+
+        # Prioridad 1: Imagen de portada subida por el usuario
+        if self.imagenes_temp.get('portada'):
+            try:
+                img_procesada = self._preparar_imagen(self.imagenes_temp['portada'], ancho_mm=80)
+                self.image(img_procesada, x=65, y=40, w=80)
+                imagen_colocada = True
+                if img_procesada != self.imagenes_temp['portada']:
+                    try: os.unlink(img_procesada)
+                    except: pass
+            except Exception:
+                pass
+
+        # Prioridad 2: Imagen del UPS desde BD
+        if not imagen_colocada and ups and ups.get('imagen_url'):
             img_filename = os.path.basename(ups['imagen_url'])
             ruta_imagen = os.path.join(os.path.dirname(__file__), 'static', 'img', 'ups', img_filename)
 
@@ -276,19 +298,14 @@ class ReportePDF(FPDF):
                 try:
                     img_procesada = self._preparar_imagen(ruta_imagen, ancho_mm=80)
                     self.image(img_procesada, x=65, y=40, w=80)
-                    draw_black_box = False
-                    # Limpiar archivo temporal
+                    imagen_colocada = True
                     if img_procesada != ruta_imagen:
-                        try:
-                            os.unlink(img_procesada)
-                        except:
-                            pass
+                        try: os.unlink(img_procesada)
+                        except: pass
                 except Exception:
                     pass
 
-        if draw_black_box:
-            self.set_fill_color(0, 0, 0)
-            self.rect(x=65, y=40, w=80, h=60, style='F')
+        # Si no hay imagen, no dibujar nada (sin caja negra)
 
         self.set_y(y_pos_after_image)
 
@@ -637,13 +654,9 @@ class ReportePDF(FPDF):
                 imagen_insertada = self._insertar_imagen_segura(ruta_imagen, ancho_mm=120)
 
         if not imagen_insertada:
-            y = self.get_y()
-            self.set_fill_color(230, 230, 230)
-            self.rect(45, y, 120, 80, 'F')
-            self.set_xy(45, y + 35)
-            self.set_font('Arial', 'B', 12)
-            self.set_text_color(150, 150, 150)
-            self.cell(120, 10, "[ IMAGEN NOTAS 1 ]", 0, 0, 'C')
+            self.set_font('Arial', 'I', 9)
+            self.set_text_color(*COLOR_GRIS_CLARO)
+            self.cell(0, 6, "Imagen no disponible.", 0, 1, 'C')
             self.set_text_color(*COLOR_NEGRO)
 
     # ==========================================================================
@@ -680,14 +693,10 @@ class ReportePDF(FPDF):
             )
 
         if not imagen_unifilar_ok:
-            self.set_fill_color(230, 230, 230)
-            y = self.get_y()
-            self.rect(10, y, 190, 80, 'F')
-            self.set_xy(10, y + 35)
-            self.set_font('Arial', 'B', 12)
-            self.set_text_color(150, 150, 150)
-            self.cell(190, 10, "[ ESPACIO PARA DIAGRAMA UNIFILAR AC ]", 0, 0, 'C')
-            self.set_y(y + 85)
+            self.set_font('Arial', 'I', 9)
+            self.set_text_color(*COLOR_GRIS_CLARO)
+            self.cell(0, 6, "Diagrama unifilar AC no disponible.", 0, 1, 'C')
+            self.set_text_color(*COLOR_NEGRO)
         self.ln(5)
 
         # NUEVA PÁGINA PARA DIAGRAMA DE BATERÍAS DC
@@ -725,13 +734,9 @@ class ReportePDF(FPDF):
                 imagen_bat_ok = self._insertar_imagen_segura(ruta_imagen, ancho_mm=120)
 
         if not imagen_bat_ok:
-            y = self.get_y()
-            self.set_fill_color(230, 230, 230)
-            self.rect(45, y, 120, 80, 'F')
-            self.set_xy(45, y + 35)
-            self.set_font('Arial', 'B', 12)
-            self.set_text_color(150, 150, 150)
-            self.cell(120, 10, "[ IMAGEN CONEXIÓN BATERÍAS ]", 0, 0, 'C')
+            self.set_font('Arial', 'I', 9)
+            self.set_text_color(*COLOR_GRIS_CLARO)
+            self.cell(0, 6, "Diagrama de baterías DC no disponible.", 0, 1, 'C')
             self.set_text_color(*COLOR_NEGRO)
 
     def _seccion_fotografia(self, titulo, imagen_url=None):
@@ -778,13 +783,9 @@ class ReportePDF(FPDF):
                 imagen_ok = self._insertar_imagen_segura(ruta_imagen, ancho_mm=120)
 
         if not imagen_ok:
-            y = self.get_y()
-            self.set_fill_color(230, 230, 230)
-            self.rect(45, y, 120, 80, 'F')
-            self.set_xy(45, y + 35)
-            self.set_font('Arial', 'B', 12)
-            self.set_text_color(150, 150, 150)
-            self.cell(120, 10, f"[ FOTOGRAFÍA: {titulo.upper()} ]", 0, 0, 'C')
+            self.set_font('Arial', 'I', 9)
+            self.set_text_color(*COLOR_GRIS_CLARO)
+            self.cell(0, 6, "Imagen no disponible.", 0, 1, 'C')
             self.set_text_color(*COLOR_NEGRO)
 
     def _seccion_tipo_ventilacion(self, tipo_ventilacion=None, tipo_ventilacion_data=None):

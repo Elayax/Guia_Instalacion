@@ -1,10 +1,11 @@
 import logging
 import os
 from flask import render_template, request, make_response, current_app
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.reporte import ReportePDF
+from app.permisos import permiso_requerido
 from app.auxiliares import (
-    guardar_archivo_temporal,
+    normalizar_imagen,
     guardar_pdf_proyecto,
     guardar_imagen_proyecto
 )
@@ -23,6 +24,7 @@ def _to_float(val, default=0.0):
 
 @guia_rapida_bp.route('/guia-rapida')
 @login_required
+@permiso_requerido('guia_rapida')
 def guia_rapida():
     """Renderiza el formulario de Guía Rápida con datos de BD para autocomplete."""
     db = current_app.db
@@ -36,6 +38,7 @@ def guia_rapida():
 
 @guia_rapida_bp.route('/generar-pdf-guia-rapida', methods=['POST'])
 @login_required
+@permiso_requerido('guia_rapida')
 def generar_pdf_guia_rapida():
     """Genera PDF de instalación desde datos manuales del formulario Guía Rápida."""
     db = current_app.db
@@ -84,11 +87,12 @@ def generar_pdf_guia_rapida():
         'es_publicado': es_publicar
     }
 
-    # Manejo de imágenes
+    # Manejo de imágenes con normalización
     imagenes_temp = {}
     base_app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     image_fields = [
+        ('imagen_portada', 'portada'),
         ('imagen_unifilar_ac', 'unifilar_ac'),
         ('imagen_baterias_dc', 'baterias_dc'),
         ('imagen_layout_equipos', 'layout_equipos')
@@ -100,15 +104,18 @@ def generar_pdf_guia_rapida():
                 file = request.files[field_name]
                 if file and file.filename:
                     nombre = guardar_imagen_proyecto(file, pedido)
-                    imagenes_temp[key] = os.path.join(
-                        base_app_dir, 'static', 'img', 'proyectos', pedido, nombre
-                    )
+                    if nombre:
+                        imagenes_temp[key] = os.path.join(
+                            base_app_dir, 'static', 'img', 'proyectos', pedido, nombre
+                        )
     else:
         for field_name, key in image_fields:
             if field_name in request.files:
                 file = request.files[field_name]
                 if file and file.filename:
-                    imagenes_temp[key] = guardar_archivo_temporal(file)
+                    ruta_normalizada = normalizar_imagen(file)
+                    if ruta_normalizada:
+                        imagenes_temp[key] = ruta_normalizada
 
     # Obtener tipo de ventilación desde el UPS
     tipo_ventilacion_data = None
@@ -163,4 +170,87 @@ def generar_pdf_guia_rapida():
     nombre_seguro = str(pedido).replace(" ", "_")
     prefijo = "Guia" if es_publicar else "Preview"
     response.headers['Content-Disposition'] = f'attachment; filename={prefijo}_Instalacion_{nombre_seguro}.pdf'
+    return response
+
+
+@guia_rapida_bp.route('/generar-ejemplo-pdf')
+@login_required
+@permiso_requerido('guia_rapida')
+def generar_ejemplo_pdf():
+    """Genera un PDF de ejemplo con datos ficticios."""
+
+    db = current_app.db
+
+    datos_ejemplo = {
+        'pedido': 'EJEMPLO-001',
+        'cliente_texto': 'CLIENTE EJEMPLO S.A. DE C.V.',
+        'sucursal_texto': 'SUCURSAL DEMO - CDMX',
+        'modelo_nombre': 'Dragon Power Plus 60',
+        'kva': '60',
+        'voltaje': '220',
+        'fases': '3',
+        'longitud': '15',
+    }
+
+    resultado_ejemplo = {
+        'pedido': 'EJEMPLO-001',
+        'cliente_nom': 'CLIENTE EJEMPLO S.A. DE C.V.',
+        'sucursal_nom': 'SUCURSAL DEMO - CDMX',
+        'modelo_nombre': 'Dragon Power Plus 60',
+        'kva': '60',
+        'voltaje': '220',
+        'fases': '3',
+        'longitud': '15',
+        'i_nom': 157.5,
+        'i_diseno': 196.9,
+        'dv_pct': 1.85,
+        'fase_sel': '1/0',
+        'breaker_sel': 200.0,
+        'gnd_sel': '6',
+        'i_real_cable': 230.0,
+        'nota_altitud': '',
+        'baterias_total': 40.0,
+        'baterias_por_string': 20.0,
+        'numero_strings': 2.0,
+        'autonomia_calculada_min': 12.5,
+        'autonomia_deseada_min': 10.0,
+        'bateria_modelo': 'LBS12-100 (100Ah)',
+        'tiempo_respaldo': '10',
+        'dim_largo': '442',
+        'dim_ancho': '659',
+        'dim_alto': '174',
+        'peso': '180',
+        'es_publicado': False,
+        'tipo_ventilacion': None,
+        'tipo_ventilacion_data': None,
+    }
+
+    # Intentar obtener un UPS real de la BD para la portada
+    ups_data = None
+    try:
+        todos_ups = db.obtener_ups_todos()
+        if todos_ups:
+            ups_data = db.obtener_ups_id(todos_ups[0].get('id') or todos_ups[0].get('Id'))
+    except Exception:
+        pass
+
+    bateria_ejemplo = {
+        'modelo': 'LBS12-100',
+        'fabricante': 'LBS Energy',
+        'voltaje_nominal': 12,
+        'capacidad_ah': 100,
+    }
+
+    pdf = ReportePDF()
+    pdf_bytes = pdf.generar_cuerpo(
+        datos_ejemplo, resultado_ejemplo,
+        ups=ups_data,
+        bateria=bateria_ejemplo,
+        es_publicado=False,
+        imagenes_temp={}
+    )
+
+    response = make_response(bytes(pdf_bytes))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=Ejemplo_Guia_Instalacion.pdf'
     return response

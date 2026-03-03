@@ -2,6 +2,7 @@ import logging
 import os
 from flask import render_template, request, redirect, url_for, current_app
 from flask_login import login_required
+from app.permisos import permiso_requerido
 from . import dashboard_bp
 
 logger = logging.getLogger(__name__)
@@ -9,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 @dashboard_bp.route('/', methods=['GET', 'POST'])
 @login_required
+@permiso_requerido('tablero')
 def dashboard():
     db = current_app.db
     pedido_data = None

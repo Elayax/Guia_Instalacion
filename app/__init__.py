@@ -41,7 +41,17 @@ def create_app(config_name=None):
     @login_manager.user_loader
     def load_user(user_id):
         row = app.db.obtener_usuario_por_id(int(user_id))
-        return User.from_row(row)
+        user = User.from_row(row)
+        if user:
+            user.permisos = app.db.obtener_permisos_usuario(user.id)
+        return user
+
+    @app.context_processor
+    def inject_user_permisos():
+        from flask_login import current_user
+        if current_user.is_authenticated:
+            return {'user_permisos': getattr(current_user, 'permisos', {})}
+        return {'user_permisos': {}}
 
     # Headers de seguridad
     apply_security_headers(app)
@@ -74,6 +84,9 @@ def create_app(config_name=None):
     from app.routes.diagnostic_routes import diagnostic_bp
     app.register_blueprint(diagnostic_bp)
 
+    from app.routes.user_management import user_mgmt_bp
+    app.register_blueprint(user_mgmt_bp)
+
     # --- Monitoreo en segundo plano ---
     try:
         from app.services.monitoring_service import MonitoringService
@@ -84,6 +97,10 @@ def create_app(config_name=None):
         logger.warning("No se pudo iniciar el servicio de monitoreo: %s", e)
 
     # --- Error handlers ---
+    @app.errorhandler(403)
+    def forbidden(e):
+        return "Acceso denegado — No tiene permisos para esta sección", 403
+
     @app.errorhandler(404)
     def not_found(e):
         return "Página no encontrada", 404

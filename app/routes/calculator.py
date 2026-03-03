@@ -5,6 +5,7 @@ from flask import render_template, request, make_response, redirect, url_for, cu
 from flask_login import login_required
 from werkzeug.datastructures import ImmutableMultiDict
 from app.reporte import ReportePDF
+from app.permisos import permiso_requerido
 from app.auxiliares import (
     procesar_calculo_ups,
     guardar_archivo_temporal,
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 @calculator_bp.route('/calculadora', methods=['GET', 'POST'])
 @login_required
+@permiso_requerido('calculos')
 def calculadora():
     db = current_app.db
     lista_clientes_unicos = db.obtener_clientes_unicos()
@@ -270,6 +272,7 @@ def calculadora():
 
 @calculator_bp.route('/generar-pdf-calculadora', methods=['POST'])
 @login_required
+@permiso_requerido('calculos')
 def generar_pdf_calculadora():
     db = current_app.db
     datos = request.form.to_dict()

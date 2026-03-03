@@ -1,6 +1,7 @@
 import logging
 from flask import render_template, request, redirect, url_for, make_response, current_app
 from flask_login import login_required
+from app.permisos import permiso_requerido
 from app.auxiliares import procesar_post_gestion, obtener_datos_plantilla
 from . import management_bp
 
@@ -21,6 +22,7 @@ def baterias():
 
 @management_bp.route('/gestion', methods=['GET', 'POST'])
 @login_required
+@permiso_requerido('datos')
 def gestion():
     db = current_app.db
     state = {
@@ -53,6 +55,7 @@ def gestion():
 
 @management_bp.route('/carga-masiva', methods=['GET', 'POST'])
 @login_required
+@permiso_requerido('datos')
 def carga_masiva():
     if request.method == 'POST':
         from app.auxiliares import _procesar_carga_masiva
@@ -66,6 +69,7 @@ def carga_masiva():
 
 @management_bp.route('/descargar-plantilla/<tipo>')
 @login_required
+@permiso_requerido('datos')
 def descargar_plantilla(tipo):
     headers, rows = obtener_datos_plantilla(tipo)
     if not headers:
@@ -87,6 +91,7 @@ def descargar_plantilla(tipo):
 
 @management_bp.route('/exportar-tabla/<tabla>')
 @login_required
+@permiso_requerido('datos')
 def exportar_tabla(tabla):
     db = current_app.db
     headers, rows = db.obtener_datos_tabla(tabla)
@@ -109,6 +114,7 @@ def exportar_tabla(tabla):
 
 @management_bp.route('/recuperacion-proyectos', methods=['GET', 'POST'])
 @login_required
+@permiso_requerido('datos')
 def recuperacion_proyectos():
     db = current_app.db
     mensaje = None

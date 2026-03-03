@@ -927,3 +927,94 @@ textarea {
     align-items: center;
     gap: 1rem;
 }
+
+/* =========================================================================
+   SEGMENTED NAVIGATION
+   ========================================================================= */
+:root {
+    --red-servicio: #ff453a;
+    --red-monitoreo: #e03030;
+    --red-admin: #c41840;
+}
+
+.nav-segmented {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.nav-segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 10px 6px;
+    border-radius: 8px;
+    position: relative;
+}
+
+.nav-segment-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    opacity: 0.5;
+}
+
+.nav-segment .nav-link {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+}
+
+.nav-segment-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+}
+
+/* Servicio segment */
+.nav-segment-servicio {
+    background: rgba(255, 69, 58, 0.06);
+    border: 1px solid rgba(255, 69, 58, 0.12);
+}
+
+.nav-segment-servicio .nav-segment-label {
+    color: var(--red-servicio);
+}
+
+.nav-segment-servicio .nav-link:hover,
+.nav-segment-servicio .nav-link.active {
+    color: var(--red-servicio) !important;
+}
+
+/* Monitoreo segment */
+.nav-segment-monitoreo {
+    background: rgba(224, 48, 48, 0.06);
+    border: 1px solid rgba(224, 48, 48, 0.12);
+}
+
+.nav-segment-monitoreo .nav-segment-label {
+    color: var(--red-monitoreo);
+}
+
+.nav-segment-monitoreo .nav-link:hover,
+.nav-segment-monitoreo .nav-link.active {
+    color: var(--red-monitoreo) !important;
+}
+
+/* Admin segment */
+.nav-segment-admin {
+    background: rgba(196, 24, 64, 0.06);
+    border: 1px solid rgba(196, 24, 64, 0.12);
+}
+
+.nav-segment-admin .nav-segment-label {
+    color: var(--red-admin);
+}
+
+.nav-segment-admin .nav-link:hover,
+.nav-segment-admin .nav-link.active {
+    color: var(--red-admin) !important;
+}

@@ -61,6 +61,16 @@
             margin-left: 0.3rem;
             vertical-align: middle;
         }
+        .calc-badge {
+            display: inline-block;
+            background: rgba(25, 135, 84, 0.15);
+            color: #198754;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.3rem;
+            vertical-align: middle;
+        }
         .guia-container {
             max-width: 1100px;
             margin: 0 auto;
@@ -109,16 +119,60 @@
                 <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
             </div>
         </div>
-        <nav class="d-flex gap-4">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
-            <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
-            <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
-            <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+        <nav class="nav-segmented">
+            <div class="nav-segment nav-segment-servicio">
+                <span class="nav-segment-label">SERVICIO</span>
+                <div class="d-flex gap-1">
+                    {% if user_permisos.get('tablero', True) %}
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+                    {% endif %}
+                    {% if user_permisos.get('calculos', True) %}
+                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+                    {% endif %}
+                    {% if user_permisos.get('guia_rapida', True) %}
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% if user_permisos.get('scada', True) %}
+            <div class="nav-segment-divider"></div>
+            <div class="nav-segment nav-segment-monitoreo">
+                <span class="nav-segment-label">MONITOREO</span>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+                </div>
+            </div>
+            {% endif %}
+            <div class="nav-segment-divider"></div>
+            <div class="nav-segment nav-segment-admin">
+                <span class="nav-segment-label">ADMIN</span>
+                <div class="d-flex gap-1">
+                    {% if user_permisos.get('datos', True) %}
+                    <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+                    {% endif %}
+                    {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i class="bi bi-people me-1"></i> CUENTAS</a>
+                    {% endif %}
+                </div>
+            </div>
         </nav>
         <div class="d-flex align-items-center gap-3">
             <div class="text-end">
                 <div class="fw-bold" id="clock">00:00:00</div>
                 <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i class="bi bi-key me-2"></i>Cambiar Contraseña</a></li>
+                    {% if current_user.role == 'admin' %}
+                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                </ul>
             </div>
         </div>
     </header>
@@ -292,15 +346,15 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Baterías por String</label>
-                        <input type="number" name="baterias_por_string" class="form-control" step="1" placeholder="0">
+                        <input type="number" name="baterias_por_string" id="input_bat_por_string" class="form-control" step="1" placeholder="0">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Número de Strings</label>
-                        <input type="number" name="numero_strings" class="form-control" step="1" placeholder="0">
+                        <input type="number" name="numero_strings" id="input_num_strings" class="form-control" step="1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Total Baterías</label>
-                        <input type="number" name="baterias_total" class="form-control" step="1" placeholder="0">
+                        <label class="form-label">Total Baterías <span class="calc-badge">CALC</span></label>
+                        <input type="number" name="baterias_total" id="input_bat_total" class="form-control" step="1" placeholder="Auto" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Tiempo Respaldo (min)</label>
@@ -319,22 +373,27 @@
 
             <!-- =================== SECCIÓN 5: IMÁGENES =================== -->
             <div class="section-card">
-                <div class="section-title"><i class="bi bi-image"></i>Imágenes para el Reporte</div>
+                <div class="section-title"><i class="bi bi-image"></i>Imágenes para el Reporte <small class="text-muted fw-normal" style="letter-spacing:0;">(solo JPG, PNG, BMP)</small></div>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-danger"><i class="bi bi-card-image me-1"></i>Portada (opcional)</label>
+                        <input type="file" name="imagen_portada" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
+                        <small class="text-muted">Reemplaza la imagen de UPS en la portada del PDF</small>
+                    </div>
+                    <div class="col-md-6">
                         <label class="form-label fw-bold text-danger"><i class="bi bi-diagram-3-fill me-1"></i>Diagrama Unifilar AC</label>
-                        <input type="file" name="imagen_unifilar_ac" class="form-control" accept="image/*">
-                        <small class="text-muted">PNG, JPG. Máximo 5MB</small>
+                        <input type="file" name="imagen_unifilar_ac" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
+                        <small class="text-muted">JPG, PNG, BMP. Máximo 5MB</small>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label fw-bold text-danger"><i class="bi bi-battery-charging me-1"></i>Diagrama Baterías DC</label>
-                        <input type="file" name="imagen_baterias_dc" class="form-control" accept="image/*">
-                        <small class="text-muted">PNG, JPG. Máximo 5MB</small>
+                        <input type="file" name="imagen_baterias_dc" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
+                        <small class="text-muted">JPG, PNG, BMP. Máximo 5MB</small>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label fw-bold text-danger"><i class="bi bi-grid-3x3 me-1"></i>Disposición de Equipos</label>
-                        <input type="file" name="imagen_layout_equipos" class="form-control" accept="image/*">
-                        <small class="text-muted">PNG, JPG. Máximo 5MB</small>
+                        <input type="file" name="imagen_layout_equipos" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
+                        <small class="text-muted">JPG, PNG, BMP. Máximo 5MB</small>
                     </div>
                 </div>
             </div>
@@ -346,6 +405,11 @@
                     Vista Previa genera un borrador con marca de agua. Publicar guarda el PDF final.
                 </div>
                 <div class="d-flex gap-3">
+                    {% if current_user.role != 'user' %}
+                    <a href="{{ url_for('guia_rapida.generar_ejemplo_pdf') }}" class="btn btn-outline-info btn-lg px-3" target="_blank">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>EJEMPLO PDF
+                    </a>
+                    {% endif %}
                     <button type="submit" class="btn btn-warning btn-lg px-4 fw-bold shadow" onclick="document.getElementById('accion_hidden').value='preview';">
                         <i class="bi bi-eye me-2"></i>VISTA PREVIA PDF
                     </button>
@@ -373,6 +437,23 @@
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
 
+        // =================== AUTO-CÁLCULO TOTAL BATERÍAS ===================
+        const inputBatPorString = document.getElementById('input_bat_por_string');
+        const inputNumStrings = document.getElementById('input_num_strings');
+        const inputBatTotal = document.getElementById('input_bat_total');
+
+        function calcularTotalBaterias() {
+            const porString = parseInt(inputBatPorString.value) || 0;
+            const numStrings = parseInt(inputNumStrings.value) || 0;
+            const total = porString * numStrings;
+            inputBatTotal.value = total > 0 ? total : '';
+        }
+
+        if (inputBatPorString && inputNumStrings) {
+            inputBatPorString.addEventListener('input', calcularTotalBaterias);
+            inputNumStrings.addEventListener('input', calcularTotalBaterias);
+        }
+
         // =================== UPS AUTOCOMPLETE ===================
         const selUps = document.getElementById('sel_ups');
         if (selUps) {
@@ -386,7 +467,6 @@
                 fetch(`/api/ups/${id}`)
                     .then(r => r.json())
                     .then(data => {
-                        // Llenar ficha mini
                         const mini = document.getElementById('ups_specs_mini');
                         if (mini) mini.style.display = 'block';
                         document.getElementById('sp_kva').textContent = data.Capacidad_kVA || '--';
@@ -394,7 +474,6 @@
                         document.getElementById('sp_eff').textContent = (data.Eficiencia_Modo_AC_pct || '--') + '%';
                         document.getElementById('sp_vdc').textContent = (data.Bateria_Vdc || '--') + ' VDC';
 
-                        // Auto-fill campos del formulario
                         document.getElementById('input_modelo_nombre').value = data.Nombre_del_Producto || '';
                         document.getElementById('input_kva').value = data.Capacidad_kVA || '';
                         document.getElementById('input_peso').value = data.Peso_Gabinete_kg || '';

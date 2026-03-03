@@ -1,5 +1,58 @@
 import os
+import tempfile
+from PIL import Image
+from werkzeug.utils import secure_filename
 from app.calculos import CalculadoraUPS, CalculadoraBaterias
+
+# --- Constantes para normalización de imágenes ---
+FORMATOS_IMAGEN_PERMITIDOS = {'.jpg', '.jpeg', '.png', '.bmp'}
+MAX_ANCHO_IMG_PX = 2000
+MAX_ALTO_IMG_PX = 1500
+CALIDAD_JPEG = 85
+
+
+def normalizar_imagen(file):
+    """Valida formato bitmap, redimensiona si excede máximo, convierte a JPEG.
+
+    Args:
+        file: objeto FileStorage de Flask (request.files[...])
+
+    Returns:
+        Path temporal del archivo normalizado (JPEG) o None si formato inválido.
+    """
+    if not file or not file.filename:
+        return None
+
+    filename = secure_filename(file.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in FORMATOS_IMAGEN_PERMITIDOS:
+        return None
+
+    try:
+        img = Image.open(file.stream)
+
+        # Convertir a RGB si tiene alpha o palette
+        if img.mode in ('RGBA', 'LA', 'P'):
+            bg = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            bg.paste(img, mask=img.split()[-1] if 'A' in img.mode else None)
+            img = bg
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        # Redimensionar si excede máximos (mantener proporción)
+        if img.width > MAX_ANCHO_IMG_PX or img.height > MAX_ALTO_IMG_PX:
+            img.thumbnail((MAX_ANCHO_IMG_PX, MAX_ALTO_IMG_PX), Image.Resampling.LANCZOS)
+
+        # Guardar como JPEG temporal
+        temp = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+        img.save(temp.name, 'JPEG', quality=CALIDAD_JPEG, optimize=True)
+        temp.close()
+        return temp.name
+    except Exception as e:
+        print(f"Error normalizando imagen: {e}")
+        return None
 
 def procesar_post_gestion(db, request, state):
     """Despachador principal de lógica POST para gestión"""

@@ -52,3 +52,34 @@ def logout():
     logout_user()
     flash('Sesión cerrada correctamente.', 'info')
     return redirect(url_for('auth.login'))
+
+
+@auth_bp.route('/cambiar-password', methods=['GET', 'POST'])
+@login_required
+def cambiar_password():
+    if request.method == 'POST':
+        actual = request.form.get('password_actual', '').strip()
+        nueva = request.form.get('password_nueva', '').strip()
+        confirmar = request.form.get('password_confirmar', '').strip()
+
+        if not all([actual, nueva, confirmar]):
+            flash('Todos los campos son requeridos.', 'danger')
+        elif nueva != confirmar:
+            flash('La nueva contraseña no coincide con la confirmación.', 'danger')
+        elif len(nueva) < 4:
+            flash('La contraseña debe tener al menos 4 caracteres.', 'danger')
+        else:
+            db = current_app.db
+            user_row = db.obtener_usuario_por_id(current_user.id)
+            if user_row and bcrypt.checkpw(actual.encode('utf-8'), user_row['password_hash'].encode('utf-8')):
+                new_hash = bcrypt.hashpw(nueva.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                if db.actualizar_password(current_user.id, new_hash):
+                    logger.info("Usuario '%s' cambió su contraseña", current_user.username)
+                    flash('Contraseña actualizada correctamente.', 'success')
+                    return redirect(url_for('dashboard.dashboard'))
+                else:
+                    flash('Error al actualizar la contraseña. Intente de nuevo.', 'danger')
+            else:
+                flash('Contraseña actual incorrecta.', 'danger')
+
+    return render_template('cambiar_password.html')

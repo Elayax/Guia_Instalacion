@@ -2,12 +2,14 @@ import os
 from flask import render_template, request, make_response, send_file, current_app
 from flask_login import login_required
 from app.checklist import ChecklistPDF
+from app.permisos import permiso_requerido
 from app.auxiliares import guardar_pdf_proyecto
 from . import documents_bp
 
 
 @documents_bp.route('/reimprimir-guia/<pedido>')
 @login_required
+@permiso_requerido('calculos')
 def reimprimir_guia(pedido):
     """Reimprime la guía de instalación de un pedido ya publicado."""
     db = current_app.db
@@ -35,6 +37,7 @@ def reimprimir_guia(pedido):
 
 @documents_bp.route('/generar-checklist/<pedido>', methods=['GET', 'POST'])
 @login_required
+@permiso_requerido('calculos')
 def generar_checklist(pedido):
     """Genera el checklist para un pedido."""
     db = current_app.db
@@ -76,6 +79,7 @@ def generar_checklist(pedido):
 
 @documents_bp.route('/reimprimir-checklist/<pedido>')
 @login_required
+@permiso_requerido('calculos')
 def reimprimir_checklist(pedido):
     """Reimprime el checklist de un pedido ya publicado."""
     db = current_app.db

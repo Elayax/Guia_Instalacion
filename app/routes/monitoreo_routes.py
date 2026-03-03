@@ -1,17 +1,20 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required
+from app.permisos import permiso_requerido
 
 monitoreo_bp = Blueprint('monitoreo', __name__)
 
 
 @monitoreo_bp.route('/monitoreo')
 @login_required
+@permiso_requerido('scada')
 def index():
     return render_template('monitoreo.html')
 
 
 @monitoreo_bp.route('/api/monitoreo/list', methods=['GET'])
 @login_required
+@permiso_requerido('scada')
 def list_devices():
     db = current_app.db
     devices = db.obtener_monitoreo_ups()
@@ -20,6 +23,7 @@ def list_devices():
 
 @monitoreo_bp.route('/api/monitoreo/add', methods=['POST'])
 @login_required
+@permiso_requerido('scada')
 def add_device():
     db = current_app.db
     data = request.json
@@ -38,6 +42,7 @@ def add_device():
 
 @monitoreo_bp.route('/api/monitoreo/delete/<int:id_device>', methods=['DELETE'])
 @login_required
+@permiso_requerido('scada')
 def delete_device(id_device):
     db = current_app.db
     db.eliminar_monitoreo_ups(id_device)
