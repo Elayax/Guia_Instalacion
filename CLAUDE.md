@@ -88,3 +88,6 @@ Flask-SocketIO, Flask-Login, Flask-WTF (CSRF) — initialized as singletons, bou
 | `INFLUXDB_URL` | `http://localhost:8086` | InfluxDB for monitoring data |
 | `INFLUXDB_TOKEN` | `my-token` | InfluxDB auth token |
 | `CORS_ORIGINS` | `*` | Allowed CORS origins for SocketIO |
+| `APP_DOMAIN` | `lbs.local` | Domain name for the app (used by mDNS and CORS) |
+| `MDNS_ENABLED` | `true` | Enable mDNS (Bonjour) auto-discovery on LAN |
+| `MDNS_SERVICE_NAME` | `UPS Manager LBS` | Service name announced via mDNS |

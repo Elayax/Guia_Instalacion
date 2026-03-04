@@ -24,13 +24,17 @@ class BaseConfig:
     ALLOWED_IMAGE_TYPES = {'image/png', 'image/jpeg', 'image/gif'}
 
     # --- DNS / Red ---
-    APP_DOMAIN = os.environ.get('APP_DOMAIN', 'apa.lbs.local')
+    APP_DOMAIN = os.environ.get('APP_DOMAIN', 'lbs.local')
     APP_HOST = os.environ.get('APP_HOST', '0.0.0.0')
     APP_PORT = int(os.environ.get('APP_PORT', '5000'))
 
+    # --- mDNS (Bonjour / Zeroconf) ---
+    MDNS_ENABLED = os.environ.get('MDNS_ENABLED', 'true').lower() in ('true', '1', 'yes')
+    MDNS_SERVICE_NAME = os.environ.get('MDNS_SERVICE_NAME', 'UPS Manager LBS')
+
     # SocketIO CORS (red local + dominio)
     _cors_env = os.environ.get('CORS_ORIGINS', '')
-    _domain = os.environ.get('APP_DOMAIN', 'apa.lbs.local')
+    _domain = os.environ.get('APP_DOMAIN', 'lbs.local')
     _port = os.environ.get('APP_PORT', '5000')
     CORS_ORIGINS = (
         _cors_env.split(',') if _cors_env

@@ -96,6 +96,22 @@ def create_app(config_name=None):
     except Exception as e:
         logger.warning("No se pudo iniciar el servicio de monitoreo: %s", e)
 
+    # --- mDNS (Bonjour / Zeroconf) ---
+    if app.config.get('MDNS_ENABLED', True):
+        # Evitar doble registro con el reloader de Werkzeug
+        if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            try:
+                from app.services.mdns_service import ServicioMDNS
+                mdns_service = ServicioMDNS(
+                    domain=app.config.get('APP_DOMAIN', 'lbs.local'),
+                    port=app.config.get('APP_PORT', 5000),
+                    service_name=app.config.get('MDNS_SERVICE_NAME', 'UPS Manager LBS'),
+                )
+                mdns_service.start()
+                logger.info("Servicio mDNS iniciado")
+            except Exception as e:
+                logger.warning("No se pudo iniciar el servicio mDNS: %s", e)
+
     # --- Error handlers ---
     @app.errorhandler(403)
     def forbidden(e):
