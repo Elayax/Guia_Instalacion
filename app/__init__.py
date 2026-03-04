@@ -84,6 +84,9 @@ def create_app(config_name=None):
     from app.routes.diagnostic_routes import diagnostic_bp
     app.register_blueprint(diagnostic_bp)
 
+    from app.routes.vales import vales_bp
+    app.register_blueprint(vales_bp)
+
     from app.routes.user_management import user_mgmt_bp
     app.register_blueprint(user_mgmt_bp)
 

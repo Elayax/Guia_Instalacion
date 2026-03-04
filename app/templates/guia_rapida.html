@@ -4,107 +4,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guía Rápida - Sistema UPS</title>
+    <title>Guía Manual - Sistema UPS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
-        .section-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(10px);
+        /* ===== PRO GUÍA MANUAL STYLES ===== */
+        .guia-container {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 6rem;
         }
-        .section-title {
-            color: var(--accent-red, #dc3545);
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+
+        /* --- Page Header --- */
+        .page-header {
+            position: relative;
+            padding: 1.5rem 0 1.25rem;
+            margin-bottom: 1.75rem;
         }
-        .section-title i {
-            margin-right: 0.5rem;
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent-red), rgba(255,69,58,0.1) 60%, transparent);
         }
-        .form-label {
-            color: rgba(255,255,255,0.7);
+        .page-header h4 {
+            font-size: 1.35rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.35rem;
+        }
+        .page-header .subtitle {
+            color: rgba(255,255,255,0.45);
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 400;
             letter-spacing: 0.5px;
+            line-height: 1.4;
         }
+
+        /* --- Section Cards --- */
+        .section-card {
+            position: relative;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 1.5rem 1.5rem 1.25rem;
+            margin-bottom: 1.25rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+        }
+        .section-card:hover {
+            border-color: rgba(255,69,58,0.15);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+        }
+        .section-card:focus-within {
+            border-color: rgba(255,69,58,0.25);
+            box-shadow: 0 0 0 1px rgba(255,69,58,0.08), 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        /* --- Section Title --- */
+        .sec-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--accent-red, #ff453a);
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            margin-bottom: 1.1rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sec-title i {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        .sec-title .sec-hint {
+            font-weight: 400;
+            letter-spacing: 0;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+            text-transform: none;
+            margin-left: auto;
+        }
+
+        /* --- Form Labels & Inputs --- */
+        .field-label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+        .field-label .badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 7px;
+            border-radius: 3px;
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            vertical-align: middle;
+        }
+        .badge-tag.suggest {
+            background: rgba(100,210,255,0.08);
+            color: rgba(100,210,255,0.65);
+            border: 1px solid rgba(100,210,255,0.12);
+        }
+        .badge-tag.calc {
+            background: rgba(50,215,75,0.08);
+            color: rgba(50,215,75,0.65);
+            border: 1px solid rgba(50,215,75,0.12);
+        }
+        .badge-tag.required {
+            background: rgba(255,69,58,0.08);
+            color: rgba(255,69,58,0.65);
+            border: 1px solid rgba(255,69,58,0.12);
+        }
+
         .form-control, .form-select {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            font-size: 0.9rem;
+            background: rgba(0,0,0,0.25) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            border-radius: 8px;
+            color: #fff !important;
+            font-size: 0.88rem;
+            padding: 0.55rem 0.75rem;
+            transition: all 0.25s ease;
+        }
+        .form-control:hover, .form-select:hover {
+            border-color: rgba(255,255,255,0.15) !important;
         }
         .form-control:focus, .form-select:focus {
-            background: rgba(0,0,0,0.4);
-            border-color: var(--accent-red, #dc3545);
-            color: #fff;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+            background: rgba(0,0,0,0.35) !important;
+            border-color: rgba(255,69,58,0.45) !important;
+            box-shadow: 0 0 0 3px rgba(255,69,58,0.1), inset 0 1px 3px rgba(0,0,0,0.2) !important;
         }
         .form-control::placeholder {
-            color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.2);
+            font-weight: 400;
         }
-        .autofill-badge {
-            display: inline-block;
-            background: rgba(13, 202, 240, 0.15);
-            color: #0dcaf0;
-            font-size: 0.65rem;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            margin-left: 0.3rem;
-            vertical-align: middle;
+        .form-control[readonly] {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-        .calc-badge {
-            display: inline-block;
-            background: rgba(25, 135, 84, 0.15);
-            color: #198754;
-            font-size: 0.65rem;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            margin-left: 0.3rem;
-            vertical-align: middle;
+
+        /* File inputs */
+        .file-upload-zone {
+            position: relative;
+            background: rgba(0,0,0,0.15);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
-        .guia-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 1.5rem;
+        .file-upload-zone:hover {
+            border-color: rgba(255,69,58,0.3);
+            background: rgba(255,69,58,0.03);
         }
-        .btn-action-group {
-            position: sticky;
-            bottom: 0;
-            background: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding: 1rem 1.5rem;
-            margin: 0 -1.5rem;
-            z-index: 100;
+        .file-upload-zone .upload-icon {
+            font-size: 1.4rem;
+            color: rgba(255,255,255,0.2);
+            margin-bottom: 0.25rem;
         }
-        .ups-specs-mini {
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.05);
+        .file-upload-zone .upload-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 0.5px;
+        }
+        .file-upload-zone .upload-hint {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.25);
+        }
+        .file-upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* --- UPS Specs Mini Card --- */
+        .specs-mini {
+            background: rgba(255,69,58,0.04);
+            border: 1px solid rgba(255,69,58,0.1);
             border-radius: 8px;
-            padding: 0.75rem;
-            font-size: 0.8rem;
+            padding: 0.65rem 0.85rem;
+            margin-top: 0.5rem;
             display: none;
         }
-        .ups-specs-mini .spec-row {
+        .specs-mini.active { display: block; }
+        .specs-mini .spec-row {
             display: flex;
             justify-content: space-between;
-            padding: 0.15rem 0;
+            align-items: center;
+            padding: 0.2rem 0;
+            font-size: 0.75rem;
         }
-        .ups-specs-mini .spec-label {
-            color: rgba(255,255,255,0.5);
+        .specs-mini .spec-row + .spec-row {
+            border-top: 1px solid rgba(255,255,255,0.03);
         }
-        .ups-specs-mini .spec-value {
-            color: var(--accent-red, #dc3545);
+        .specs-mini .spec-label { color: rgba(255,255,255,0.4); }
+        .specs-mini .spec-value {
+            color: var(--accent-red, #ff453a);
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        /* --- Mode Toggle --- */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 3px 10px 3px 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            letter-spacing: 0;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .mode-toggle:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+        .mode-toggle .mode-label {
             font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            transition: color 0.2s;
+        }
+        .mode-toggle .mode-label.active-mode {
+            color: var(--accent-red);
+        }
+        .mode-toggle .form-check-input {
+            width: 2rem;
+            height: 1rem;
+            margin: 0;
+        }
+
+        /* --- Libre mode alert --- */
+        .libre-alert {
+            background: rgba(100,210,255,0.04);
+            border: 1px solid rgba(100,210,255,0.1);
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.78rem;
+            color: rgba(100,210,255,0.7);
+        }
+        .libre-alert i { opacity: 0.7; }
+
+        /* --- Sticky Action Bar --- */
+        .action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 17, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 0.75rem 2rem;
+            z-index: 1000;
+            box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
+        }
+        .action-bar-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .action-bar .action-hint {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .action-bar .action-hint i { color: rgba(255,255,255,0.2); }
+
+        /* --- Action Buttons --- */
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            line-height: 1;
+        }
+        .btn-ejemplo {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.7);
+        }
+        .btn-ejemplo:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .btn-descargar {
+            background: linear-gradient(135deg, #1a5276, #154360);
+            border: 1px solid rgba(26,82,118,0.6);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(26,82,118,0.3);
+        }
+        .btn-descargar:hover {
+            background: linear-gradient(135deg, #1f6090, #1a5276);
+            box-shadow: 0 4px 20px rgba(26,82,118,0.45);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .btn-publicar {
+            background: linear-gradient(135deg, #1e7e34, #155724);
+            border: 1px solid rgba(30,126,52,0.6);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(30,126,52,0.3);
+        }
+        .btn-publicar:hover {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            box-shadow: 0 4px 20px rgba(40,167,69,0.45);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-card {
+            animation: fadeSlideIn 0.4s ease both;
+        }
+        .section-card:nth-child(2) { animation-delay: 0.05s; }
+        .section-card:nth-child(3) { animation-delay: 0.1s; }
+        .section-card:nth-child(4) { animation-delay: 0.15s; }
+        .section-card:nth-child(5) { animation-delay: 0.2s; }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .guia-container { padding: 1rem 0.75rem 5.5rem; }
+            .section-card { padding: 1.1rem; }
+            .action-bar { padding: 0.65rem 1rem; }
+            .action-bar-inner { flex-wrap: wrap; justify-content: center; }
+            .action-bar .action-hint { display: none; }
         }
     </style>
 </head>
@@ -130,7 +398,10 @@
                     <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
                     {% endif %}
                     {% if user_permisos.get('guia_rapida', True) %}
-                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i class="bi bi-lightning me-1"></i> GUÍA MANUAL</a>
+                    {% endif %}
+                    {% if user_permisos.get('vales', False) %}
+                    <a href="{{ url_for('vales.vales') }}" class="nav-link"><i class="bi bi-clipboard-check me-1"></i> VALES</a>
                     {% endif %}
                 </div>
             </div>
@@ -178,11 +449,13 @@
     </header>
 
     <div class="guia-container">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <div>
-                <h4 class="fw-bold text-white mb-1"><i class="bi bi-lightning-fill text-danger me-2"></i>Guía Rápida de Instalación</h4>
-                <p class="text-muted mb-0" style="font-size:0.85rem;">Ingrese los datos manualmente para generar la memoria técnica PDF. Los campos con <span class="autofill-badge">AUTO</span> se completan al seleccionar un equipo de la BD.</p>
-            </div>
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+            <h4 class="fw-bold text-white mb-1">
+                <i class="bi bi-file-earmark-text" style="color:var(--accent-red); opacity:0.7;"></i>
+                Guía Manual de Instalación
+            </h4>
+            <p class="subtitle mb-0">Ingrese los datos del proyecto para generar la memoria técnica en PDF. Puede seleccionar equipos de la BD como sugerencia o escribir libremente.</p>
         </div>
 
         <form method="POST" action="{{ url_for('guia_rapida.generar_pdf_guia_rapida') }}" enctype="multipart/form-data" id="guiaForm" target="_blank">
@@ -191,14 +464,17 @@
 
             <!-- =================== SECCIÓN 1: PROYECTO =================== -->
             <div class="section-card">
-                <div class="section-title"><i class="bi bi-folder2-open"></i>Datos del Proyecto</div>
+                <div class="sec-title">
+                    <i class="bi bi-folder2-open"></i>
+                    Datos del Proyecto
+                </div>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">No. Pedido</label>
+                        <label class="field-label">No. Pedido <span class="badge-tag required">REQUERIDO</span></label>
                         <input type="text" name="pedido" class="form-control" placeholder="OC-2024-001" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Cliente</label>
+                        <label class="field-label">Cliente</label>
                         <input type="text" name="cliente_texto" id="input_cliente" class="form-control" list="lista_clientes" placeholder="Nombre del cliente" autocomplete="off">
                         <datalist id="lista_clientes">
                             {% for c in clientes %}
@@ -207,7 +483,7 @@
                         </datalist>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Sucursal / Proyecto</label>
+                        <label class="field-label">Sucursal / Proyecto</label>
                         <input type="text" name="sucursal_texto" id="input_sucursal" class="form-control" list="lista_sucursales" placeholder="Sucursal o proyecto" autocomplete="off">
                         <datalist id="lista_sucursales"></datalist>
                     </div>
@@ -216,109 +492,149 @@
 
             <!-- =================== SECCIÓN 2: EQUIPO UPS =================== -->
             <div class="section-card">
-                <div class="section-title"><i class="bi bi-box-seam"></i>Equipo UPS</div>
-                <div class="row g-3">
+                <div class="sec-title">
+                    <i class="bi bi-cpu"></i>
+                    Equipo UPS
+                    <div class="mode-toggle" title="Alternar entre base de datos y escritura libre">
+                        <span class="mode-label active-mode" id="lbl_bd">BD</span>
+                        <div class="form-check form-switch m-0 p-0">
+                            <input class="form-check-input m-0" type="checkbox" id="toggle_modo_equipo" style="cursor:pointer;">
+                        </div>
+                        <span class="mode-label" id="lbl_libre">LIBRE</span>
+                    </div>
+                </div>
+
+                <!-- Modo BD -->
+                <div id="equipo_modo_bd" class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">Modelo UPS (desde BD) <span class="autofill-badge">AUTO</span></label>
-                        <select name="id_ups" id="sel_ups" class="form-select" required>
-                            <option value="">Seleccionar modelo...</option>
+                        <label class="field-label">Modelo UPS <span class="badge-tag suggest">SUGERENCIA</span></label>
+                        <select name="id_ups" id="sel_ups" class="form-select">
+                            <option value="">(Opcional) Seleccionar modelo...</option>
                             {% for u in ups %}
                             <option value="{{ u.id }}" data-kva="{{ u.Capacidad_kVA }}" data-kw="{{ u.Capacidad_kW }}">
                                 {{ u.Serie }} {{ u.Nombre_del_Producto }} ({{ u.Capacidad_kVA }} kVA)
                             </option>
                             {% endfor %}
                         </select>
-
-                        <!-- Mini ficha técnica -->
-                        <div class="ups-specs-mini mt-2" id="ups_specs_mini">
-                            <div class="spec-row"><span class="spec-label">kVA:</span><span class="spec-value" id="sp_kva">--</span></div>
-                            <div class="spec-row"><span class="spec-label">kW:</span><span class="spec-value" id="sp_kw">--</span></div>
-                            <div class="spec-row"><span class="spec-label">Eficiencia:</span><span class="spec-value" id="sp_eff">--%</span></div>
-                            <div class="spec-row"><span class="spec-label">VDC Baterías:</span><span class="spec-value" id="sp_vdc">--</span></div>
+                        <div class="specs-mini" id="ups_specs_mini">
+                            <div class="spec-row"><span class="spec-label">kVA</span><span class="spec-value" id="sp_kva">--</span></div>
+                            <div class="spec-row"><span class="spec-label">kW</span><span class="spec-value" id="sp_kw">--</span></div>
+                            <div class="spec-row"><span class="spec-label">Eficiencia</span><span class="spec-value" id="sp_eff">--%</span></div>
+                            <div class="spec-row"><span class="spec-label">VDC Baterías</span><span class="spec-value" id="sp_vdc">--</span></div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Nombre Modelo (para PDF) <span class="autofill-badge">AUTO</span></label>
+                        <label class="field-label">Nombre Modelo (para PDF) <span class="badge-tag suggest">SUGERENCIA</span></label>
                         <input type="text" name="modelo_nombre" id="input_modelo_nombre" class="form-control" placeholder="Ej: Dragon Power Plus 60">
                     </div>
+                </div>
+
+                <!-- Modo Libre -->
+                <div id="equipo_modo_libre" class="row g-3" style="display:none;">
+                    <div class="col-12">
+                        <div class="libre-alert">
+                            <i class="bi bi-pencil-square me-1"></i>
+                            Modo libre: escriba los datos del equipo manualmente sin depender de la base de datos.
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="field-label">Nombre / Modelo del Equipo</label>
+                        <input type="text" id="input_modelo_nombre_libre" class="form-control" placeholder="Ej: Eaton 9PX 20kVA, APC Smart-UPS, Huawei UPS2000, etc.">
+                    </div>
+                </div>
+
+                <!-- Campos compartidos -->
+                <div class="row g-3 mt-1">
                     <div class="col-md-3">
-                        <label class="form-label">Capacidad (kVA) <span class="autofill-badge">AUTO</span></label>
-                        <input type="number" name="kva" id="input_kva" class="form-control" step="0.1" placeholder="0">
+                        <label class="field-label">Capacidad (kVA)</label>
+                        <input type="text" name="kva" id="input_kva" class="form-control" placeholder="Ej: 60">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Peso (kg) <span class="autofill-badge">AUTO</span></label>
-                        <input type="number" name="peso" id="input_peso" class="form-control" step="0.1" placeholder="0">
+                        <label class="field-label">Peso (kg)</label>
+                        <input type="text" name="peso" id="input_peso" class="form-control" placeholder="Ej: 180">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Largo (mm) <span class="autofill-badge">AUTO</span></label>
-                        <input type="number" name="dim_largo" id="input_dim_largo" class="form-control" placeholder="0">
+                        <label class="field-label">Largo (mm)</label>
+                        <input type="text" name="dim_largo" id="input_dim_largo" class="form-control" placeholder="442">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Ancho (mm) <span class="autofill-badge">AUTO</span></label>
-                        <input type="number" name="dim_ancho" id="input_dim_ancho" class="form-control" placeholder="0">
+                        <label class="field-label">Ancho (mm)</label>
+                        <input type="text" name="dim_ancho" id="input_dim_ancho" class="form-control" placeholder="659">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Alto (mm) <span class="autofill-badge">AUTO</span></label>
-                        <input type="number" name="dim_alto" id="input_dim_alto" class="form-control" placeholder="0">
+                        <label class="field-label">Alto (mm)</label>
+                        <input type="text" name="dim_alto" id="input_dim_alto" class="form-control" placeholder="1740">
                     </div>
                 </div>
             </div>
 
             <!-- =================== SECCIÓN 3: CONFIG ELÉCTRICA =================== -->
             <div class="section-card">
-                <div class="section-title"><i class="bi bi-lightning-charge"></i>Configuración Eléctrica <small class="text-muted fw-normal" style="letter-spacing:0;">(todos los campos son manuales)</small></div>
+                <div class="sec-title">
+                    <i class="bi bi-lightning-charge"></i>
+                    Configuración Eléctrica
+                    <span class="sec-hint">Todos los campos son manuales</span>
+                </div>
                 <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Voltaje (V)</label>
-                        <select name="voltaje" class="form-select">
+                    <div class="col-md-3" id="voltaje_bd_wrap">
+                        <label class="field-label">Voltaje (V)</label>
+                        <select name="voltaje" id="sel_voltaje" class="form-select">
                             <option value="220">220V</option>
                             <option value="208">208V</option>
                             <option value="480">480V</option>
                             <option value="127">127V</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Fases</label>
-                        <select name="fases" class="form-select">
+                    <div class="col-md-3" id="voltaje_libre_wrap" style="display:none;">
+                        <label class="field-label">Voltaje (V) <span class="badge-tag" style="background:rgba(255,149,0,0.2);color:#ff9500;">LIBRE</span></label>
+                        <input type="text" id="input_voltaje_libre" class="form-control" placeholder="Ej: 220, 480, 600...">
+                    </div>
+                    <div class="col-md-3" id="fases_bd_wrap">
+                        <label class="field-label">Fases</label>
+                        <select name="fases" id="sel_fases" class="form-select">
                             <option value="3">3 Fases</option>
                             <option value="2">2 Fases</option>
                             <option value="1">1 Fase</option>
                         </select>
                     </div>
+                    <div class="col-md-3" id="fases_libre_wrap" style="display:none;">
+                        <label class="field-label">Fases <span class="badge-tag" style="background:rgba(255,149,0,0.2);color:#ff9500;">LIBRE</span></label>
+                        <input type="text" id="input_fases_libre" class="form-control" placeholder="Ej: 1, 2, 3...">
+                    </div>
                     <div class="col-md-3">
-                        <label class="form-label">Longitud Circuito (m)</label>
+                        <label class="field-label">Longitud Circuito (m)</label>
                         <input type="number" name="longitud" class="form-control" step="0.1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Corriente Nominal (A)</label>
+                        <label class="field-label">Corriente Nominal (A)</label>
                         <input type="number" name="i_nom" class="form-control" step="0.01" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Corriente Diseño +25% (A)</label>
+                        <label class="field-label">Corriente Diseño +25% (A)</label>
                         <input type="number" name="i_diseno" class="form-control" step="0.01" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Caída de Tensión (%)</label>
+                        <label class="field-label">Caída de Tensión (%)</label>
                         <input type="number" name="dv_pct" class="form-control" step="0.01" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Calibre Fases (AWG/kcmil)</label>
-                        <input type="text" name="fase_sel" class="form-control" placeholder="Ej: 6, 4, 2, 1/0">
+                        <label class="field-label">Calibre Fases (AWG/kcmil)</label>
+                        <input type="text" name="fase_sel" class="form-control" placeholder="Ej: 1/0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Calibre Tierra (AWG)</label>
-                        <input type="text" name="gnd_sel" class="form-control" placeholder="Ej: 8, 6, 4">
+                        <label class="field-label">Calibre Tierra (AWG)</label>
+                        <input type="text" name="gnd_sel" class="form-control" placeholder="Ej: 6">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Protección Breaker (A)</label>
+                        <label class="field-label">Protección Breaker (A)</label>
                         <input type="number" name="breaker_sel" class="form-control" step="1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Corriente Real Cable (A)</label>
+                        <label class="field-label">Corriente Real Cable (A)</label>
                         <input type="number" name="i_real_cable" class="form-control" step="0.01" placeholder="0">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Nota de Altitud (opcional)</label>
+                        <label class="field-label">Nota de Altitud (opcional)</label>
                         <input type="text" name="nota_altitud" class="form-control" placeholder="Ej: Sitio a 2200 msnm, aplicar factor de corrección">
                     </div>
                 </div>
@@ -326,13 +642,14 @@
 
             <!-- =================== SECCIÓN 4: BATERÍAS =================== -->
             <div class="section-card">
-                <div class="section-title">
-                    <i class="bi bi-battery-charging"></i>Banco de Baterías
-                    <small class="text-muted fw-normal" style="letter-spacing:0;">(opcional — dejar vacío si no aplica)</small>
+                <div class="sec-title">
+                    <i class="bi bi-battery-charging"></i>
+                    Banco de Baterías
+                    <span class="sec-hint">Opcional - dejar vacío si no aplica</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">Modelo Batería (desde BD) <span class="autofill-badge">AUTO</span></label>
+                        <label class="field-label">Modelo Batería <span class="badge-tag suggest">SUGERENCIA</span></label>
                         <select name="id_bateria" id="sel_bateria" class="form-select">
                             <option value="">Sin baterías</option>
                             {% for b in baterias %}
@@ -341,31 +658,31 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Modelo Batería (texto PDF) <span class="autofill-badge">AUTO</span></label>
+                        <label class="field-label">Modelo Batería (texto PDF) <span class="badge-tag suggest">SUGERENCIA</span></label>
                         <input type="text" name="bateria_modelo" id="input_bateria_modelo" class="form-control" placeholder="Se llena al seleccionar">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Baterías por String</label>
+                        <label class="field-label">Baterías por String</label>
                         <input type="number" name="baterias_por_string" id="input_bat_por_string" class="form-control" step="1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Número de Strings</label>
+                        <label class="field-label">Número de Strings</label>
                         <input type="number" name="numero_strings" id="input_num_strings" class="form-control" step="1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Total Baterías <span class="calc-badge">CALC</span></label>
+                        <label class="field-label">Total Baterías <span class="badge-tag calc">AUTO</span></label>
                         <input type="number" name="baterias_total" id="input_bat_total" class="form-control" step="1" placeholder="Auto" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Tiempo Respaldo (min)</label>
+                        <label class="field-label">Tiempo Respaldo (min)</label>
                         <input type="number" name="tiempo_respaldo" class="form-control" step="0.1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Autonomía Calculada (min)</label>
+                        <label class="field-label">Autonomía Calculada (min)</label>
                         <input type="number" name="autonomia_calculada_min" class="form-control" step="0.1" placeholder="0">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Autonomía Deseada (min)</label>
+                        <label class="field-label">Autonomía Deseada (min)</label>
                         <input type="number" name="autonomia_deseada_min" class="form-control" step="0.1" placeholder="0">
                     </div>
                 </div>
@@ -373,56 +690,75 @@
 
             <!-- =================== SECCIÓN 5: IMÁGENES =================== -->
             <div class="section-card">
-                <div class="section-title"><i class="bi bi-image"></i>Imágenes para el Reporte <small class="text-muted fw-normal" style="letter-spacing:0;">(solo JPG, PNG, BMP)</small></div>
+                <div class="sec-title">
+                    <i class="bi bi-images"></i>
+                    Imágenes para el Reporte
+                    <span class="sec-hint">JPG, PNG, BMP - Máx. 5 MB</span>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-danger"><i class="bi bi-card-image me-1"></i>Portada (opcional)</label>
-                        <input type="file" name="imagen_portada" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
-                        <small class="text-muted">Reemplaza la imagen de UPS en la portada del PDF</small>
+                        <div class="file-upload-zone text-center">
+                            <div class="upload-icon"><i class="bi bi-card-image"></i></div>
+                            <div class="upload-label">Portada (opcional)</div>
+                            <div class="upload-hint">Reemplaza la imagen de UPS en la portada</div>
+                            <input type="file" name="imagen_portada" accept=".jpg,.jpeg,.png,.bmp">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-danger"><i class="bi bi-diagram-3-fill me-1"></i>Diagrama Unifilar AC</label>
-                        <input type="file" name="imagen_unifilar_ac" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
-                        <small class="text-muted">JPG, PNG, BMP. Máximo 5MB</small>
+                        <div class="file-upload-zone text-center">
+                            <div class="upload-icon"><i class="bi bi-diagram-3-fill"></i></div>
+                            <div class="upload-label">Diagrama Unifilar AC</div>
+                            <div class="upload-hint">Esquema de alimentación eléctrica</div>
+                            <input type="file" name="imagen_unifilar_ac" accept=".jpg,.jpeg,.png,.bmp">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-danger"><i class="bi bi-battery-charging me-1"></i>Diagrama Baterías DC</label>
-                        <input type="file" name="imagen_baterias_dc" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
-                        <small class="text-muted">JPG, PNG, BMP. Máximo 5MB</small>
+                        <div class="file-upload-zone text-center">
+                            <div class="upload-icon"><i class="bi bi-battery-charging"></i></div>
+                            <div class="upload-label">Diagrama Baterías DC</div>
+                            <div class="upload-hint">Configuración serie/paralelo</div>
+                            <input type="file" name="imagen_baterias_dc" accept=".jpg,.jpeg,.png,.bmp">
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-danger"><i class="bi bi-grid-3x3 me-1"></i>Disposición de Equipos</label>
-                        <input type="file" name="imagen_layout_equipos" class="form-control" accept=".jpg,.jpeg,.png,.bmp">
-                        <small class="text-muted">JPG, PNG, BMP. Máximo 5MB</small>
+                        <div class="file-upload-zone text-center">
+                            <div class="upload-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+                            <div class="upload-label">Disposición de Equipos</div>
+                            <div class="upload-hint">Layout físico en sitio</div>
+                            <input type="file" name="imagen_layout_equipos" accept=".jpg,.jpeg,.png,.bmp">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- =================== BOTONES DE ACCIÓN =================== -->
-            <div class="btn-action-group d-flex justify-content-between align-items-center">
-                <div class="text-muted" style="font-size:0.8rem;">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Vista Previa genera un borrador con marca de agua. Publicar guarda el PDF final.
-                </div>
-                <div class="d-flex gap-3">
-                    {% if current_user.role != 'user' %}
-                    <a href="{{ url_for('guia_rapida.generar_ejemplo_pdf') }}" class="btn btn-outline-info btn-lg px-3" target="_blank">
-                        <i class="bi bi-file-earmark-pdf me-1"></i>EJEMPLO PDF
-                    </a>
-                    {% endif %}
-                    <button type="submit" class="btn btn-warning btn-lg px-4 fw-bold shadow" onclick="document.getElementById('accion_hidden').value='preview';">
-                        <i class="bi bi-eye me-2"></i>VISTA PREVIA PDF
-                    </button>
-                    <button type="submit" class="btn btn-primary btn-lg px-4 fw-bold shadow" onclick="document.getElementById('accion_hidden').value='publicar';">
-                        <i class="bi bi-printer-fill me-2"></i>PUBLICAR PDF
-                    </button>
+            <!-- =================== STICKY ACTION BAR =================== -->
+            <div class="action-bar">
+                <div class="action-bar-inner">
+                    <div class="action-hint">
+                        <i class="bi bi-info-circle"></i>
+                        Descargar genera borrador con marca de agua. Publicar guarda el PDF final.
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        {% if user_permisos.get('ejemplo_pdf', False) %}
+                        <a href="{{ url_for('guia_rapida.generar_ejemplo_pdf') }}" class="btn-action btn-ejemplo" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i>EJEMPLO
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="btn-action btn-descargar" onclick="document.getElementById('accion_hidden').value='preview';">
+                            <i class="bi bi-download"></i>DESCARGAR PDF
+                        </button>
+                        {% if user_permisos.get('publicar_pdf', False) %}
+                        <button type="submit" class="btn-action btn-publicar" onclick="document.getElementById('accion_hidden').value='publicar';">
+                            <i class="bi bi-check-circle"></i>PUBLICAR
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
         </form>
     </div>
 
-    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -459,16 +795,21 @@
         if (selUps) {
             selUps.addEventListener('change', function() {
                 const id = this.value;
+                const modeloInput = document.getElementById('input_modelo_nombre');
+                const specsMini = document.getElementById('ups_specs_mini');
                 if (!id) {
-                    document.getElementById('ups_specs_mini').style.display = 'none';
+                    if (specsMini) specsMini.classList.remove('active');
+                    if (modeloInput) {
+                        modeloInput.readOnly = false;
+                        modeloInput.placeholder = 'Ej: Dragon Power Plus 60';
+                    }
                     return;
                 }
 
                 fetch(`/api/ups/${id}`)
                     .then(r => r.json())
                     .then(data => {
-                        const mini = document.getElementById('ups_specs_mini');
-                        if (mini) mini.style.display = 'block';
+                        if (specsMini) specsMini.classList.add('active');
                         document.getElementById('sp_kva').textContent = data.Capacidad_kVA || '--';
                         document.getElementById('sp_kw').textContent = data.Capacidad_kW || '--';
                         document.getElementById('sp_eff').textContent = (data.Eficiencia_Modo_AC_pct || '--') + '%';
@@ -480,6 +821,11 @@
                         document.getElementById('input_dim_largo').value = data.Dim_Largo_mm || '';
                         document.getElementById('input_dim_ancho').value = data.Dim_Ancho_mm || '';
                         document.getElementById('input_dim_alto').value = data.Dim_Alto_mm || '';
+
+                        if (modeloInput) {
+                            modeloInput.readOnly = true;
+                            modeloInput.placeholder = '(Asignado desde BD)';
+                        }
                     })
                     .catch(err => console.error('Error cargando datos UPS:', err));
             });
@@ -526,6 +872,103 @@
                     .catch(err => console.error('Error cargando sucursales:', err));
             });
         }
+
+        // =================== TOGGLE MODO EQUIPO (BD / LIBRE) ===================
+        // unchecked = BD (default), checked = LIBRE
+        const toggleModo = document.getElementById('toggle_modo_equipo');
+        const modoBd = document.getElementById('equipo_modo_bd');
+        const modoLibre = document.getElementById('equipo_modo_libre');
+        const lblBd = document.getElementById('lbl_bd');
+        const lblLibre = document.getElementById('lbl_libre');
+        const inputModeloNombre = document.getElementById('input_modelo_nombre');
+        const inputModeloLibre = document.getElementById('input_modelo_nombre_libre');
+        const selUpsToggle = document.getElementById('sel_ups');
+        // Voltaje y Fases libre
+        const voltajeBdWrap = document.getElementById('voltaje_bd_wrap');
+        const voltajeLibreWrap = document.getElementById('voltaje_libre_wrap');
+        const fasesBdWrap = document.getElementById('fases_bd_wrap');
+        const fasesLibreWrap = document.getElementById('fases_libre_wrap');
+        const selVoltaje = document.getElementById('sel_voltaje');
+        const inputVoltajeLibre = document.getElementById('input_voltaje_libre');
+        const selFases = document.getElementById('sel_fases');
+        const inputFasesLibre = document.getElementById('input_fases_libre');
+
+        function aplicarModo(esLibre) {
+            if (esLibre) {
+                // Modo Libre
+                modoBd.style.display = 'none';
+                modoLibre.style.display = '';
+                lblLibre.classList.add('active-mode');
+                lblBd.classList.remove('active-mode');
+                if (inputModeloNombre.value && !inputModeloLibre.value) {
+                    inputModeloLibre.value = inputModeloNombre.value;
+                }
+                inputModeloLibre.setAttribute('name', 'modelo_nombre');
+                inputModeloNombre.removeAttribute('name');
+                selUpsToggle.removeAttribute('name');
+                // Voltaje: select -> input libre
+                voltajeBdWrap.style.display = 'none';
+                voltajeLibreWrap.style.display = '';
+                selVoltaje.removeAttribute('name');
+                inputVoltajeLibre.setAttribute('name', 'voltaje');
+                if (selVoltaje.value && !inputVoltajeLibre.value) {
+                    inputVoltajeLibre.value = selVoltaje.value;
+                }
+                // Fases: select -> input libre
+                fasesBdWrap.style.display = 'none';
+                fasesLibreWrap.style.display = '';
+                selFases.removeAttribute('name');
+                inputFasesLibre.setAttribute('name', 'fases');
+                if (selFases.value && !inputFasesLibre.value) {
+                    inputFasesLibre.value = selFases.value;
+                }
+            } else {
+                // Modo BD
+                modoBd.style.display = '';
+                modoLibre.style.display = 'none';
+                lblBd.classList.add('active-mode');
+                lblLibre.classList.remove('active-mode');
+                inputModeloNombre.setAttribute('name', 'modelo_nombre');
+                inputModeloLibre.removeAttribute('name');
+                selUpsToggle.setAttribute('name', 'id_ups');
+                // Voltaje: input libre -> select
+                voltajeBdWrap.style.display = '';
+                voltajeLibreWrap.style.display = 'none';
+                selVoltaje.setAttribute('name', 'voltaje');
+                inputVoltajeLibre.removeAttribute('name');
+                // Fases: input libre -> select
+                fasesBdWrap.style.display = '';
+                fasesLibreWrap.style.display = 'none';
+                selFases.setAttribute('name', 'fases');
+                inputFasesLibre.removeAttribute('name');
+            }
+        }
+
+        if (toggleModo) {
+            toggleModo.addEventListener('change', function() {
+                aplicarModo(this.checked);
+            });
+            // Estado inicial (unchecked = BD)
+            aplicarModo(false);
+        }
+
+        // =================== FILE UPLOAD FEEDBACK ===================
+        document.querySelectorAll('.file-upload-zone input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const zone = this.closest('.file-upload-zone');
+                const label = zone.querySelector('.upload-label');
+                if (this.files.length > 0) {
+                    zone.style.borderColor = 'rgba(50,215,75,0.4)';
+                    zone.style.background = 'rgba(50,215,75,0.05)';
+                    label.textContent = this.files[0].name;
+                    label.style.color = 'rgba(50,215,75,0.8)';
+                } else {
+                    zone.style.borderColor = '';
+                    zone.style.background = '';
+                }
+            });
+        });
     </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

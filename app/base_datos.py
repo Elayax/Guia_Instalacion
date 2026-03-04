@@ -1118,7 +1118,7 @@ class GestorDB:
         if role == 'admin':
             permisos = {s: True for s in SECCIONES_DISPONIBLES}
         else:
-            permisos = {s: (s != 'scada') for s in SECCIONES_DISPONIBLES}
+            permisos = {s: (s not in ('scada', 'publicar_pdf')) for s in SECCIONES_DISPONIBLES}
         return self.establecer_permisos_usuario(user_id, permisos)
 
     def obtener_todos_usuarios_con_permisos(self):

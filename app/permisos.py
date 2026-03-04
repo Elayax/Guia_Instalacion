@@ -3,14 +3,17 @@ from functools import wraps
 from flask import abort, current_app
 from flask_login import current_user
 
-SECCIONES_DISPONIBLES = ['tablero', 'calculos', 'guia_rapida', 'scada', 'datos']
+SECCIONES_DISPONIBLES = ['tablero', 'calculos', 'guia_rapida', 'scada', 'datos', 'ejemplo_pdf', 'publicar_pdf', 'vales']
 
 SECCIONES_NOMBRES = {
     'tablero': 'Tablero',
     'calculos': 'Cálculos',
-    'guia_rapida': 'Guía Rápida',
+    'guia_rapida': 'Guía Manual',
     'scada': 'SCADA',
     'datos': 'Datos',
+    'ejemplo_pdf': 'Ejemplo PDF',
+    'publicar_pdf': 'Publicar PDF',
+    'vales': 'Vales Herramienta',
 }
 
 

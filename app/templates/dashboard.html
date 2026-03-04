@@ -32,7 +32,10 @@
                     <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
                     {% endif %}
                     {% if user_permisos.get('guia_rapida', True) %}
-                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUÍA RÁPIDA</a>
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUÍA MANUAL</a>
+                    {% endif %}
+                    {% if user_permisos.get('vales', False) %}
+                    <a href="{{ url_for('vales.vales') }}" class="nav-link"><i class="bi bi-clipboard-check me-1"></i> VALES</a>
                     {% endif %}
                 </div>
             </div>

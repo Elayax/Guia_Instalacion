@@ -3,7 +3,7 @@ import os
 from flask import render_template, request, make_response, current_app
 from flask_login import login_required, current_user
 from app.reporte import ReportePDF
-from app.permisos import permiso_requerido
+from app.permisos import permiso_requerido, tiene_permiso
 from app.auxiliares import (
     normalizar_imagen,
     guardar_pdf_proyecto,
@@ -44,15 +44,17 @@ def generar_pdf_guia_rapida():
     db = current_app.db
     datos = request.form.to_dict()
 
-    if not datos.get('id_ups'):
-        return "Error: Debe seleccionar un modelo de UPS.", 400
-
-    ups_data = db.obtener_ups_id(datos['id_ups'])
-    if not ups_data:
-        return "Error: UPS no encontrado en la base de datos.", 404
+    # UPS desde BD es opcional: si se seleccionó, cargar datos; si no, usar None
+    ups_data = None
+    if datos.get('id_ups'):
+        ups_data = db.obtener_ups_id(datos['id_ups'])
 
     accion = datos.get('accion', 'preview')
     es_publicar = (accion == 'publicar')
+
+    # Verificar permiso de publicar_pdf
+    if es_publicar and not tiene_permiso('publicar_pdf'):
+        return "Error: No tiene permiso para publicar PDFs.", 403
     pedido = datos.get('pedido', 'temporal')
 
     # Construir resultado manualmente desde el formulario (sin cálculos)
@@ -117,9 +119,9 @@ def generar_pdf_guia_rapida():
                     if ruta_normalizada:
                         imagenes_temp[key] = ruta_normalizada
 
-    # Obtener tipo de ventilación desde el UPS
+    # Obtener tipo de ventilación desde el UPS (si se seleccionó uno)
     tipo_ventilacion_data = None
-    if ups_data.get('tipo_ventilacion_id'):
+    if ups_data and ups_data.get('tipo_ventilacion_id'):
         tipo_ventilacion_data = db.obtener_tipo_ventilacion_id(ups_data['tipo_ventilacion_id'])
 
     resultado['tipo_ventilacion'] = tipo_ventilacion_data.get('nombre') if tipo_ventilacion_data else None
@@ -176,6 +178,7 @@ def generar_pdf_guia_rapida():
 @guia_rapida_bp.route('/generar-ejemplo-pdf')
 @login_required
 @permiso_requerido('guia_rapida')
+@permiso_requerido('ejemplo_pdf')
 def generar_ejemplo_pdf():
     """Genera un PDF de ejemplo con datos ficticios."""
 
@@ -241,13 +244,28 @@ def generar_ejemplo_pdf():
         'capacidad_ah': 100,
     }
 
+    # Cargar imágenes de ejemplo desde static/img/ejemplo/
+    img_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'static', 'img', 'ejemplo')
+    imagenes_ejemplo = {}
+    img_map = {
+        'portada': 'ejemplo_portada.png',
+        'unifilar_ac': 'ejemplo_unifilar.png',
+        'baterias_dc': 'ejemplo_baterias.png',
+        'layout_equipos': 'ejemplo_layout.png',
+    }
+    for key, filename in img_map.items():
+        ruta = os.path.join(img_dir, filename)
+        if os.path.exists(ruta):
+            imagenes_ejemplo[key] = ruta
+
     pdf = ReportePDF()
     pdf_bytes = pdf.generar_cuerpo(
         datos_ejemplo, resultado_ejemplo,
         ups=ups_data,
         bateria=bateria_ejemplo,
         es_publicado=False,
-        imagenes_temp={}
+        imagenes_temp=imagenes_ejemplo
     )
 
     response = make_response(bytes(pdf_bytes))

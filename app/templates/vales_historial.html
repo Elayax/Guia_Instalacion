@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Vales - Sistema UPS Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .container-vales { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+        .section-card {
+            background: rgba(44,44,46,0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .field-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 0.3rem; }
+        .badge-tipo { font-size: 0.75rem; padding: 0.3em 0.7em; border-radius: 6px; font-weight: 600; display: inline-block; }
+        .badge-HT { background: #ff9500; color: #000; }
+        .badge-PR { background: #ff453a; color: #fff; }
+        .badge-EQ { background: #30d158; color: #000; }
+        .badge-MT { background: #0a84ff; color: #fff; }
+        .badge-ES { background: #bf5af2; color: #fff; }
+        .tbl-historial { width: 100%; font-size: 0.85rem; }
+        .tbl-historial th { background: rgba(255,69,58,0.15); color: #ff453a; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.6rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .tbl-historial td { padding: 0.5rem; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .tbl-historial tr:hover { background: rgba(255,255,255,0.03); }
+        .btn-acc { background: none; border: 1px solid rgba(255,255,255,0.15); color: #ccc; border-radius: 6px; padding: 0.25rem 0.5rem; font-size: 0.78rem; cursor: pointer; margin-right: 0.3rem; }
+        .btn-acc:hover { border-color: #ff453a; color: #ff453a; }
+        .btn-acc.btn-del:hover { border-color: #ff453a; color: #ff453a; }
+        .empty-state { text-align: center; padding: 3rem; color: #666; }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERIA</small>
+            </div>
+        </div>
+        <nav class="nav-segmented">
+            <div class="nav-segment nav-segment-servicio">
+                <span class="nav-segment-label">SERVICIO</span>
+                <div class="d-flex gap-1">
+                    {% if user_permisos.get('tablero', True) %}
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+                    {% endif %}
+                    {% if user_permisos.get('calculos', True) %}
+                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CALCULOS</a>
+                    {% endif %}
+                    {% if user_permisos.get('guia_rapida', True) %}
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUIA MANUAL</a>
+                    {% endif %}
+                    {% if user_permisos.get('vales', False) %}
+                    <a href="{{ url_for('vales.vales') }}" class="nav-link active"><i class="bi bi-clipboard-check me-1"></i> VALES</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% if user_permisos.get('scada', True) %}
+            <div class="nav-segment-divider"></div>
+            <div class="nav-segment nav-segment-monitoreo">
+                <span class="nav-segment-label">MONITOREO</span>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+                </div>
+            </div>
+            {% endif %}
+            <div class="nav-segment-divider"></div>
+            <div class="nav-segment nav-segment-admin">
+                <span class="nav-segment-label">ADMIN</span>
+                <div class="d-flex gap-1">
+                    {% if user_permisos.get('datos', True) %}
+                    <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+                    {% endif %}
+                    {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i class="bi bi-people me-1"></i> CUENTAS</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i class="bi bi-key me-2"></i>Cambiar Contrasena</a></li>
+                    {% if current_user.role == 'admin' %}
+                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesion</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-vales">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0"><i class="bi bi-clock-history me-2" style="color:#ff453a"></i>Historial de Vales</h4>
+            <a href="{{ url_for('vales.vales') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-plus-circle me-1"></i> Nuevo Vale</a>
+        </div>
+
+        <!-- Filtros -->
+        <div class="section-card">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <div class="field-label">Tipo</div>
+                    <select id="filtroTipo" class="form-select form-select-sm" onchange="renderHistorial()">
+                        <option value="">Todos</option>
+                        <option value="HT">HT - Herramienta</option>
+                        <option value="PR">PR - Prestamo</option>
+                        <option value="EQ">EQ - EPP</option>
+                        <option value="MT">MT - Material</option>
+                        <option value="ES">ES - Especial</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="field-label">Tecnico</div>
+                    <select id="filtroTecnico" class="form-select form-select-sm" onchange="renderHistorial()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="field-label">Desde</div>
+                    <input type="date" id="filtroDesde" class="form-control form-control-sm" onchange="renderHistorial()">
+                </div>
+                <div class="col-md-2">
+                    <div class="field-label">Hasta</div>
+                    <input type="date" id="filtroHasta" class="form-control form-control-sm" onchange="renderHistorial()">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-outline-secondary w-100" onclick="limpiarFiltros()"><i class="bi bi-funnel me-1"></i> Limpiar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla historial -->
+        <div class="section-card">
+            <div id="tablaHistorial"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    const STORAGE_KEY = 'vales_herramienta';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        poblarFiltroTecnicos();
+        renderHistorial();
+        actualizarReloj();
+        setInterval(actualizarReloj, 1000);
+    });
+
+    function actualizarReloj() {
+        const now = new Date();
+        const cl = document.getElementById('clock');
+        const dt = document.getElementById('date');
+        if (cl) cl.textContent = now.toLocaleTimeString('es-MX', {hour12: false});
+        if (dt) dt.textContent = now.toLocaleDateString('es-MX');
+    }
+
+    function getVales() {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+
+    function poblarFiltroTecnicos() {
+        const vales = getVales();
+        const tecnicos = [...new Set(vales.map(v => v.tecnico))].sort();
+        const sel = document.getElementById('filtroTecnico');
+        tecnicos.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            sel.appendChild(opt);
+        });
+    }
+
+    function renderHistorial() {
+        const vales = getVales();
+        const tipo = document.getElementById('filtroTipo').value;
+        const tecnico = document.getElementById('filtroTecnico').value;
+        const desde = document.getElementById('filtroDesde').value;
+        const hasta = document.getElementById('filtroHasta').value;
+
+        let filtrados = vales.filter(v => {
+            if (tipo && v.tipo !== tipo) return false;
+            if (tecnico && v.tecnico !== tecnico) return false;
+            if (desde && v.fecha < desde) return false;
+            if (hasta && v.fecha > hasta) return false;
+            return true;
+        });
+
+        // Ordenar por fecha descendente
+        filtrados.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+
+        const container = document.getElementById('tablaHistorial');
+
+        if (filtrados.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-clipboard-x"></i>
+                    <div>No se encontraron vales</div>
+                    <small class="text-muted">Cree un nuevo vale o ajuste los filtros</small>
+                </div>`;
+            return;
+        }
+
+        let html = `
+        <table class="tbl-historial">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Tecnico</th>
+                    <th>Fecha</th>
+                    <th>Articulos</th>
+                    <th>Creado por</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        filtrados.forEach(v => {
+            html += `
+                <tr>
+                    <td style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;">${escapeHtml(v.id)}</td>
+                    <td><span class="badge-tipo badge-${v.tipo}">${v.tipo}</span></td>
+                    <td>${escapeHtml(v.tecnico)}</td>
+                    <td>${v.fecha}</td>
+                    <td style="text-align:center">${v.articulos ? v.articulos.length : 0}</td>
+                    <td>${escapeHtml(v.created_by || '-')}</td>
+                    <td>
+                        <button class="btn-acc" onclick="verVale('${escapeHtml(v.id)}')" title="Ver/Editar"><i class="bi bi-eye"></i></button>
+                        <button class="btn-acc" onclick="imprimirVale('${escapeHtml(v.id)}')" title="Imprimir"><i class="bi bi-printer"></i></button>
+                        <button class="btn-acc btn-del" onclick="eliminarVale('${escapeHtml(v.id)}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function verVale(id) {
+        window.location.href = '/vales?id=' + encodeURIComponent(id);
+    }
+
+    function imprimirVale(id) {
+        window.location.href = '/vales?id=' + encodeURIComponent(id) + '&print=1';
+    }
+
+    function eliminarVale(id) {
+        if (!confirm('Eliminar vale ' + id + '?')) return;
+        const vales = getVales().filter(v => v.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(vales));
+        renderHistorial();
+    }
+
+    function limpiarFiltros() {
+        document.getElementById('filtroTipo').value = '';
+        document.getElementById('filtroTecnico').value = '';
+        document.getElementById('filtroDesde').value = '';
+        document.getElementById('filtroHasta').value = '';
+        renderHistorial();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+    </script>
+</body>
+</html>
