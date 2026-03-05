@@ -14,7 +14,13 @@
       "Bash(.venv/Scripts/python:*)",
       "Bash(.venv/Scripts/pip install:*)",
       "Bash(rm:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(ls:*)",
+      "Bash(xargs:*)",
+      "Bash(cd:*)",
+      "Bash(git config:*)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }

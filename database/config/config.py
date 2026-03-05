@@ -14,7 +14,7 @@ class BaseConfig:
     # Base de datos PostgreSQL
     DATABASE_URL = os.environ.get(
         'DATABASE_URL',
-        'postgresql://postgres:Lemonroy%231@localhost:5432/ups_manager'
+        'postgresql://localhost:5432/ups_manager'
     )
 
     # Archivos

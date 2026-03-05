@@ -8,7 +8,6 @@ import asyncio
 import socket
 import subprocess
 import platform
-import re
 from datetime import datetime
 
 diagnostic_bp = Blueprint('diagnostic', __name__)

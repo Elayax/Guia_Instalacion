@@ -2,7 +2,6 @@ import os
 import csv
 import logging
 from datetime import datetime
-from psycopg.rows import dict_row
 
 logger = logging.getLogger(__name__)
 

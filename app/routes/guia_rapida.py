@@ -1,7 +1,7 @@
 import logging
 import os
 from flask import render_template, request, make_response, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required
 from app.reporte import ReportePDF
 from app.permisos import permiso_requerido, tiene_permiso
 from app.auxiliares import (

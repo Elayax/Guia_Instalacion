@@ -358,7 +358,6 @@ def _procesar_acciones_bateria(db, request, state, accion):
         state['bateria_seleccionada'] = db.obtener_bateria_id(id_bat)
         if state['bateria_seleccionada']:
             state['pivot_data'] = db.obtener_curvas_pivot(id_bat, unidad=state['unidad_curva'])
-        pass
 
 def _procesar_acciones_personal(db, request, state, accion):
     """Lógica de estado para Personal"""
@@ -544,7 +543,7 @@ def procesar_calculo_ups(db, form):
         'ruido': ups_data.get('Nivel_Ruido_dB')
     })
     
-    # Mensaje inicial (la publicación se hace en rutas.py con todos los datos)
+    # Mensaje inicial
     mensaje = "👁️ VISTA PREVIA GENERADA" if accion != 'publicar' else "📊 Cálculos realizados"
 
     return resultado, mensaje

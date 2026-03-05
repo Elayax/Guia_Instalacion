@@ -29,7 +29,7 @@ La cadena de conexión se define en `config/config.py` y se puede sobreescribir 
 
 ```bash
 # Ejemplo .env o variable de entorno
-DATABASE_URL=postgresql://postgres:Lemonroy%231@localhost:5432/ups_manager
+DATABASE_URL=postgresql://usuario:CONTRASEÑA@localhost:5432/ups_manager
 ```
 
 **Motor:** PostgreSQL 18  

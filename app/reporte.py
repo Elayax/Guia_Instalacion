@@ -37,7 +37,7 @@ class ReportePDF(FPDF):
             else:
                 self.set_fill_color(*COLOR_ROJO)
                 self.rect(10, 10, 33, 15, 'F')
-        except:
+        except Exception:
             pass
 
         # 2. ENCABEZADO
@@ -84,7 +84,7 @@ class ReportePDF(FPDF):
         try:
             # FPDF usa Latin-1 que soporta caracteres españoles
             return texto.encode('latin-1', 'replace').decode('latin-1')
-        except:
+        except Exception:
             return texto
 
     def _preparar_imagen(self, ruta_imagen, ancho_mm=190, alto_mm=None, alto_max_mm=None):
@@ -189,7 +189,7 @@ class ReportePDF(FPDF):
             if img_procesada != ruta_imagen:
                 try:
                     os.unlink(img_procesada)
-                except:
+                except OSError:
                     pass
 
             return True
@@ -294,7 +294,7 @@ class ReportePDF(FPDF):
                 imagen_colocada = True
                 if img_procesada != self.imagenes_temp['portada']:
                     try: os.unlink(img_procesada)
-                    except: pass
+                    except OSError: pass
             except Exception:
                 pass
 
@@ -310,7 +310,7 @@ class ReportePDF(FPDF):
                     imagen_colocada = True
                     if img_procesada != ruta_imagen:
                         try: os.unlink(img_procesada)
-                        except: pass
+                        except OSError: pass
                 except Exception:
                     pass
 
@@ -657,7 +657,7 @@ class ReportePDF(FPDF):
             if img_procesada != ruta_imagen:
                 try:
                     os.unlink(img_procesada)
-                except:
+                except OSError:
                     pass
             return True
         except Exception as e:

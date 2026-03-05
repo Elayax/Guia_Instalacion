@@ -31,7 +31,7 @@ class ChecklistPDF(FPDF):
         if os.path.exists(ruta_logo):
             try:
                 self.image(ruta_logo, 15, 15, 40)
-            except:
+            except Exception:
                 pass
 
         # Título

@@ -22,6 +22,7 @@ app/static/temp/
 # Ignorar archivos de sistema
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Ignorar PDFs generados de muestra
 Reportes/output/*.pdf
@@ -33,3 +34,31 @@ reporte_generado_lbs.pdf
 
 # Ignorar archivos de lock de OneDrive/Affinity
 *~lock~
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Test y coverage
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Node (por si acaso)
+node_modules/
+
+# Logs adicionales
+*.log
+
+# Workspace de IA (notas, prompts, guías internas)
+.ai-workspace/
+
+# Backups con datos de clientes
+backups/
