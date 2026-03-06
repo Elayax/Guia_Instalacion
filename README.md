@@ -233,12 +233,11 @@ pytest --cov=app
 
 ## Licencia
 
-Proyecto propietario de **Lemonroy Business Solutions SA de CV**. Todos los derechos reservados.
 
----
 
 <div align="center">
 
 Desarrollado con dedicacion por el equipo de **Lemonroy Business Solutions**
 
 </div>
+
