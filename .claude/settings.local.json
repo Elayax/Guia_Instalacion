@@ -20,7 +20,8 @@
       "Bash(cd:*)",
       "Bash(git config:*)",
       "Bash(.venv/Scripts/python.exe:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(grep:*)"
     ]
   }
 }
