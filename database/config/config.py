@@ -1,5 +1,11 @@
 import os
 import secrets
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Cargar .env desde la raíz del proyecto (dos niveles arriba de este archivo)
+_root = Path(__file__).resolve().parent.parent.parent
+load_dotenv(_root / '.env', override=False)
 
 
 class BaseConfig:
