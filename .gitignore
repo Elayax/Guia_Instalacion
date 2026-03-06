@@ -1,64 +1,117 @@
-# Ignorar entorno virtual
+# ============================================
+# Entornos virtuales de Python
+# ============================================
 venv/
 .venv/
 env/
+ENV/
 
-# Ignorar archivos compilados de Python
+# ============================================
+# Archivos compilados de Python
+# ============================================
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 
-# Ignorar bases de datos
+# ============================================
+# Bases de datos locales
+# ============================================
 *.db
 *.sqlite3
 
-# Ignorar logs
+# ============================================
+# Logs
+# ============================================
 logs/*.log
+*.log
 
-# Ignorar archivos temporales
+# ============================================
+# Archivos temporales
+# ============================================
 app/static/temp/
 *.tmp
+*.bak
+*.swp
+*~
 
-# Ignorar archivos de sistema
+# ============================================
+# Archivos de sistema operativo
+# ============================================
 .DS_Store
 Thumbs.db
 desktop.ini
+ehthumbs.db
 
-# Ignorar PDFs generados de muestra
+# ============================================
+# PDFs generados de muestra
+# ============================================
 Reportes/output/*.pdf
 reporte_generado_lbs.pdf
 
-# Ignorar archivos de IDE
+# ============================================
+# IDEs y editores
+# ============================================
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 
-# Ignorar archivos de lock de OneDrive/Affinity
+# ============================================
+# Lock de OneDrive/Affinity
+# ============================================
 *~lock~
 
-# Variables de entorno
+# ============================================
+# Variables de entorno e informacion sensible
+# ============================================
 .env
 .env.local
 .env.*.local
+.env.example
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials/
 
+# ============================================
+# Claude Code / Herramientas de IA
+# ============================================
+.claude/
+
+# ============================================
+# Docker (archivos locales)
+# ============================================
+.dockerignore
+
+# ============================================
 # Test y coverage
+# ============================================
 .pytest_cache/
 htmlcov/
 .coverage
 coverage.xml
 
+# ============================================
 # Build artifacts
+# ============================================
 build/
 dist/
 *.egg-info/
 
+# ============================================
 # Node (por si acaso)
+# ============================================
 node_modules/
 
-# Logs adicionales
-*.log
-
-# Workspace de IA (notas, prompts, guías internas)
+# ============================================
+# Workspace de IA (notas, prompts, guias internas)
+# ============================================
 .ai-workspace/
 
+# ============================================
 # Backups con datos de clientes
+# ============================================
 backups/
