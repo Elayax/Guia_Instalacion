@@ -18,7 +18,7 @@
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
             <div>
-                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA DE SERVICIO</div>
                 <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE
                     INGENIERÍA</small>
             </div>
@@ -28,16 +28,20 @@
                 <span class="nav-segment-label">SERVICIO</span>
                 <div class="d-flex gap-1">
                     {% if user_permisos.get('tablero', True) %}
-                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i
+                            class="bi bi-speedometer2 me-1"></i> TABLERO</a>
                     {% endif %}
                     {% if user_permisos.get('calculos', True) %}
-                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i
+                            class="bi bi-calculator me-1"></i> CÁLCULOS</a>
                     {% endif %}
                     {% if user_permisos.get('guia_rapida', True) %}
-                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUÍA MANUAL</a>
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i
+                            class="bi bi-lightning me-1"></i> GUÍA MANUAL</a>
                     {% endif %}
                     {% if user_permisos.get('vales', False) %}
-                    <a href="{{ url_for('vales.vales') }}" class="nav-link"><i class="bi bi-clipboard-check me-1"></i> VALES</a>
+                    <a href="{{ url_for('vales.vales') }}" class="nav-link"><i class="bi bi-clipboard-check me-1"></i>
+                        VALES</a>
                     {% endif %}
                 </div>
             </div>
@@ -46,7 +50,8 @@
             <div class="nav-segment nav-segment-monitoreo">
                 <span class="nav-segment-label">MONITOREO</span>
                 <div class="d-flex gap-1">
-                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i>
+                        SCADA</a>
                 </div>
             </div>
             {% endif %}
@@ -55,10 +60,12 @@
                 <span class="nav-segment-label">ADMIN</span>
                 <div class="d-flex gap-1">
                     {% if user_permisos.get('datos', True) %}
-                    <a href="{{ url_for('management.gestion') }}" class="nav-link active"><i class="bi bi-database me-1"></i> DATOS</a>
+                    <a href="{{ url_for('management.gestion') }}" class="nav-link active"><i
+                            class="bi bi-database me-1"></i> DATOS</a>
                     {% endif %}
                     {% if current_user.role == 'admin' %}
-                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i class="bi bi-people me-1"></i> CUENTAS</a>
+                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i
+                            class="bi bi-people me-1"></i> CUENTAS</a>
                     {% endif %}
                 </div>
             </div>
@@ -69,16 +76,22 @@
                 <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
             </div>
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown">
                     <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i class="bi bi-key me-2"></i>Cambiar Contraseña</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i
+                                class="bi bi-key me-2"></i>Cambiar Contraseña</a></li>
                     {% if current_user.role == 'admin' %}
-                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i
+                                class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
                     {% endif %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
+                                class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
                 </ul>
             </div>
         </div>
@@ -132,7 +145,8 @@
                             class="fas fa-cloud-upload-alt"></i> CARGA MASIVA</button>
                     {% if current_user.role == 'admin' %}
                     <hr style="border-color: rgba(255,255,255,0.1); margin: 0.5rem 0;">
-                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link text-start" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link text-start"
+                        style="padding: 0.5rem 1rem; font-size: 0.85rem;">
                         <i class="fas fa-user-shield"></i> GESTIONAR CUENTAS
                     </a>
                     {% endif %}
@@ -865,19 +879,33 @@
                                 <a href="{{ url_for('management.exportar_tabla', tabla='clientes') }}"
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
-                            <form method="POST" class="row g-2 mb-3 p-2 border rounded"
+                            <form method="POST" class="row g-2 mb-3 p-3 border rounded"
                                 style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="add_cliente">
-                                <div class="col-3"><input type="text" name="cliente"
-                                        class="form-control form-control-sm" placeholder="Cliente" required></div>
-                                <div class="col-3"><input type="text" name="sucursal"
-                                        class="form-control form-control-sm" placeholder="Sucursal" required></div>
-                                <div class="col-2"><input type="text" name="direccion"
-                                        class="form-control form-control-sm" placeholder="Dirección"></div>
-                                <div class="col-2"><input type="text" name="lat" class="form-control form-control-sm"
-                                        placeholder="Lat, Lon"></div>
-                                <div class="col-2"><button class="btn btn-sm btn-success w-100">Agregar</button></div>
+                                <div class="col-3">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Cliente</label>
+                                    <input type="text" name="cliente"
+                                        class="form-control form-control-sm" placeholder="Nombre del cliente" required>
+                                </div>
+                                <div class="col-3">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Sucursal</label>
+                                    <input type="text" name="sucursal"
+                                        class="form-control form-control-sm" placeholder="Nombre de sucursal" required>
+                                </div>
+                                <div class="col-2">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Direccion</label>
+                                    <input type="text" name="direccion"
+                                        class="form-control form-control-sm" placeholder="Calle, Ciudad...">
+                                </div>
+                                <div class="col-2">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Coordenadas</label>
+                                    <input type="text" name="lat" class="form-control form-control-sm"
+                                        placeholder="Lat, Lon">
+                                </div>
+                                <div class="col-2 d-flex align-items-end">
+                                    <button class="btn btn-sm btn-success w-100"><i class="fas fa-plus me-1"></i> Agregar</button>
+                                </div>
                             </form>
                             <div style="height: 600px; overflow-y: auto;">
                                 <table class="table table-sm table-hover">
@@ -885,19 +913,22 @@
                                         <tr>
                                             <th>Cliente</th>
                                             <th>Sucursal</th>
+                                            <th>Direccion</th>
                                             <th class="text-center">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for c in clientes %}
                                         <tr>
-                                            <td>{{ c.cliente }}</td>
+                                            <td><strong>{{ c.cliente }}</strong></td>
                                             <td>{{ c.sucursal }}</td>
+                                            <td class="small text-muted">{{ c.direccion or '-' }}</td>
                                             <td class="text-center">
-                                                <button class="btn btn-info btn-sm me-2" data-cliente="{{ c.cliente }}"
+                                                <button class="btn btn-outline-light btn-sm me-2" data-cliente="{{ c.cliente }}"
                                                     data-sucursal="{{ c.sucursal }}" data-direccion="{{ c.direccion }}"
                                                     data-lat="{{ c.lat }}" data-lon="{{ c.lon }}"
-                                                    onclick="verCliente(this)" title="Ver Detalles y Mapa">
+                                                    onclick="verCliente(this)" title="Ver Detalles y Mapa"
+                                                    style="border-color: #0a84ff; color: #0a84ff;">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                 <form method="POST" style="display:inline;"
@@ -917,119 +948,7 @@
                         </div>
                     </div>
 
-                    <!-- PESTAÑA PERSONAL (NUEVO) -->
-                    <div class="tab-pane fade {% if active_tab == 'personal' %}show active{% endif %}"
-                        id="v-pills-personal" role="tabpanel">
-
-                        {% if personal_seleccionado %}
-                        <!-- FORMULARIO DE EDICIÓN PERSONAL -->
-                        <div class="tech-matrix">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h4 class="m-0 fw-bold">Editando: <span class="text-primary">{{
-                                        personal_seleccionado.nombre }}</span></h4>
-                                <form method="POST" style="display:inline;">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="tipo" value="cancelar_edit_personal">
-                                    <button class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Volver a
-                                        Lista</button>
-                                </form>
-                            </div>
-
-                            <form method="POST">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="tipo" value="update_personal">
-                                <input type="hidden" name="id" value="{{ personal_seleccionado.id }}">
-
-                                <div class="row g-3 mb-3">
-                                    <div class="col-md-6">
-                                        <label class="small" style="color: #ff8a80;">Nombre Completo</label>
-                                        <input type="text" name="nombre" class="form-control"
-                                            value="{{ personal_seleccionado.nombre }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="small" style="color: #ff8a80;">Puesto / Cargo</label>
-                                        <input type="text" name="puesto" class="form-control"
-                                            value="{{ personal_seleccionado.puesto }}" required>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="submit" class="btn btn-success fw-bold px-5"><i
-                                            class="fas fa-save"></i> GUARDAR CAMBIOS</button>
-                                </div>
-                            </form>
-                        </div>
-                        {% else %}
-
-                        <!-- LISTA DE PERSONAL -->
-                        <div class="tech-matrix">
-                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                                <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-id-badge me-2"></i> LISTA
-                                    DE PERSONAL</div>
-                                <a href="{{ url_for('management.exportar_tabla', tabla='personal') }}"
-                                    class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
-                            </div>
-
-                            <!-- Formulario de Agregado Rápido -->
-                            <form method="POST" class="row g-2 mb-3 p-2 border rounded"
-                                style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="tipo" value="add_personal">
-                                <div class="col-5">
-                                    <input type="text" name="nombre" class="form-control form-control-sm"
-                                        placeholder="Nombre Completo" required>
-                                </div>
-                                <div class="col-5">
-                                    <input type="text" name="puesto" class="form-control form-control-sm"
-                                        placeholder="Puesto / Cargo" required>
-                                </div>
-                                <div class="col-2">
-                                    <button class="btn btn-sm btn-success w-100"><i class="fas fa-plus"></i>
-                                        Agregar</button>
-                                </div>
-                            </form>
-
-                            <div style="height: 600px; overflow-y: auto;">
-                                <table class="table table-sm table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nombre Completo</th>
-                                            <th>Puesto / Cargo</th>
-                                            <th class="text-center">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for p in personal %}
-                                        <tr>
-                                            <td>{{ p.id }}</td>
-                                            <td>{{ p.nombre }}</td>
-                                            <td>{{ p.puesto }}</td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display:inline;">
-                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                    <input type="hidden" name="tipo" value="edit_personal">
-                                                    <input type="hidden" name="id_personal" value="{{ p.id }}">
-                                                    <button class="btn btn-warning btn-sm me-2" title="Editar"><i
-                                                            class="fas fa-edit"></i></button>
-                                                </form>
-                                                <form method="POST" style="display:inline;"
-                                                    onsubmit="return confirm('¿Eliminar a {{ p.nombre }}?');">
-                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                    <input type="hidden" name="tipo" value="del_personal">
-                                                    <input type="hidden" name="id" value="{{ p.id }}">
-                                                    <button class="btn btn-danger btn-sm" title="Eliminar"><i
-                                                            class="fas fa-trash"></i></button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
+                    <!-- (Personal tab movido abajo como PESTAÑA 6) -->
 
                     <!-- PESTAÑA 3.5: TIPOS DE VENTILACIÓN -->
                     <div class="tab-pane fade {% if active_tab == 'ventilacion' %}show active{% endif %}"
@@ -1102,24 +1021,27 @@
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
 
-                            <form method="POST" enctype="multipart/form-data" class="row g-2 mb-3 p-2 border rounded"
+                            <form method="POST" enctype="multipart/form-data" class="row g-2 mb-3 p-3 border rounded"
                                 style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1) !important;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="tipo" value="add_tipo_vent">
                                 <div class="col-3">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Nombre</label>
                                     <input type="text" name="nombre" class="form-control form-control-sm"
-                                        placeholder="Nombre (ej: Aire Forzado)" required>
+                                        placeholder="Ej: Aire Forzado" required>
                                 </div>
                                 <div class="col-4">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Descripcion</label>
                                     <input type="text" name="descripcion" class="form-control form-control-sm"
-                                        placeholder="Descripción (opcional)">
+                                        placeholder="Descripcion (opcional)">
                                 </div>
                                 <div class="col-3">
+                                    <label class="small fw-bold mb-1" style="color: #ff8a80;">Imagen</label>
                                     <input type="file" name="imagen_ventilacion" class="form-control form-control-sm"
                                         accept="image/*,.svg">
                                 </div>
-                                <div class="col-2">
-                                    <button class="btn btn-sm btn-success w-100"><i class="fas fa-plus"></i>
+                                <div class="col-2 d-flex align-items-end">
+                                    <button class="btn btn-sm btn-success w-100"><i class="fas fa-plus me-1"></i>
                                         Agregar</button>
                                 </div>
                             </form>
@@ -1180,19 +1102,19 @@
                         id="v-pills-history" role="tabpanel">
                         <div class="tech-matrix">
                             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                                <div class="control-title mb-0 border-0 pb-0" style="color: var(--success);"><i
+                                <div class="control-title mb-0 border-0 pb-0"><i
                                         class="fas fa-history me-2"></i> PROYECTOS PUBLICADOS (HISTORIAL)</div>
                                 <a href="{{ url_for('management.exportar_tabla', tabla='proyectos_publicados') }}"
                                     class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i> Exportar CSV</a>
                             </div>
                             <div style="max-height: 600px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-sm table-hover">
                                     <thead>
                                         <tr>
                                             <th>Pedido</th>
                                             <th>Fecha</th>
                                             <th>Cliente</th>
-                                            <th>Modelo (Snapshot)</th>
+                                            <th>Modelo</th>
                                             <th>Cables</th>
                                             <th>Config</th>
                                             <th class="text-center">Acciones</th>
@@ -1207,7 +1129,7 @@
                                             <td>{{ p.modelo_snap }}</td>
                                             <td>{{ p.calibre_fases }}</td>
                                             <td>{{ p.config_salida }}</td>
-                                            <tdclass="text-center">
+                                            <td class="text-center">
                                                 <button class="btn btn-warning btn-sm me-2" title="Editar"
                                                     onclick="editarProyecto('{{ p.pedido }}', '{{ p.cliente_snap }}', '{{ p.sucursal_snap }}')">
                                                     <i class="fas fa-edit"></i> Editar
@@ -1216,7 +1138,7 @@
                                                     onclick="eliminarProyecto('{{ p.pedido }}')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
-                                                </td>
+                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -1340,18 +1262,19 @@
                                 <input type="hidden" name="id" value="{{ personal_seleccionado.id }}">
                                 {% endif %}
 
+                                <div class="control-title">Datos del Personal</div>
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
                                         <label class="small" style="color: #ff8a80;">Nombre Completo</label>
                                         <input type="text" name="nombre" class="form-control"
                                             value="{{ personal_seleccionado.nombre if personal_seleccionado else '' }}"
-                                            required>
+                                            placeholder="Nombre y apellidos" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="small" style="color: #ff8a80;">Puesto</label>
+                                        <label class="small" style="color: #ff8a80;">Puesto / Cargo</label>
                                         <input type="text" name="puesto" class="form-control"
                                             value="{{ personal_seleccionado.puesto if personal_seleccionado else '' }}"
-                                            required>
+                                            placeholder="Ej: Ingeniero de Campo" required>
                                     </div>
                                 </div>
 
@@ -1367,13 +1290,16 @@
                             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                                 <div class="control-title mb-0 border-0 pb-0"><i class="fas fa-user-tie me-2"></i>
                                     DIRECTORIO DE PERSONAL</div>
-                                <div>
+                                <div class="d-flex align-items-center gap-2">
                                     <form method="POST" style="display:inline;">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="accion" value="iniciar_agregar_personal">
                                         <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-plus"></i>
                                             Agregar Personal</button>
                                     </form>
+                                    <a href="{{ url_for('management.exportar_tabla', tabla='personal') }}"
+                                        class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i>
+                                        Exportar CSV</a>
                                 </div>
                             </div>
 
@@ -1381,8 +1307,9 @@
                                 <table class="table table-sm table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Nombre</th>
-                                            <th>Puesto</th>
+                                            <th>#</th>
+                                            <th>Nombre Completo</th>
+                                            <th>Puesto / Cargo</th>
                                             <th class="text-center">Acciones</th>
                                         </tr>
                                     </thead>
@@ -1390,7 +1317,8 @@
                                         {% if personal %}
                                         {% for p in personal %}
                                         <tr>
-                                            <td>{{ p.nombre }}</td>
+                                            <td class="text-muted small">{{ loop.index }}</td>
+                                            <td><strong>{{ p.nombre }}</strong></td>
                                             <td>{{ p.puesto }}</td>
                                             <td class="text-center">
                                                 <form method="POST" style="display:inline;">
@@ -1413,7 +1341,9 @@
                                         {% endfor %}
                                         {% else %}
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted">No hay personal registrado.
+                                            <td colspan="4" class="text-center py-4">
+                                                <i class="fas fa-user-slash fa-2x mb-2 d-block" style="color: #555;"></i>
+                                                <span class="text-muted">No hay personal registrado</span>
                                             </td>
                                         </tr>
                                         {% endif %}
