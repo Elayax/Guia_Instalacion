@@ -22,6 +22,7 @@
             padding: 1.5rem 0 1.25rem;
             margin-bottom: 1.75rem;
         }
+
         .page-header::after {
             content: '';
             position: absolute;
@@ -29,15 +30,17 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, var(--accent-red), rgba(255,69,58,0.1) 60%, transparent);
+            background: linear-gradient(90deg, var(--accent-red), rgba(255, 69, 58, 0.1) 60%, transparent);
         }
+
         .page-header h4 {
             font-size: 1.35rem;
             letter-spacing: 2px;
             margin-bottom: 0.35rem;
         }
+
         .page-header .subtitle {
-            color: rgba(255,255,255,0.45);
+            color: rgba(255, 255, 255, 0.45);
             font-size: 0.8rem;
             font-weight: 400;
             letter-spacing: 0.5px;
@@ -47,13 +50,14 @@
         /* --- Section Cards --- */
         .section-card {
             position: relative;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 14px;
             padding: 1.5rem 1.5rem 1.25rem;
             margin-bottom: 1.25rem;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
+
         .section-card::before {
             content: '';
             position: absolute;
@@ -61,15 +65,17 @@
             left: 20px;
             right: 20px;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
         }
+
         .section-card:hover {
-            border-color: rgba(255,69,58,0.15);
-            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            border-color: rgba(255, 69, 58, 0.15);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
         }
+
         .section-card:focus-within {
-            border-color: rgba(255,69,58,0.25);
-            box-shadow: 0 0 0 1px rgba(255,69,58,0.08), 0 8px 32px rgba(0,0,0,0.2);
+            border-color: rgba(255, 69, 58, 0.25);
+            box-shadow: 0 0 0 1px rgba(255, 69, 58, 0.08), 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
         /* --- Section Title --- */
@@ -84,17 +90,19 @@
             text-transform: uppercase;
             margin-bottom: 1.1rem;
             padding-bottom: 0.65rem;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
+
         .sec-title i {
             font-size: 1rem;
             opacity: 0.8;
         }
+
         .sec-title .sec-hint {
             font-weight: 400;
             letter-spacing: 0;
             font-size: 0.7rem;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255, 255, 255, 0.3);
             text-transform: none;
             margin-left: auto;
         }
@@ -104,13 +112,14 @@
             display: flex;
             align-items: center;
             gap: 0.35rem;
-            color: rgba(255,255,255,0.55);
+            color: rgba(255, 255, 255, 0.55);
             font-size: 0.72rem;
             font-weight: 600;
             letter-spacing: 0.8px;
             text-transform: uppercase;
             margin-bottom: 0.4rem;
         }
+
         .field-label .badge-tag {
             display: inline-flex;
             align-items: center;
@@ -122,43 +131,53 @@
             letter-spacing: 0.8px;
             vertical-align: middle;
         }
+
         .badge-tag.suggest {
-            background: rgba(100,210,255,0.08);
-            color: rgba(100,210,255,0.65);
-            border: 1px solid rgba(100,210,255,0.12);
-        }
-        .badge-tag.calc {
-            background: rgba(50,215,75,0.08);
-            color: rgba(50,215,75,0.65);
-            border: 1px solid rgba(50,215,75,0.12);
-        }
-        .badge-tag.required {
-            background: rgba(255,69,58,0.08);
-            color: rgba(255,69,58,0.65);
-            border: 1px solid rgba(255,69,58,0.12);
+            background: rgba(100, 210, 255, 0.08);
+            color: rgba(100, 210, 255, 0.65);
+            border: 1px solid rgba(100, 210, 255, 0.12);
         }
 
-        .form-control, .form-select {
-            background: rgba(0,0,0,0.25) !important;
-            border: 1px solid rgba(255,255,255,0.08) !important;
+        .badge-tag.calc {
+            background: rgba(50, 215, 75, 0.08);
+            color: rgba(50, 215, 75, 0.65);
+            border: 1px solid rgba(50, 215, 75, 0.12);
+        }
+
+        .badge-tag.required {
+            background: rgba(255, 69, 58, 0.08);
+            color: rgba(255, 69, 58, 0.65);
+            border: 1px solid rgba(255, 69, 58, 0.12);
+        }
+
+        .form-control,
+        .form-select {
+            background: rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 8px;
             color: #fff !important;
             font-size: 0.88rem;
             padding: 0.55rem 0.75rem;
             transition: all 0.25s ease;
         }
-        .form-control:hover, .form-select:hover {
-            border-color: rgba(255,255,255,0.15) !important;
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.15) !important;
         }
-        .form-control:focus, .form-select:focus {
-            background: rgba(0,0,0,0.35) !important;
-            border-color: rgba(255,69,58,0.45) !important;
-            box-shadow: 0 0 0 3px rgba(255,69,58,0.1), inset 0 1px 3px rgba(0,0,0,0.2) !important;
+
+        .form-control:focus,
+        .form-select:focus {
+            background: rgba(0, 0, 0, 0.35) !important;
+            border-color: rgba(255, 69, 58, 0.45) !important;
+            box-shadow: 0 0 0 3px rgba(255, 69, 58, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
         }
+
         .form-control::placeholder {
-            color: rgba(255,255,255,0.2);
+            color: rgba(255, 255, 255, 0.2);
             font-weight: 400;
         }
+
         .form-control[readonly] {
             opacity: 0.5;
             cursor: not-allowed;
@@ -167,32 +186,37 @@
         /* File inputs */
         .file-upload-zone {
             position: relative;
-            background: rgba(0,0,0,0.15);
-            border: 1px dashed rgba(255,255,255,0.1);
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 1rem;
             transition: all 0.3s ease;
             cursor: pointer;
         }
+
         .file-upload-zone:hover {
-            border-color: rgba(255,69,58,0.3);
-            background: rgba(255,69,58,0.03);
+            border-color: rgba(255, 69, 58, 0.3);
+            background: rgba(255, 69, 58, 0.03);
         }
+
         .file-upload-zone .upload-icon {
             font-size: 1.4rem;
-            color: rgba(255,255,255,0.2);
+            color: rgba(255, 255, 255, 0.2);
             margin-bottom: 0.25rem;
         }
+
         .file-upload-zone .upload-label {
             font-size: 0.78rem;
             font-weight: 600;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255, 255, 255, 0.6);
             letter-spacing: 0.5px;
         }
+
         .file-upload-zone .upload-hint {
             font-size: 0.68rem;
-            color: rgba(255,255,255,0.25);
+            color: rgba(255, 255, 255, 0.25);
         }
+
         .file-upload-zone input[type="file"] {
             position: absolute;
             inset: 0;
@@ -202,14 +226,18 @@
 
         /* --- UPS Specs Mini Card --- */
         .specs-mini {
-            background: rgba(255,69,58,0.04);
-            border: 1px solid rgba(255,69,58,0.1);
+            background: rgba(255, 69, 58, 0.04);
+            border: 1px solid rgba(255, 69, 58, 0.1);
             border-radius: 8px;
             padding: 0.65rem 0.85rem;
             margin-top: 0.5rem;
             display: none;
         }
-        .specs-mini.active { display: block; }
+
+        .specs-mini.active {
+            display: block;
+        }
+
         .specs-mini .spec-row {
             display: flex;
             justify-content: space-between;
@@ -217,10 +245,15 @@
             padding: 0.2rem 0;
             font-size: 0.75rem;
         }
-        .specs-mini .spec-row + .spec-row {
-            border-top: 1px solid rgba(255,255,255,0.03);
+
+        .specs-mini .spec-row+.spec-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
         }
-        .specs-mini .spec-label { color: rgba(255,255,255,0.4); }
+
+        .specs-mini .spec-label {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
         .specs-mini .spec-value {
             color: var(--accent-red, #ff453a);
             font-weight: 700;
@@ -234,25 +267,29 @@
             align-items: center;
             gap: 0.5rem;
             padding: 3px 10px 3px 12px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             font-size: 0.7rem;
             letter-spacing: 0;
             cursor: pointer;
             transition: all 0.25s;
         }
+
         .mode-toggle:hover {
-            border-color: rgba(255,255,255,0.15);
+            border-color: rgba(255, 255, 255, 0.15);
         }
+
         .mode-toggle .mode-label {
             font-weight: 600;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             transition: color 0.2s;
         }
+
         .mode-toggle .mode-label.active-mode {
             color: var(--accent-red);
         }
+
         .mode-toggle .form-check-input {
             width: 2rem;
             height: 1rem;
@@ -261,14 +298,17 @@
 
         /* --- Libre mode alert --- */
         .libre-alert {
-            background: rgba(100,210,255,0.04);
-            border: 1px solid rgba(100,210,255,0.1);
+            background: rgba(100, 210, 255, 0.04);
+            border: 1px solid rgba(100, 210, 255, 0.1);
             border-radius: 8px;
             padding: 0.6rem 0.85rem;
             font-size: 0.78rem;
-            color: rgba(100,210,255,0.7);
+            color: rgba(100, 210, 255, 0.7);
         }
-        .libre-alert i { opacity: 0.7; }
+
+        .libre-alert i {
+            opacity: 0.7;
+        }
 
         /* --- Sticky Action Bar --- */
         .action-bar {
@@ -279,11 +319,12 @@
             background: rgba(15, 15, 17, 0.92);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255,255,255,0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
             padding: 0.75rem 2rem;
             z-index: 1000;
-            box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
         }
+
         .action-bar-inner {
             max-width: 1120px;
             margin: 0 auto;
@@ -292,14 +333,18 @@
             justify-content: space-between;
             gap: 1rem;
         }
+
         .action-bar .action-hint {
-            color: rgba(255,255,255,0.3);
+            color: rgba(255, 255, 255, 0.3);
             font-size: 0.75rem;
             display: flex;
             align-items: center;
             gap: 0.4rem;
         }
-        .action-bar .action-hint i { color: rgba(255,255,255,0.2); }
+
+        .action-bar .action-hint i {
+            color: rgba(255, 255, 255, 0.2);
+        }
 
         /* --- Action Buttons --- */
         .btn-action {
@@ -318,61 +363,102 @@
             text-decoration: none;
             line-height: 1;
         }
+
         .btn-ejemplo {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.12);
-            color: rgba(255,255,255,0.7);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.7);
         }
+
         .btn-ejemplo:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
             color: #fff;
         }
+
         .btn-descargar {
             background: linear-gradient(135deg, #1a5276, #154360);
-            border: 1px solid rgba(26,82,118,0.6);
+            border: 1px solid rgba(26, 82, 118, 0.6);
             color: #fff;
-            box-shadow: 0 2px 12px rgba(26,82,118,0.3);
+            box-shadow: 0 2px 12px rgba(26, 82, 118, 0.3);
         }
+
         .btn-descargar:hover {
             background: linear-gradient(135deg, #1f6090, #1a5276);
-            box-shadow: 0 4px 20px rgba(26,82,118,0.45);
+            box-shadow: 0 4px 20px rgba(26, 82, 118, 0.45);
             color: #fff;
             transform: translateY(-1px);
         }
+
         .btn-publicar {
             background: linear-gradient(135deg, #1e7e34, #155724);
-            border: 1px solid rgba(30,126,52,0.6);
+            border: 1px solid rgba(30, 126, 52, 0.6);
             color: #fff;
-            box-shadow: 0 2px 12px rgba(30,126,52,0.3);
+            box-shadow: 0 2px 12px rgba(30, 126, 52, 0.3);
         }
+
         .btn-publicar:hover {
             background: linear-gradient(135deg, #28a745, #1e7e34);
-            box-shadow: 0 4px 20px rgba(40,167,69,0.45);
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.45);
             color: #fff;
             transform: translateY(-1px);
         }
 
         /* --- Animations --- */
         @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .section-card {
             animation: fadeSlideIn 0.4s ease both;
         }
-        .section-card:nth-child(2) { animation-delay: 0.05s; }
-        .section-card:nth-child(3) { animation-delay: 0.1s; }
-        .section-card:nth-child(4) { animation-delay: 0.15s; }
-        .section-card:nth-child(5) { animation-delay: 0.2s; }
+
+        .section-card:nth-child(2) {
+            animation-delay: 0.05s;
+        }
+
+        .section-card:nth-child(3) {
+            animation-delay: 0.1s;
+        }
+
+        .section-card:nth-child(4) {
+            animation-delay: 0.15s;
+        }
+
+        .section-card:nth-child(5) {
+            animation-delay: 0.2s;
+        }
 
         /* --- Responsive --- */
         @media (max-width: 768px) {
-            .guia-container { padding: 1rem 0.75rem 5.5rem; }
-            .section-card { padding: 1.1rem; }
-            .action-bar { padding: 0.65rem 1rem; }
-            .action-bar-inner { flex-wrap: wrap; justify-content: center; }
-            .action-bar .action-hint { display: none; }
+            .guia-container {
+                padding: 1rem 0.75rem 5.5rem;
+            }
+
+            .section-card {
+                padding: 1.1rem;
+            }
+
+            .action-bar {
+                padding: 0.65rem 1rem;
+            }
+
+            .action-bar-inner {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .action-bar .action-hint {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -383,8 +469,9 @@
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
             <div>
-                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
-                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERÍA</small>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA DE SERVICIO</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE
+                    INGENIERÍA</small>
             </div>
         </div>
         <nav class="nav-segmented">
@@ -392,16 +479,20 @@
                 <span class="nav-segment-label">SERVICIO</span>
                 <div class="d-flex gap-1">
                     {% if user_permisos.get('tablero', True) %}
-                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i
+                            class="bi bi-speedometer2 me-1"></i> TABLERO</a>
                     {% endif %}
                     {% if user_permisos.get('calculos', True) %}
-                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CÁLCULOS</a>
+                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i
+                            class="bi bi-calculator me-1"></i> CÁLCULOS</a>
                     {% endif %}
                     {% if user_permisos.get('guia_rapida', True) %}
-                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i class="bi bi-lightning me-1"></i> GUÍA MANUAL</a>
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link active"><i
+                            class="bi bi-lightning me-1"></i> GUÍA MANUAL</a>
                     {% endif %}
                     {% if user_permisos.get('vales', False) %}
-                    <a href="{{ url_for('vales.vales') }}" class="nav-link"><i class="bi bi-clipboard-check me-1"></i> VALES</a>
+                    <a href="{{ url_for('vales.vales') }}" class="nav-link"><i class="bi bi-clipboard-check me-1"></i>
+                        VALES</a>
                     {% endif %}
                 </div>
             </div>
@@ -410,7 +501,8 @@
             <div class="nav-segment nav-segment-monitoreo">
                 <span class="nav-segment-label">MONITOREO</span>
                 <div class="d-flex gap-1">
-                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i>
+                        SCADA</a>
                 </div>
             </div>
             {% endif %}
@@ -419,10 +511,12 @@
                 <span class="nav-segment-label">ADMIN</span>
                 <div class="d-flex gap-1">
                     {% if user_permisos.get('datos', True) %}
-                    <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+                    <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i>
+                        DATOS</a>
                     {% endif %}
                     {% if current_user.role == 'admin' %}
-                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i class="bi bi-people me-1"></i> CUENTAS</a>
+                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i
+                            class="bi bi-people me-1"></i> CUENTAS</a>
                     {% endif %}
                 </div>
             </div>
@@ -433,16 +527,22 @@
                 <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
             </div>
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown">
                     <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i class="bi bi-key me-2"></i>Cambiar Contraseña</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i
+                                class="bi bi-key me-2"></i>Cambiar Contraseña</a></li>
                     {% if current_user.role == 'admin' %}
-                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i
+                                class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
                     {% endif %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
+                                class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
                 </ul>
             </div>
         </div>
@@ -455,10 +555,12 @@
                 <i class="bi bi-file-earmark-text" style="color:var(--accent-red); opacity:0.7;"></i>
                 Guía Manual de Instalación
             </h4>
-            <p class="subtitle mb-0">Ingrese los datos del proyecto para generar la memoria técnica en PDF. Puede seleccionar equipos de la BD como sugerencia o escribir libremente.</p>
+            <p class="subtitle mb-0">Ingrese los datos del proyecto para generar la memoria técnica en PDF. Puede
+                seleccionar equipos de la BD como sugerencia o escribir libremente.</p>
         </div>
 
-        <form method="POST" action="{{ url_for('guia_rapida.generar_pdf_guia_rapida') }}" enctype="multipart/form-data" id="guiaForm" target="_blank">
+        <form method="POST" action="{{ url_for('guia_rapida.generar_pdf_guia_rapida') }}" enctype="multipart/form-data"
+            id="guiaForm" target="_blank">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="accion" id="accion_hidden" value="preview">
 
@@ -475,16 +577,18 @@
                     </div>
                     <div class="col-md-4">
                         <label class="field-label">Cliente</label>
-                        <input type="text" name="cliente_texto" id="input_cliente" class="form-control" list="lista_clientes" placeholder="Nombre del cliente" autocomplete="off">
+                        <input type="text" name="cliente_texto" id="input_cliente" class="form-control"
+                            list="lista_clientes" placeholder="Nombre del cliente" autocomplete="off">
                         <datalist id="lista_clientes">
                             {% for c in clientes %}
                             <option value="{{ c }}">
-                            {% endfor %}
+                                {% endfor %}
                         </datalist>
                     </div>
                     <div class="col-md-4">
                         <label class="field-label">Sucursal / Proyecto</label>
-                        <input type="text" name="sucursal_texto" id="input_sucursal" class="form-control" list="lista_sucursales" placeholder="Sucursal o proyecto" autocomplete="off">
+                        <input type="text" name="sucursal_texto" id="input_sucursal" class="form-control"
+                            list="lista_sucursales" placeholder="Sucursal o proyecto" autocomplete="off">
                         <datalist id="lista_sucursales"></datalist>
                     </div>
                 </div>
@@ -498,7 +602,8 @@
                     <div class="mode-toggle" title="Alternar entre base de datos y escritura libre">
                         <span class="mode-label active-mode" id="lbl_bd">BD</span>
                         <div class="form-check form-switch m-0 p-0">
-                            <input class="form-check-input m-0" type="checkbox" id="toggle_modo_equipo" style="cursor:pointer;">
+                            <input class="form-check-input m-0" type="checkbox" id="toggle_modo_equipo"
+                                style="cursor:pointer;">
                         </div>
                         <span class="mode-label" id="lbl_libre">LIBRE</span>
                     </div>
@@ -517,15 +622,21 @@
                             {% endfor %}
                         </select>
                         <div class="specs-mini" id="ups_specs_mini">
-                            <div class="spec-row"><span class="spec-label">kVA</span><span class="spec-value" id="sp_kva">--</span></div>
-                            <div class="spec-row"><span class="spec-label">kW</span><span class="spec-value" id="sp_kw">--</span></div>
-                            <div class="spec-row"><span class="spec-label">Eficiencia</span><span class="spec-value" id="sp_eff">--%</span></div>
-                            <div class="spec-row"><span class="spec-label">VDC Baterías</span><span class="spec-value" id="sp_vdc">--</span></div>
+                            <div class="spec-row"><span class="spec-label">kVA</span><span class="spec-value"
+                                    id="sp_kva">--</span></div>
+                            <div class="spec-row"><span class="spec-label">kW</span><span class="spec-value"
+                                    id="sp_kw">--</span></div>
+                            <div class="spec-row"><span class="spec-label">Eficiencia</span><span class="spec-value"
+                                    id="sp_eff">--%</span></div>
+                            <div class="spec-row"><span class="spec-label">VDC Baterías</span><span class="spec-value"
+                                    id="sp_vdc">--</span></div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="field-label">Nombre Modelo (para PDF) <span class="badge-tag suggest">SUGERENCIA</span></label>
-                        <input type="text" name="modelo_nombre" id="input_modelo_nombre" class="form-control" placeholder="Ej: Dragon Power Plus 60">
+                        <label class="field-label">Nombre Modelo (para PDF) <span
+                                class="badge-tag suggest">SUGERENCIA</span></label>
+                        <input type="text" name="modelo_nombre" id="input_modelo_nombre" class="form-control"
+                            placeholder="Ej: Dragon Power Plus 60">
                     </div>
                 </div>
 
@@ -539,7 +650,8 @@
                     </div>
                     <div class="col-md-12">
                         <label class="field-label">Nombre / Modelo del Equipo</label>
-                        <input type="text" id="input_modelo_nombre_libre" class="form-control" placeholder="Ej: Eaton 9PX 20kVA, APC Smart-UPS, Huawei UPS2000, etc.">
+                        <input type="text" id="input_modelo_nombre_libre" class="form-control"
+                            placeholder="Ej: Eaton 9PX 20kVA, APC Smart-UPS, Huawei UPS2000, etc.">
                     </div>
                 </div>
 
@@ -586,8 +698,10 @@
                         </select>
                     </div>
                     <div class="col-md-3" id="voltaje_libre_wrap" style="display:none;">
-                        <label class="field-label">Voltaje (V) <span class="badge-tag" style="background:rgba(255,149,0,0.2);color:#ff9500;">LIBRE</span></label>
-                        <input type="text" id="input_voltaje_libre" class="form-control" placeholder="Ej: 220, 480, 600...">
+                        <label class="field-label">Voltaje (V) <span class="badge-tag"
+                                style="background:rgba(255,149,0,0.2);color:#ff9500;">LIBRE</span></label>
+                        <input type="text" id="input_voltaje_libre" class="form-control"
+                            placeholder="Ej: 220, 480, 600...">
                     </div>
                     <div class="col-md-3" id="fases_bd_wrap">
                         <label class="field-label">Fases</label>
@@ -598,7 +712,8 @@
                         </select>
                     </div>
                     <div class="col-md-3" id="fases_libre_wrap" style="display:none;">
-                        <label class="field-label">Fases <span class="badge-tag" style="background:rgba(255,149,0,0.2);color:#ff9500;">LIBRE</span></label>
+                        <label class="field-label">Fases <span class="badge-tag"
+                                style="background:rgba(255,149,0,0.2);color:#ff9500;">LIBRE</span></label>
                         <input type="text" id="input_fases_libre" class="form-control" placeholder="Ej: 1, 2, 3...">
                     </div>
                     <div class="col-md-3">
@@ -635,7 +750,8 @@
                     </div>
                     <div class="col-md-6">
                         <label class="field-label">Nota de Altitud (opcional)</label>
-                        <input type="text" name="nota_altitud" class="form-control" placeholder="Ej: Sitio a 2200 msnm, aplicar factor de corrección">
+                        <input type="text" name="nota_altitud" class="form-control"
+                            placeholder="Ej: Sitio a 2200 msnm, aplicar factor de corrección">
                     </div>
                 </div>
             </div>
@@ -649,29 +765,36 @@
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="field-label">Modelo Batería <span class="badge-tag suggest">SUGERENCIA</span></label>
+                        <label class="field-label">Modelo Batería <span
+                                class="badge-tag suggest">SUGERENCIA</span></label>
                         <select name="id_bateria" id="sel_bateria" class="form-select">
                             <option value="">Sin baterías</option>
                             {% for b in baterias %}
-                            <option value="{{ b.id }}">{{ b.modelo }} ({{ b.capacidad_nominal_ah if b.capacidad_nominal_ah else b.capacidad_ah }}Ah)</option>
+                            <option value="{{ b.id }}">{{ b.modelo }} ({{ b.capacidad_nominal_ah if
+                                b.capacidad_nominal_ah else b.capacidad_ah }}Ah)</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="field-label">Modelo Batería (texto PDF) <span class="badge-tag suggest">SUGERENCIA</span></label>
-                        <input type="text" name="bateria_modelo" id="input_bateria_modelo" class="form-control" placeholder="Se llena al seleccionar">
+                        <label class="field-label">Modelo Batería (texto PDF) <span
+                                class="badge-tag suggest">SUGERENCIA</span></label>
+                        <input type="text" name="bateria_modelo" id="input_bateria_modelo" class="form-control"
+                            placeholder="Se llena al seleccionar">
                     </div>
                     <div class="col-md-3">
                         <label class="field-label">Baterías por String</label>
-                        <input type="number" name="baterias_por_string" id="input_bat_por_string" class="form-control" step="1" placeholder="0">
+                        <input type="number" name="baterias_por_string" id="input_bat_por_string" class="form-control"
+                            step="1" placeholder="0">
                     </div>
                     <div class="col-md-3">
                         <label class="field-label">Número de Strings</label>
-                        <input type="number" name="numero_strings" id="input_num_strings" class="form-control" step="1" placeholder="0">
+                        <input type="number" name="numero_strings" id="input_num_strings" class="form-control" step="1"
+                            placeholder="0">
                     </div>
                     <div class="col-md-3">
                         <label class="field-label">Total Baterías <span class="badge-tag calc">AUTO</span></label>
-                        <input type="number" name="baterias_total" id="input_bat_total" class="form-control" step="1" placeholder="Auto" readonly>
+                        <input type="number" name="baterias_total" id="input_bat_total" class="form-control" step="1"
+                            placeholder="Auto" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="field-label">Tiempo Respaldo (min)</label>
@@ -679,11 +802,13 @@
                     </div>
                     <div class="col-md-3">
                         <label class="field-label">Autonomía Calculada (min)</label>
-                        <input type="number" name="autonomia_calculada_min" class="form-control" step="0.1" placeholder="0">
+                        <input type="number" name="autonomia_calculada_min" class="form-control" step="0.1"
+                            placeholder="0">
                     </div>
                     <div class="col-md-3">
                         <label class="field-label">Autonomía Deseada (min)</label>
-                        <input type="number" name="autonomia_deseada_min" class="form-control" step="0.1" placeholder="0">
+                        <input type="number" name="autonomia_deseada_min" class="form-control" step="0.1"
+                            placeholder="0">
                     </div>
                 </div>
             </div>
@@ -740,15 +865,18 @@
                     </div>
                     <div class="d-flex gap-2 align-items-center">
                         {% if user_permisos.get('ejemplo_pdf', False) %}
-                        <a href="{{ url_for('guia_rapida.generar_ejemplo_pdf') }}" class="btn-action btn-ejemplo" target="_blank">
+                        <a href="{{ url_for('guia_rapida.generar_ejemplo_pdf') }}" class="btn-action btn-ejemplo"
+                            target="_blank">
                             <i class="bi bi-file-earmark-pdf"></i>EJEMPLO
                         </a>
                         {% endif %}
-                        <button type="submit" class="btn-action btn-descargar" onclick="document.getElementById('accion_hidden').value='preview';">
+                        <button type="submit" class="btn-action btn-descargar"
+                            onclick="document.getElementById('accion_hidden').value='preview';">
                             <i class="bi bi-download"></i>DESCARGAR PDF
                         </button>
                         {% if user_permisos.get('publicar_pdf', False) %}
-                        <button type="submit" class="btn-action btn-publicar" onclick="document.getElementById('accion_hidden').value='publicar';">
+                        <button type="submit" class="btn-action btn-publicar"
+                            onclick="document.getElementById('accion_hidden').value='publicar';">
                             <i class="bi bi-check-circle"></i>PUBLICAR
                         </button>
                         {% endif %}
@@ -793,7 +921,7 @@
         // =================== UPS AUTOCOMPLETE ===================
         const selUps = document.getElementById('sel_ups');
         if (selUps) {
-            selUps.addEventListener('change', function() {
+            selUps.addEventListener('change', function () {
                 const id = this.value;
                 const modeloInput = document.getElementById('input_modelo_nombre');
                 const specsMini = document.getElementById('ups_specs_mini');
@@ -834,7 +962,7 @@
         // =================== BATERÍA AUTOCOMPLETE ===================
         const selBateria = document.getElementById('sel_bateria');
         if (selBateria) {
-            selBateria.addEventListener('change', function() {
+            selBateria.addEventListener('change', function () {
                 const id = this.value;
                 if (!id) {
                     document.getElementById('input_bateria_modelo').value = '';
@@ -853,7 +981,7 @@
         // =================== CLIENTE → SUCURSAL AUTOCOMPLETE ===================
         const inputCliente = document.getElementById('input_cliente');
         if (inputCliente) {
-            inputCliente.addEventListener('change', function() {
+            inputCliente.addEventListener('change', function () {
                 const cliente = this.value.trim();
                 const datalist = document.getElementById('lista_sucursales');
                 datalist.innerHTML = '';
@@ -945,7 +1073,7 @@
         }
 
         if (toggleModo) {
-            toggleModo.addEventListener('change', function() {
+            toggleModo.addEventListener('change', function () {
                 aplicarModo(this.checked);
             });
             // Estado inicial (unchecked = BD)
@@ -954,7 +1082,7 @@
 
         // =================== FILE UPLOAD FEEDBACK ===================
         document.querySelectorAll('.file-upload-zone input[type="file"]').forEach(input => {
-            input.addEventListener('change', function() {
+            input.addEventListener('change', function () {
                 const zone = this.closest('.file-upload-zone');
                 const label = zone.querySelector('.upload-label');
                 if (this.files.length > 0) {
@@ -971,4 +1099,5 @@
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>

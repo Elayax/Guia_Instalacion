@@ -662,7 +662,7 @@ textarea:focus {
 
 .sidebar-nav .nav-link.active {
     background-color: var(--accent-red);
-    color: white;
+    color: white !important;
     border-color: var(--accent-red);
     box-shadow: 0 4px 15px rgba(255, 69, 58, 0.3);
     animation: glowPulse 3s ease-in-out infinite;

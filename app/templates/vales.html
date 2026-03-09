@@ -4,68 +4,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vales de Herramienta - Sistema UPS Manager</title>
+    <title>Vales de Herramienta - Sistema de Servicio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
-        .container-vales { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+        .container-vales {
+            max-width: 1100px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
         .section-card {
-            background: rgba(44,44,46,0.85);
+            background: rgba(44, 44, 46, 0.85);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 1.25rem;
             margin-bottom: 1rem;
         }
-        .field-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 0.3rem; }
-        .badge-tipo { font-size: 0.75rem; padding: 0.3em 0.7em; border-radius: 6px; font-weight: 600; }
-        .badge-HT { background: #ff9500; color: #000; }
-        .badge-PR { background: #ff453a; color: #fff; }
-        .badge-EQ { background: #30d158; color: #000; }
-        .badge-MT { background: #0a84ff; color: #fff; }
-        .badge-ES { background: #bf5af2; color: #fff; }
-        .action-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
-        .action-bar .btn { min-width: 140px; }
-        .tbl-articulos { width: 100%; font-size: 0.85rem; }
-        .tbl-articulos th { background: rgba(255,69,58,0.15); color: #ff453a; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .tbl-articulos td { padding: 0.4rem; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .tbl-articulos input, .tbl-articulos select { background: rgba(30,30,30,0.8); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.82rem; width: 100%; }
-        .tbl-articulos input:focus, .tbl-articulos select:focus { border-color: #ff453a; outline: none; box-shadow: 0 0 0 2px rgba(255,69,58,0.2); }
-        .thumb-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer; }
-        .btn-del-row { background: none; border: none; color: #ff453a; font-size: 1.1rem; cursor: pointer; padding: 0.2rem 0.5rem; }
-        .btn-del-row:hover { color: #ff6b6b; }
-        .campos-prestamo { display: none; }
-        .campos-prestamo.visible { display: flex; }
+
+        .field-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-bottom: 0.3rem;
+        }
+
+        .badge-tipo {
+            font-size: 0.75rem;
+            padding: 0.3em 0.7em;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .badge-HT {
+            background: #ff9500;
+            color: #000;
+        }
+
+        .badge-PR {
+            background: #ff453a;
+            color: #fff;
+        }
+
+        .badge-EQ {
+            background: #30d158;
+            color: #000;
+        }
+
+        .badge-MT {
+            background: #0a84ff;
+            color: #fff;
+        }
+
+        .badge-ES {
+            background: #bf5af2;
+            color: #fff;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .action-bar .btn {
+            min-width: 140px;
+        }
+
+        .tbl-articulos {
+            width: 100%;
+            font-size: 0.85rem;
+        }
+
+        .tbl-articulos th {
+            background: rgba(255, 69, 58, 0.15);
+            color: #ff453a;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tbl-articulos td {
+            padding: 0.4rem;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tbl-articulos input,
+        .tbl-articulos select {
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 6px;
+            padding: 0.3rem 0.5rem;
+            font-size: 0.82rem;
+            width: 100%;
+        }
+
+        .tbl-articulos input:focus,
+        .tbl-articulos select:focus {
+            border-color: #ff453a;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 69, 58, 0.2);
+        }
+
+        .thumb-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+        }
+
+        .btn-del-row {
+            background: none;
+            border: none;
+            color: #ff453a;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+        }
+
+        .btn-del-row:hover {
+            color: #ff6b6b;
+        }
+
+        .campos-prestamo {
+            display: none;
+        }
+
+        .campos-prestamo.visible {
+            display: flex;
+        }
 
         /* Preview / Print mode */
-        .preview-mode .form-area { display: none; }
-        .form-mode .print-area { display: none; }
-        .print-area { background: #fff; color: #000; padding: 2rem; border-radius: 8px; font-family: Arial, Helvetica, sans-serif; }
-        .print-area h2 { color: #000; text-transform: none; letter-spacing: 0; }
-        .print-area table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-        .print-area table th, .print-area table td { border: 1px solid #333; padding: 6px 8px; font-size: 0.85rem; }
-        .print-area table th { background: #e8e8e8; font-weight: 700; text-align: center; }
-        .print-area .header-vale { text-align: center; border-bottom: 3px solid #000; padding-bottom: 0.75rem; margin-bottom: 1rem; }
-        .print-area .header-vale h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
-        .print-area .header-vale .subtitulo { font-size: 0.95rem; color: #333; margin-top: 0.25rem; }
-        .print-area .franja-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 2rem; margin-bottom: 1rem; font-size: 0.88rem; }
-        .print-area .franja-datos .dato-label { font-weight: 700; }
-        .print-area .texto-legal { font-size: 0.8rem; color: #333; border: 1px solid #999; padding: 0.75rem; margin: 1rem 0; border-radius: 4px; font-style: italic; }
-        .print-area .firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 3rem; text-align: center; }
-        .print-area .firmas .linea-firma { border-top: 1px solid #000; padding-top: 0.5rem; margin-top: 2.5rem; }
-        .print-area .evidencia-page { page-break-before: always; }
-        .print-area .grid-evidencia { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .print-area .evidencia-item img { width: 100%; height: 220px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; }
-        .print-area .evidencia-item p { font-size: 0.8rem; margin-top: 0.3rem; text-align: center; }
-        .print-area .id-vale { font-family: 'Courier New', monospace; font-size: 0.85rem; color: #666; }
+        .preview-mode .form-area {
+            display: none;
+        }
+
+        .form-mode .print-area {
+            display: none;
+        }
+
+        .print-area {
+            background: #fff;
+            color: #000;
+            padding: 2rem;
+            border-radius: 8px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .print-area h2 {
+            color: #000;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .print-area table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .print-area table th,
+        .print-area table td {
+            border: 1px solid #333;
+            padding: 6px 8px;
+            font-size: 0.85rem;
+        }
+
+        .print-area table th {
+            background: #e8e8e8;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .print-area .header-vale {
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .print-area .header-vale h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .print-area .header-vale .subtitulo {
+            font-size: 0.95rem;
+            color: #333;
+            margin-top: 0.25rem;
+        }
+
+        .print-area .franja-datos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem 2rem;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+        }
+
+        .print-area .franja-datos .dato-label {
+            font-weight: 700;
+        }
+
+        .print-area .texto-legal {
+            font-size: 0.8rem;
+            color: #333;
+            border: 1px solid #999;
+            padding: 0.75rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .print-area .firmas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .print-area .firmas .linea-firma {
+            border-top: 1px solid #000;
+            padding-top: 0.5rem;
+            margin-top: 2.5rem;
+        }
+
+        .print-area .evidencia-page {
+            page-break-before: always;
+        }
+
+        .print-area .grid-evidencia {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .print-area .evidencia-item img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .print-area .evidencia-item p {
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            text-align: center;
+        }
+
+        .print-area .id-vale {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #666;
+        }
 
         @media print {
-            body { background: #fff !important; color: #000 !important; }
-            .app-header, .form-area, .action-bar, .no-print { display: none !important; }
-            .print-area { padding: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
-            .container-vales { max-width: 100%; margin: 0; padding: 0; }
-            @page { size: letter; margin: 1.5cm; }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .app-header,
+            .form-area,
+            .action-bar,
+            .no-print {
+                display: none !important;
+            }
+
+            .print-area {
+                padding: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .container-vales {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            @page {
+                size: letter;
+                margin: 1.5cm;
+            }
         }
     </style>
 </head>
@@ -76,8 +310,9 @@
         <div class="d-flex align-items-center gap-3">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
             <div>
-                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA UPS MANAGER</div>
-                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE INGENIERIA</small>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">SISTEMA DE SERVICIO</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">CONSOLA DE
+                    INGENIERIA</small>
             </div>
         </div>
         <nav class="nav-segmented">
@@ -85,16 +320,20 @@
                 <span class="nav-segment-label">SERVICIO</span>
                 <div class="d-flex gap-1">
                     {% if user_permisos.get('tablero', True) %}
-                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i
+                            class="bi bi-speedometer2 me-1"></i> TABLERO</a>
                     {% endif %}
                     {% if user_permisos.get('calculos', True) %}
-                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i class="bi bi-calculator me-1"></i> CALCULOS</a>
+                    <a href="{{ url_for('calculator.calculadora') }}" class="nav-link"><i
+                            class="bi bi-calculator me-1"></i> CALCULOS</a>
                     {% endif %}
                     {% if user_permisos.get('guia_rapida', True) %}
-                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i class="bi bi-lightning me-1"></i> GUIA MANUAL</a>
+                    <a href="{{ url_for('guia_rapida.guia_rapida') }}" class="nav-link"><i
+                            class="bi bi-lightning me-1"></i> GUIA MANUAL</a>
                     {% endif %}
                     {% if user_permisos.get('vales', False) %}
-                    <a href="{{ url_for('vales.vales') }}" class="nav-link active"><i class="bi bi-clipboard-check me-1"></i> VALES</a>
+                    <a href="{{ url_for('vales.vales') }}" class="nav-link active"><i
+                            class="bi bi-clipboard-check me-1"></i> VALES</a>
                     {% endif %}
                 </div>
             </div>
@@ -103,7 +342,8 @@
             <div class="nav-segment nav-segment-monitoreo">
                 <span class="nav-segment-label">MONITOREO</span>
                 <div class="d-flex gap-1">
-                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i>
+                        SCADA</a>
                 </div>
             </div>
             {% endif %}
@@ -112,10 +352,12 @@
                 <span class="nav-segment-label">ADMIN</span>
                 <div class="d-flex gap-1">
                     {% if user_permisos.get('datos', True) %}
-                    <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i> DATOS</a>
+                    <a href="{{ url_for('management.gestion') }}" class="nav-link"><i class="bi bi-database me-1"></i>
+                        DATOS</a>
                     {% endif %}
                     {% if current_user.role == 'admin' %}
-                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i class="bi bi-people me-1"></i> CUENTAS</a>
+                    <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link"><i
+                            class="bi bi-people me-1"></i> CUENTAS</a>
                     {% endif %}
                 </div>
             </div>
@@ -126,16 +368,22 @@
                 <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
             </div>
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown">
                     <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
-                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i class="bi bi-key me-2"></i>Cambiar Contrasena</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i
+                                class="bi bi-key me-2"></i>Cambiar Contrasena</a></li>
                     {% if current_user.role == 'admin' %}
-                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user_mgmt.gestionar_cuentas') }}"><i
+                                class="bi bi-people me-2"></i>Gestionar Cuentas</a></li>
                     {% endif %}
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesion</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
+                                class="bi bi-box-arrow-right me-2"></i>Cerrar Sesion</a></li>
                 </ul>
             </div>
         </div>
@@ -145,8 +393,10 @@
         <!-- ========== FORM AREA ========== -->
         <div class="form-area">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0"><i class="bi bi-clipboard-check me-2" style="color:#ff453a"></i>Vale de Entrega de Herramienta</h4>
-                <a href="{{ url_for('vales.vales_historial') }}" class="btn btn-sm btn-outline-light"><i class="bi bi-clock-history me-1"></i> Historial</a>
+                <h4 class="mb-0"><i class="bi bi-clipboard-check me-2" style="color:#ff453a"></i>Vale de Entrega de
+                    Herramienta</h4>
+                <a href="{{ url_for('vales.vales_historial') }}" class="btn btn-sm btn-outline-light"><i
+                        class="bi bi-clock-history me-1"></i> Historial</a>
             </div>
 
             <!-- Tipo de Vale -->
@@ -166,22 +416,34 @@
                         <div class="field-label">Tecnico</div>
                         <select id="tecnico" class="form-select form-select-sm">
                             <option value="">-- Seleccionar --</option>
-                            <option value="Gabriel Hernandez|Lider de Proyecto">Gabriel Hernandez (Lider de Proyecto)</option>
-                            <option value="Ricardo Gonzalez Hernandez|Tecnico de Campo">Ricardo Gonzalez Hernandez</option>
-                            <option value="Jose Roberto Avalos Martinez|Tecnico de Campo">Jose Roberto Avalos Martinez</option>
+                            <option value="Gabriel Hernandez|Lider de Proyecto">Gabriel Hernandez (Lider de Proyecto)
+                            </option>
+                            <option value="Ricardo Gonzalez Hernandez|Tecnico de Campo">Ricardo Gonzalez Hernandez
+                            </option>
+                            <option value="Jose Roberto Avalos Martinez|Tecnico de Campo">Jose Roberto Avalos Martinez
+                            </option>
                             <option value="Isaias Dominguez Romero|Tecnico de Campo">Isaias Dominguez Romero</option>
-                            <option value="Manuel Alejandro Dominguez Castillo|Tecnico de Campo">Manuel Alejandro Dominguez Castillo</option>
+                            <option value="Manuel Alejandro Dominguez Castillo|Tecnico de Campo">Manuel Alejandro
+                                Dominguez Castillo</option>
                             <option value="Pedro Martin Diaz|Tecnico de Campo">Pedro Martin Diaz</option>
-                            <option value="Cesar David Alvarado Pena|Tecnico de Campo">Cesar David Alvarado Pena</option>
+                            <option value="Cesar David Alvarado Pena|Tecnico de Campo">Cesar David Alvarado Pena
+                            </option>
                             <option value="Edgar Torres Mendieta|Tecnico de Campo">Edgar Torres Mendieta</option>
-                            <option value="Jhoan Emanuel Gonzalez Teran|Tecnico de Campo">Jhoan Emanuel Gonzalez Teran</option>
-                            <option value="Ivan Sebastian Ruiz Reyes|Tecnico de Campo">Ivan Sebastian Ruiz Reyes</option>
-                            <option value="Luis Fernando Gomez Rubio|Tecnico de Campo">Luis Fernando Gomez Rubio</option>
+                            <option value="Jhoan Emanuel Gonzalez Teran|Tecnico de Campo">Jhoan Emanuel Gonzalez Teran
+                            </option>
+                            <option value="Ivan Sebastian Ruiz Reyes|Tecnico de Campo">Ivan Sebastian Ruiz Reyes
+                            </option>
+                            <option value="Luis Fernando Gomez Rubio|Tecnico de Campo">Luis Fernando Gomez Rubio
+                            </option>
                             <option value="Azael Hernandez Cornejo|Tecnico de Campo">Azael Hernandez Cornejo</option>
-                            <option value="Jose Antonio Aguilar Gomez|Tecnico de Campo">Jose Antonio Aguilar Gomez</option>
-                            <option value="Juan Eduardo Vazquez Hernandez|Tecnico de Campo">Juan Eduardo Vazquez Hernandez</option>
-                            <option value="Omar Alejandro Garcia Gutierrez|Tecnico de Campo">Omar Alejandro Garcia Gutierrez</option>
-                            <option value="Oscar Manuel Torres Hernandez|Tecnico de Campo">Oscar Manuel Torres Hernandez</option>
+                            <option value="Jose Antonio Aguilar Gomez|Tecnico de Campo">Jose Antonio Aguilar Gomez
+                            </option>
+                            <option value="Juan Eduardo Vazquez Hernandez|Tecnico de Campo">Juan Eduardo Vazquez
+                                Hernandez</option>
+                            <option value="Omar Alejandro Garcia Gutierrez|Tecnico de Campo">Omar Alejandro Garcia
+                                Gutierrez</option>
+                            <option value="Oscar Manuel Torres Hernandez|Tecnico de Campo">Oscar Manuel Torres Hernandez
+                            </option>
                             <option value="Alejandro Lopez Ramirez|Tecnico de Campo">Alejandro Lopez Ramirez</option>
                         </select>
                     </div>
@@ -191,7 +453,8 @@
                     </div>
                     <div class="col-md-2">
                         <div class="field-label">Area / Departamento</div>
-                        <input type="text" id="areaVale" class="form-control form-control-sm" placeholder="Ej: Mantenimiento">
+                        <input type="text" id="areaVale" class="form-control form-control-sm"
+                            placeholder="Ej: Mantenimiento">
                     </div>
                 </div>
                 <!-- Campos condicionales Prestamo -->
@@ -202,7 +465,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="field-label">Destino / Proyecto</div>
-                        <input type="text" id="destinoProyecto" class="form-control form-control-sm" placeholder="Ej: Proyecto SITE-042">
+                        <input type="text" id="destinoProyecto" class="form-control form-control-sm"
+                            placeholder="Ej: Proyecto SITE-042">
                     </div>
                 </div>
             </div>
@@ -211,7 +475,8 @@
             <div class="section-card">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="field-label mb-0">Articulos</div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="agregarArticulo()"><i class="bi bi-plus-circle me-1"></i> Agregar Articulo</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="agregarArticulo()"><i
+                            class="bi bi-plus-circle me-1"></i> Agregar Articulo</button>
                 </div>
                 <div class="table-responsive">
                     <table class="tbl-articulos">
@@ -236,14 +501,17 @@
             <!-- Observaciones -->
             <div class="section-card">
                 <div class="field-label">Observaciones / Texto Legal</div>
-                <textarea id="observaciones" class="form-control form-control-sm" rows="4" style="background:rgba(30,30,30,0.8);border-color:rgba(255,255,255,0.1);color:#fff;font-size:0.85rem;"></textarea>
+                <textarea id="observaciones" class="form-control form-control-sm" rows="4"
+                    style="background:rgba(30,30,30,0.8);border-color:rgba(255,255,255,0.1);color:#fff;font-size:0.85rem;"></textarea>
             </div>
 
             <!-- Botones de accion -->
             <div class="action-bar no-print">
-                <button class="btn btn-outline-light" onclick="generarVistaPrevia()"><i class="bi bi-eye me-1"></i> Vista Previa</button>
+                <button class="btn btn-outline-light" onclick="generarVistaPrevia()"><i class="bi bi-eye me-1"></i>
+                    Vista Previa</button>
                 <button class="btn btn-danger" onclick="guardarVale()"><i class="bi bi-save me-1"></i> Guardar</button>
-                <button class="btn btn-outline-secondary" onclick="limpiarFormulario()"><i class="bi bi-arrow-counterclockwise me-1"></i> Limpiar</button>
+                <button class="btn btn-outline-secondary" onclick="limpiarFormulario()"><i
+                        class="bi bi-arrow-counterclockwise me-1"></i> Limpiar</button>
             </div>
         </div>
 
@@ -251,98 +519,100 @@
         <div class="print-area" id="printArea">
             <div id="printContent"></div>
             <div class="action-bar no-print mt-3">
-                <button class="btn btn-outline-dark" onclick="volverFormulario()"><i class="bi bi-arrow-left me-1"></i> Volver al Formulario</button>
-                <button class="btn btn-dark" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+                <button class="btn btn-outline-dark" onclick="volverFormulario()"><i class="bi bi-arrow-left me-1"></i>
+                    Volver al Formulario</button>
+                <button class="btn btn-dark" onclick="window.print()"><i class="bi bi-printer me-1"></i>
+                    Imprimir</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    // ==================== DATOS ====================
-    const TEXTOS_LEGALES = {
-        'HT': 'El trabajador se compromete a utilizar la herramienta exclusivamente para las actividades laborales asignadas, mantenerla en buen estado y reportar cualquier dano o perdida de manera inmediata. En caso de extravio o dano por negligencia, el trabajador sera responsable de la reposicion.',
-        'PR': 'Este vale ampara la salida temporal de herramienta/equipo de las instalaciones de la empresa. El responsable se compromete a devolver el material en las mismas condiciones en que fue recibido en la fecha acordada. El incumplimiento en la devolucion generara las responsabilidades correspondientes.',
-        'EQ': 'El equipo de proteccion personal entregado es de uso obligatorio durante la jornada laboral conforme a la NOM-017-STPS-2008. El trabajador es responsable de su cuidado, limpieza y de reportar cuando requiera reemplazo. No se permite el uso de EPP en mal estado.',
-        'MT': 'El material entregado es exclusivamente para uso en las actividades y proyectos asignados por la empresa. Cualquier uso diferente al autorizado debera ser reportado y aprobado por el supervisor. El sobrante debera ser devuelto al almacen.',
-        'ES': 'El equipo especial requiere capacitacion previa para su operacion. El responsable confirma haber recibido la capacitacion correspondiente y se compromete a seguir los procedimientos de uso seguro. Cualquier falla o anomalia debe reportarse inmediatamente sin intentar reparaciones no autorizadas.'
-    };
+        // ==================== DATOS ====================
+        const TEXTOS_LEGALES = {
+            'HT': 'El trabajador se compromete a utilizar la herramienta exclusivamente para las actividades laborales asignadas, mantenerla en buen estado y reportar cualquier dano o perdida de manera inmediata. En caso de extravio o dano por negligencia, el trabajador sera responsable de la reposicion.',
+            'PR': 'Este vale ampara la salida temporal de herramienta/equipo de las instalaciones de la empresa. El responsable se compromete a devolver el material en las mismas condiciones en que fue recibido en la fecha acordada. El incumplimiento en la devolucion generara las responsabilidades correspondientes.',
+            'EQ': 'El equipo de proteccion personal entregado es de uso obligatorio durante la jornada laboral conforme a la NOM-017-STPS-2008. El trabajador es responsable de su cuidado, limpieza y de reportar cuando requiera reemplazo. No se permite el uso de EPP en mal estado.',
+            'MT': 'El material entregado es exclusivamente para uso en las actividades y proyectos asignados por la empresa. Cualquier uso diferente al autorizado debera ser reportado y aprobado por el supervisor. El sobrante debera ser devuelto al almacen.',
+            'ES': 'El equipo especial requiere capacitacion previa para su operacion. El responsable confirma haber recibido la capacitacion correspondiente y se compromete a seguir los procedimientos de uso seguro. Cualquier falla o anomalia debe reportarse inmediatamente sin intentar reparaciones no autorizadas.'
+        };
 
-    const TIPOS_NOMBRE = {
-        'HT': 'Herramienta',
-        'PR': 'Salida a Prestamo',
-        'EQ': 'Equipo de Seguridad / EPP',
-        'MT': 'Material de Trabajo',
-        'ES': 'Equipo Especial'
-    };
+        const TIPOS_NOMBRE = {
+            'HT': 'Herramienta',
+            'PR': 'Salida a Prestamo',
+            'EQ': 'Equipo de Seguridad / EPP',
+            'MT': 'Material de Trabajo',
+            'ES': 'Equipo Especial'
+        };
 
-    const STORAGE_KEY = 'vales_herramienta';
-    let articulos = [];
-    let valeEditandoId = null;
+        const STORAGE_KEY = 'vales_herramienta';
+        let articulos = [];
+        let valeEditandoId = null;
 
-    // ==================== INIT ====================
-    document.addEventListener('DOMContentLoaded', function() {
-        // Fecha default = hoy
-        document.getElementById('fechaVale').value = new Date().toISOString().split('T')[0];
-        // Texto legal default
-        document.getElementById('observaciones').value = TEXTOS_LEGALES['HT'];
-        // Agregar primera fila
-        agregarArticulo();
-        // Reloj
-        actualizarReloj();
-        setInterval(actualizarReloj, 1000);
-        // Cargar vale si viene por query param
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('id')) {
-            cargarVale(params.get('id'));
-            if (params.get('print')) {
-                setTimeout(function() { generarVistaPrevia(); setTimeout(function() { window.print(); }, 300); }, 200);
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', function () {
+            // Fecha default = hoy
+            document.getElementById('fechaVale').value = new Date().toISOString().split('T')[0];
+            // Texto legal default
+            document.getElementById('observaciones').value = TEXTOS_LEGALES['HT'];
+            // Agregar primera fila
+            agregarArticulo();
+            // Reloj
+            actualizarReloj();
+            setInterval(actualizarReloj, 1000);
+            // Cargar vale si viene por query param
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('id')) {
+                cargarVale(params.get('id'));
+                if (params.get('print')) {
+                    setTimeout(function () { generarVistaPrevia(); setTimeout(function () { window.print(); }, 300); }, 200);
+                }
+            }
+        });
+
+        function actualizarReloj() {
+            const now = new Date();
+            const cl = document.getElementById('clock');
+            const dt = document.getElementById('date');
+            if (cl) cl.textContent = now.toLocaleTimeString('es-MX', { hour12: false });
+            if (dt) dt.textContent = now.toLocaleDateString('es-MX');
+        }
+
+        // ==================== TIPO CHANGE ====================
+        function onTipoChange() {
+            const tipo = document.getElementById('tipoVale').value;
+            document.getElementById('observaciones').value = TEXTOS_LEGALES[tipo] || '';
+            const cp = document.getElementById('camposPrestamo');
+            if (tipo === 'PR') {
+                cp.classList.add('visible');
+            } else {
+                cp.classList.remove('visible');
             }
         }
-    });
 
-    function actualizarReloj() {
-        const now = new Date();
-        const cl = document.getElementById('clock');
-        const dt = document.getElementById('date');
-        if (cl) cl.textContent = now.toLocaleTimeString('es-MX', {hour12: false});
-        if (dt) dt.textContent = now.toLocaleDateString('es-MX');
-    }
-
-    // ==================== TIPO CHANGE ====================
-    function onTipoChange() {
-        const tipo = document.getElementById('tipoVale').value;
-        document.getElementById('observaciones').value = TEXTOS_LEGALES[tipo] || '';
-        const cp = document.getElementById('camposPrestamo');
-        if (tipo === 'PR') {
-            cp.classList.add('visible');
-        } else {
-            cp.classList.remove('visible');
+        // ==================== ARTICULOS ====================
+        function agregarArticulo() {
+            articulos.push({ cantidad: 1, unidad: 'pza', descripcion: '', modelo: '', marca: '', estado: 'Bueno', imagen_base64: null });
+            renderArticulos();
         }
-    }
 
-    // ==================== ARTICULOS ====================
-    function agregarArticulo() {
-        articulos.push({ cantidad: 1, unidad: 'pza', descripcion: '', modelo: '', marca: '', estado: 'Bueno', imagen_base64: null });
-        renderArticulos();
-    }
+        function eliminarArticulo(idx) {
+            articulos.splice(idx, 1);
+            renderArticulos();
+        }
 
-    function eliminarArticulo(idx) {
-        articulos.splice(idx, 1);
-        renderArticulos();
-    }
-
-    function renderArticulos() {
-        const tbody = document.getElementById('tbodyArticulos');
-        tbody.innerHTML = '';
-        articulos.forEach((art, i) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+        function renderArticulos() {
+            const tbody = document.getElementById('tbodyArticulos');
+            tbody.innerHTML = '';
+            articulos.forEach((art, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                 <td class="text-center">${i + 1}</td>
                 <td><input type="number" min="1" value="${art.cantidad}" onchange="articulos[${i}].cantidad=parseInt(this.value)||1"></td>
                 <td>
                     <select onchange="articulos[${i}].unidad=this.value">
-                        ${['pza','set','par','rollo','metro','litro','caja'].map(u => `<option value="${u}" ${art.unidad===u?'selected':''}>${u}</option>`).join('')}
+                        ${['pza', 'set', 'par', 'rollo', 'metro', 'litro', 'caja'].map(u => `<option value="${u}" ${art.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}
                     </select>
                 </td>
                 <td><input type="text" value="${escapeHtml(art.descripcion)}" onchange="articulos[${i}].descripcion=this.value" placeholder="Descripcion del articulo"></td>
@@ -350,153 +620,153 @@
                 <td><input type="text" value="${escapeHtml(art.marca)}" onchange="articulos[${i}].marca=this.value" placeholder="Marca"></td>
                 <td>
                     <select onchange="articulos[${i}].estado=this.value">
-                        ${['Nuevo','Bueno','Regular','Danado'].map(e => `<option value="${e}" ${art.estado===e?'selected':''}>${e}</option>`).join('')}
+                        ${['Nuevo', 'Bueno', 'Regular', 'Danado'].map(e => `<option value="${e}" ${art.estado === e ? 'selected' : ''}>${e}</option>`).join('')}
                     </select>
                 </td>
                 <td>
                     ${art.imagen_base64 ? `<img src="${art.imagen_base64}" class="thumb-img" onclick="document.getElementById('imgInput${i}').click()">` : ''}
-                    <input type="file" id="imgInput${i}" accept="image/*" style="display:${art.imagen_base64?'none':'block'};width:100%;font-size:0.7rem;" onchange="procesarImagen(this,${i})">
+                    <input type="file" id="imgInput${i}" accept="image/*" style="display:${art.imagen_base64 ? 'none' : 'block'};width:100%;font-size:0.7rem;" onchange="procesarImagen(this,${i})">
                 </td>
                 <td><button class="btn-del-row" onclick="eliminarArticulo(${i})" title="Eliminar"><i class="bi bi-x-circle"></i></button></td>
             `;
-            tbody.appendChild(tr);
-        });
-    }
+                tbody.appendChild(tr);
+            });
+        }
 
-    // ==================== IMAGENES ====================
-    function procesarImagen(input, index) {
-        const file = input.files[0];
-        if (!file) return;
-        comprimirImagen(file, function(base64) {
-            articulos[index].imagen_base64 = base64;
-            renderArticulos();
-        });
-    }
+        // ==================== IMAGENES ====================
+        function procesarImagen(input, index) {
+            const file = input.files[0];
+            if (!file) return;
+            comprimirImagen(file, function (base64) {
+                articulos[index].imagen_base64 = base64;
+                renderArticulos();
+            });
+        }
 
-    function comprimirImagen(file, callback) {
-        // Todas las imagenes se normalizan a 800x600 con crop centrado
-        const TARGET_W = 800, TARGET_H = 600;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = TARGET_W;
-                canvas.height = TARGET_H;
-                const ctx = canvas.getContext('2d');
-                // Fondo blanco para imagenes con transparencia
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, TARGET_W, TARGET_H);
-                // Calcular crop centrado (cover): llenar todo el canvas sin deformar
-                const srcRatio = img.width / img.height;
-                const tgtRatio = TARGET_W / TARGET_H;
-                let sx, sy, sw, sh;
-                if (srcRatio > tgtRatio) {
-                    // Imagen mas ancha: recortar lados
-                    sh = img.height;
-                    sw = img.height * tgtRatio;
-                    sx = (img.width - sw) / 2;
-                    sy = 0;
-                } else {
-                    // Imagen mas alta: recortar arriba/abajo
-                    sw = img.width;
-                    sh = img.width / tgtRatio;
-                    sx = 0;
-                    sy = (img.height - sh) / 2;
-                }
-                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
-                callback(canvas.toDataURL('image/jpeg', 0.7));
+        function comprimirImagen(file, callback) {
+            // Todas las imagenes se normalizan a 800x600 con crop centrado
+            const TARGET_W = 800, TARGET_H = 600;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = TARGET_W;
+                    canvas.height = TARGET_H;
+                    const ctx = canvas.getContext('2d');
+                    // Fondo blanco para imagenes con transparencia
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+                    // Calcular crop centrado (cover): llenar todo el canvas sin deformar
+                    const srcRatio = img.width / img.height;
+                    const tgtRatio = TARGET_W / TARGET_H;
+                    let sx, sy, sw, sh;
+                    if (srcRatio > tgtRatio) {
+                        // Imagen mas ancha: recortar lados
+                        sh = img.height;
+                        sw = img.height * tgtRatio;
+                        sx = (img.width - sw) / 2;
+                        sy = 0;
+                    } else {
+                        // Imagen mas alta: recortar arriba/abajo
+                        sw = img.width;
+                        sh = img.width / tgtRatio;
+                        sx = 0;
+                        sy = (img.height - sh) / 2;
+                    }
+                    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
+                    callback(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.src = e.target.result;
             };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // ==================== GUARDAR ====================
-    function guardarVale() {
-        const tecVal = document.getElementById('tecnico').value;
-        if (!tecVal) { alert('Seleccione un tecnico.'); return; }
-        const articulosValidos = articulos.filter(a => a.descripcion.trim() !== '');
-        if (articulosValidos.length === 0) { alert('Agregue al menos un articulo con descripcion.'); return; }
-
-        const tipo = document.getElementById('tipoVale').value;
-        const [tecNombre, tecPuesto] = tecVal.split('|');
-
-        const vale = {
-            id: valeEditandoId || generarIdVale(tipo),
-            tipo: tipo,
-            tipo_nombre: TIPOS_NOMBRE[tipo],
-            tecnico: tecNombre,
-            tecnico_puesto: tecPuesto,
-            fecha: document.getElementById('fechaVale').value,
-            area: document.getElementById('areaVale').value,
-            fecha_devolucion: tipo === 'PR' ? document.getElementById('fechaDevolucion').value : null,
-            destino: tipo === 'PR' ? document.getElementById('destinoProyecto').value : null,
-            articulos: articulosValidos,
-            observaciones: document.getElementById('observaciones').value,
-            created_at: valeEditandoId ? undefined : new Date().toISOString(),
-            created_by: '{{ current_user.username }}'
-        };
-
-        const vales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const existIdx = vales.findIndex(v => v.id === vale.id);
-        if (existIdx >= 0) {
-            vale.created_at = vales[existIdx].created_at;
-            vales[existIdx] = vale;
-        } else {
-            vale.created_at = new Date().toISOString();
-            vales.push(vale);
+            reader.readAsDataURL(file);
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(vales));
-        alert('Vale guardado: ' + vale.id);
-        valeEditandoId = vale.id;
-    }
 
-    function generarIdVale(tipo) {
-        const hoy = new Date().toISOString().split('T')[0].replace(/-/g, '');
-        const vales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const prefix = `VALE-${tipo}-${hoy}-`;
-        const existentes = vales.filter(v => v.id.startsWith(prefix));
-        const seq = String(existentes.length + 1).padStart(3, '0');
-        return prefix + seq;
-    }
+        // ==================== GUARDAR ====================
+        function guardarVale() {
+            const tecVal = document.getElementById('tecnico').value;
+            if (!tecVal) { alert('Seleccione un tecnico.'); return; }
+            const articulosValidos = articulos.filter(a => a.descripcion.trim() !== '');
+            if (articulosValidos.length === 0) { alert('Agregue al menos un articulo con descripcion.'); return; }
 
-    // ==================== CARGAR ====================
-    function cargarVale(id) {
-        const vales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const vale = vales.find(v => v.id === id);
-        if (!vale) { alert('Vale no encontrado: ' + id); return; }
+            const tipo = document.getElementById('tipoVale').value;
+            const [tecNombre, tecPuesto] = tecVal.split('|');
 
-        valeEditandoId = vale.id;
-        document.getElementById('tipoVale').value = vale.tipo;
-        onTipoChange();
-        document.getElementById('tecnico').value = vale.tecnico + '|' + vale.tecnico_puesto;
-        document.getElementById('fechaVale').value = vale.fecha;
-        document.getElementById('areaVale').value = vale.area || '';
-        if (vale.tipo === 'PR') {
-            document.getElementById('fechaDevolucion').value = vale.fecha_devolucion || '';
-            document.getElementById('destinoProyecto').value = vale.destino || '';
+            const vale = {
+                id: valeEditandoId || generarIdVale(tipo),
+                tipo: tipo,
+                tipo_nombre: TIPOS_NOMBRE[tipo],
+                tecnico: tecNombre,
+                tecnico_puesto: tecPuesto,
+                fecha: document.getElementById('fechaVale').value,
+                area: document.getElementById('areaVale').value,
+                fecha_devolucion: tipo === 'PR' ? document.getElementById('fechaDevolucion').value : null,
+                destino: tipo === 'PR' ? document.getElementById('destinoProyecto').value : null,
+                articulos: articulosValidos,
+                observaciones: document.getElementById('observaciones').value,
+                created_at: valeEditandoId ? undefined : new Date().toISOString(),
+                created_by: '{{ current_user.username }}'
+            };
+
+            const vales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const existIdx = vales.findIndex(v => v.id === vale.id);
+            if (existIdx >= 0) {
+                vale.created_at = vales[existIdx].created_at;
+                vales[existIdx] = vale;
+            } else {
+                vale.created_at = new Date().toISOString();
+                vales.push(vale);
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(vales));
+            alert('Vale guardado: ' + vale.id);
+            valeEditandoId = vale.id;
         }
-        articulos = vale.articulos.map(a => ({...a}));
-        renderArticulos();
-        document.getElementById('observaciones').value = vale.observaciones || '';
-    }
 
-    // ==================== VISTA PREVIA ====================
-    function generarVistaPrevia() {
-        const tipo = document.getElementById('tipoVale').value;
-        const tecVal = document.getElementById('tecnico').value;
-        if (!tecVal) { alert('Seleccione un tecnico.'); return; }
-        const [tecNombre, tecPuesto] = tecVal.split('|');
-        const fecha = document.getElementById('fechaVale').value;
-        const area = document.getElementById('areaVale').value;
-        const obs = document.getElementById('observaciones').value;
-        const idVale = valeEditandoId || generarIdVale(tipo);
+        function generarIdVale(tipo) {
+            const hoy = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const vales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const prefix = `VALE-${tipo}-${hoy}-`;
+            const existentes = vales.filter(v => v.id.startsWith(prefix));
+            const seq = String(existentes.length + 1).padStart(3, '0');
+            return prefix + seq;
+        }
 
-        const articulosValidos = articulos.filter(a => a.descripcion.trim() !== '');
-        const tieneImagenes = articulosValidos.some(a => a.imagen_base64);
+        // ==================== CARGAR ====================
+        function cargarVale(id) {
+            const vales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const vale = vales.find(v => v.id === id);
+            if (!vale) { alert('Vale no encontrado: ' + id); return; }
 
-        let html = `
+            valeEditandoId = vale.id;
+            document.getElementById('tipoVale').value = vale.tipo;
+            onTipoChange();
+            document.getElementById('tecnico').value = vale.tecnico + '|' + vale.tecnico_puesto;
+            document.getElementById('fechaVale').value = vale.fecha;
+            document.getElementById('areaVale').value = vale.area || '';
+            if (vale.tipo === 'PR') {
+                document.getElementById('fechaDevolucion').value = vale.fecha_devolucion || '';
+                document.getElementById('destinoProyecto').value = vale.destino || '';
+            }
+            articulos = vale.articulos.map(a => ({ ...a }));
+            renderArticulos();
+            document.getElementById('observaciones').value = vale.observaciones || '';
+        }
+
+        // ==================== VISTA PREVIA ====================
+        function generarVistaPrevia() {
+            const tipo = document.getElementById('tipoVale').value;
+            const tecVal = document.getElementById('tecnico').value;
+            if (!tecVal) { alert('Seleccione un tecnico.'); return; }
+            const [tecNombre, tecPuesto] = tecVal.split('|');
+            const fecha = document.getElementById('fechaVale').value;
+            const area = document.getElementById('areaVale').value;
+            const obs = document.getElementById('observaciones').value;
+            const idVale = valeEditandoId || generarIdVale(tipo);
+
+            const articulosValidos = articulos.filter(a => a.descripcion.trim() !== '');
+            const tieneImagenes = articulosValidos.some(a => a.imagen_base64);
+
+            let html = `
         <div class="header-vale">
             <h2>LEMONROY BUSINESS SOLUTIONS S.A. DE C.V.</h2>
             <div class="subtitulo">VALE DE ENTREGA: ${TIPOS_NOMBRE[tipo].toUpperCase()}</div>
@@ -519,7 +789,7 @@
             <tbody>
                 ${articulosValidos.map((a, i) => `
                 <tr>
-                    <td style="text-align:center">${i+1}</td>
+                    <td style="text-align:center">${i + 1}</td>
                     <td style="text-align:center">${a.cantidad}</td>
                     <td style="text-align:center">${a.unidad}</td>
                     <td>${escapeHtml(a.descripcion)}</td>
@@ -547,8 +817,8 @@
             </div>
         </div>`;
 
-        if (tieneImagenes) {
-            html += `
+            if (tieneImagenes) {
+                html += `
             <div class="evidencia-page">
                 <h3 style="text-align:center;margin-bottom:1rem;font-size:1rem;">EVIDENCIA FOTOGRAFICA</h3>
                 <div class="grid-evidencia">
@@ -559,44 +829,45 @@
                     </div>`).join('')}
                 </div>
             </div>`;
+            }
+
+            document.getElementById('printContent').innerHTML = html;
+            document.getElementById('appBody').classList.remove('form-mode');
+            document.getElementById('appBody').classList.add('preview-mode');
         }
 
-        document.getElementById('printContent').innerHTML = html;
-        document.getElementById('appBody').classList.remove('form-mode');
-        document.getElementById('appBody').classList.add('preview-mode');
-    }
-
-    function volverFormulario() {
-        document.getElementById('appBody').classList.remove('preview-mode');
-        document.getElementById('appBody').classList.add('form-mode');
-    }
-
-    // ==================== LIMPIAR ====================
-    function limpiarFormulario() {
-        if (!confirm('Limpiar todo el formulario?')) return;
-        valeEditandoId = null;
-        document.getElementById('tipoVale').value = 'HT';
-        document.getElementById('tecnico').value = '';
-        document.getElementById('fechaVale').value = new Date().toISOString().split('T')[0];
-        document.getElementById('areaVale').value = '';
-        document.getElementById('fechaDevolucion').value = '';
-        document.getElementById('destinoProyecto').value = '';
-        onTipoChange();
-        articulos = [];
-        agregarArticulo();
-        // Reset URL
-        if (window.history.replaceState) {
-            window.history.replaceState({}, '', '/vales');
+        function volverFormulario() {
+            document.getElementById('appBody').classList.remove('preview-mode');
+            document.getElementById('appBody').classList.add('form-mode');
         }
-    }
 
-    // ==================== UTILS ====================
-    function escapeHtml(text) {
-        if (!text) return '';
-        const d = document.createElement('div');
-        d.textContent = text;
-        return d.innerHTML;
-    }
+        // ==================== LIMPIAR ====================
+        function limpiarFormulario() {
+            if (!confirm('Limpiar todo el formulario?')) return;
+            valeEditandoId = null;
+            document.getElementById('tipoVale').value = 'HT';
+            document.getElementById('tecnico').value = '';
+            document.getElementById('fechaVale').value = new Date().toISOString().split('T')[0];
+            document.getElementById('areaVale').value = '';
+            document.getElementById('fechaDevolucion').value = '';
+            document.getElementById('destinoProyecto').value = '';
+            onTipoChange();
+            articulos = [];
+            agregarArticulo();
+            // Reset URL
+            if (window.history.replaceState) {
+                window.history.replaceState({}, '', '/vales');
+            }
+        }
+
+        // ==================== UTILS ====================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
     </script>
 </body>
+
 </html>
