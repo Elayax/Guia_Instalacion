@@ -1,6 +1,7 @@
 import logging
-from flask import render_template, request, redirect, url_for, make_response, current_app
-from flask_login import login_required
+from datetime import datetime
+from flask import render_template, request, redirect, url_for, make_response, current_app, flash
+from flask_login import login_required, current_user
 from app.permisos import permiso_requerido
 from app.auxiliares import procesar_post_gestion, obtener_datos_plantilla
 from . import management_bp
@@ -110,6 +111,63 @@ def exportar_tabla(tabla):
     response.headers['Content-Type'] = 'text/csv; charset=utf-8'
     response.headers['Content-Disposition'] = f'attachment; filename={tabla}.csv'
     return response
+
+
+@management_bp.route('/backup-db')
+@login_required
+@permiso_requerido('datos')
+def backup_db():
+    """Descarga un backup completo de la base de datos como archivo SQL."""
+    db = current_app.db
+    sql = db.generar_backup_sql()
+    if not sql:
+        flash('Error al generar el backup', 'danger')
+        return redirect(url_for('management.gestion', tab='carga'))
+
+    fecha = datetime.now().strftime('%Y%m%d_%H%M%S')
+    response = make_response(sql)
+    response.headers['Content-Type'] = 'application/sql; charset=utf-8'
+    response.headers['Content-Disposition'] = f'attachment; filename=backup_db_{fecha}.sql'
+    return response
+
+
+@management_bp.route('/restore-db', methods=['POST'])
+@login_required
+@permiso_requerido('datos')
+def restore_db():
+    """Restaura la base de datos desde un archivo SQL de backup."""
+    if current_user.role != 'admin':
+        flash('Solo administradores pueden restaurar backups', 'danger')
+        return redirect(url_for('management.gestion', tab='carga'))
+
+    archivo = request.files.get('archivo_backup')
+    if not archivo or not archivo.filename:
+        flash('No se selecciono ningun archivo', 'warning')
+        return redirect(url_for('management.gestion', tab='carga'))
+
+    if not archivo.filename.endswith('.sql'):
+        flash('El archivo debe ser de tipo .sql', 'danger')
+        return redirect(url_for('management.gestion', tab='carga'))
+
+    try:
+        sql_content = archivo.read().decode('utf-8')
+
+        if 'BACKUP BASE DE DATOS' not in sql_content[:500]:
+            flash('El archivo no parece ser un backup valido del sistema', 'danger')
+            return redirect(url_for('management.gestion', tab='carga'))
+
+        db = current_app.db
+        exito, mensaje = db.restaurar_backup_sql(sql_content)
+        if exito:
+            flash(mensaje, 'success')
+        else:
+            flash(mensaje, 'danger')
+    except UnicodeDecodeError:
+        flash('Error: El archivo no tiene codificacion UTF-8 valida', 'danger')
+    except Exception as e:
+        flash(f'Error al procesar el archivo: {str(e)}', 'danger')
+
+    return redirect(url_for('management.gestion', tab='carga'))
 
 
 @management_bp.route('/recuperacion-proyectos', methods=['GET', 'POST'])

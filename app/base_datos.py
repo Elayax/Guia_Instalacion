@@ -809,10 +809,98 @@ class GestorDB:
             return False
 
     # =========================================================================
+    # BACKUP / RESTORE DE BASE DE DATOS
+    # =========================================================================
+    def generar_backup_sql(self):
+        """Genera un backup completo de la BD como un script SQL con CREATE TABLE + INSERT."""
+        TABLAS_BACKUP = [
+            'clientes', 'ups_specs', 'baterias_modelos',
+            'baterias_curvas_descarga', 'proyectos_publicados',
+            'tipos_ventilacion', 'personal', 'monitoreo_config',
+        ]
+        lines = []
+        lines.append('-- ============================================')
+        lines.append('-- BACKUP BASE DE DATOS - Sistema de Servicio')
+        lines.append(f'-- Fecha: {__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        lines.append('-- ============================================')
+        lines.append('')
+        lines.append('BEGIN;')
+        lines.append('')
+
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor()
+                for tabla in TABLAS_BACKUP:
+                    try:
+                        # Obtener DDL de la tabla
+                        cursor.execute("""
+                            SELECT column_name, data_type, character_maximum_length,
+                                   is_nullable, column_default
+                            FROM information_schema.columns
+                            WHERE table_name = %s
+                            ORDER BY ordinal_position
+                        """, (tabla,))
+                        columnas_info = cursor.fetchall()
+                        if not columnas_info:
+                            continue
+
+                        lines.append(f'-- Tabla: {tabla}')
+                        lines.append(f'DELETE FROM {tabla};')
+
+                        # Obtener datos
+                        cursor.execute(f"SELECT * FROM {tabla}")
+                        filas = cursor.fetchall()
+                        headers = [desc[0] for desc in cursor.description]
+
+                        if filas:
+                            cols_str = ', '.join(headers)
+                            for fila in filas:
+                                vals = []
+                                for v in fila:
+                                    if v is None:
+                                        vals.append('NULL')
+                                    elif isinstance(v, bool):
+                                        vals.append('TRUE' if v else 'FALSE')
+                                    elif isinstance(v, (int, float)):
+                                        vals.append(str(v))
+                                    else:
+                                        escaped = str(v).replace("'", "''")
+                                        vals.append(f"'{escaped}'")
+                                vals_str = ', '.join(vals)
+                                lines.append(f"INSERT INTO {tabla} ({cols_str}) VALUES ({vals_str});")
+
+                        # Resetear secuencia del ID
+                        if headers and headers[0] == 'id' and filas:
+                            max_id = max(f[0] for f in filas if f[0] is not None)
+                            lines.append(f"SELECT setval(pg_get_serial_sequence('{tabla}', 'id'), {max_id}, true);")
+
+                        lines.append('')
+                    except Exception as e:
+                        lines.append(f'-- Error en tabla {tabla}: {e}')
+                        lines.append('')
+
+            lines.append('COMMIT;')
+            return '\n'.join(lines)
+        except Exception as e:
+            logger.error("Error generando backup: %s", e)
+            return None
+
+    def restaurar_backup_sql(self, sql_content):
+        """Restaura la BD desde un script SQL de backup."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(sql_content)
+            return True, "Backup restaurado correctamente"
+        except Exception as e:
+            logger.error("Error restaurando backup: %s", e)
+            return False, f"Error al restaurar: {str(e)}"
+
+    # =========================================================================
     # TABLA GENÉRICA (para exportación)
     # =========================================================================
     def obtener_datos_tabla(self, tabla):
-        TABLAS_VALIDAS = ['clientes', 'ups_specs', 'baterias_modelos', 'baterias_curvas_descarga', 'proyectos_publicados']
+        TABLAS_VALIDAS = ['clientes', 'ups_specs', 'baterias_modelos', 'baterias_curvas_descarga', 'proyectos_publicados', 'personal', 'tipos_ventilacion']
         if tabla not in TABLAS_VALIDAS:
             return [], []
         try:

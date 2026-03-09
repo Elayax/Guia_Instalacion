@@ -117,6 +117,18 @@
         </div>
         {% endif %}
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show m-3" role="alert">
+            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}times-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
         <div class="row g-0">
             <!-- SIDEBAR IZQUIERDO -->
             <div class="col-md-2 sidebar-container">
@@ -143,6 +155,9 @@
                     <button class="nav-link {% if active_tab == 'carga' %}active{% endif %}" id="v-pills-carga-tab"
                         data-bs-toggle="pill" data-bs-target="#v-pills-carga" type="button" role="tab"><i
                             class="fas fa-cloud-upload-alt"></i> CARGA MASIVA</button>
+                    <button class="nav-link {% if active_tab == 'backup' %}active{% endif %}" id="v-pills-backup-tab"
+                        data-bs-toggle="pill" data-bs-target="#v-pills-backup" type="button" role="tab"><i
+                            class="fas fa-database"></i> BASE DE DATOS</button>
                     {% if current_user.role == 'admin' %}
                     <hr style="border-color: rgba(255,255,255,0.1); margin: 0.5rem 0;">
                     <a href="{{ url_for('user_mgmt.gestionar_cuentas') }}" class="nav-link text-start"
@@ -1150,87 +1165,167 @@
                     <!-- PESTAÑA 5: CARGA MASIVA -->
                     <div class="tab-pane fade {% if active_tab == 'carga' %}show active{% endif %}" id="v-pills-carga"
                         role="tabpanel">
-                        <div class="row g-4">
-                            <!-- 1. UPS -->
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
-                                    <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
-                                            class="fas fa-server"></i></div>
-                                    <h6 class="fw-bold mb-2">Catálogo UPS</h6>
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ url_for('management.descargar_plantilla', tipo='ups') }}"
-                                            class="btn btn-outline-light btn-sm">Plantilla</a>
-                                        <form method="POST" enctype="multipart/form-data">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="tipo_carga" value="ups">
-                                            <input type="file" name="archivo_csv" id="csv_ups" class="d-none"
-                                                accept=".csv" onchange="this.form.submit()">
-                                            <button type="button" class="btn btn-primary btn-sm w-100"
-                                                onclick="document.getElementById('csv_ups').click()">Subir CSV</button>
-                                        </form>
+
+                        <!-- Carga CSV por tabla -->
+                        <div class="tech-matrix mb-4">
+                            <div class="control-title mb-3"><i class="fas fa-cloud-upload-alt me-2"></i> CARGA MASIVA POR TABLA (CSV)</div>
+                            <div class="row g-4">
+                                <!-- 1. UPS -->
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
+                                        <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
+                                                class="fas fa-server"></i></div>
+                                        <h6 class="fw-bold mb-2">Catalogo UPS</h6>
+                                        <div class="d-grid gap-2">
+                                            <a href="{{ url_for('management.descargar_plantilla', tipo='ups') }}"
+                                                class="btn btn-outline-light btn-sm">Plantilla</a>
+                                            <form method="POST" enctype="multipart/form-data">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="tipo_carga" value="ups">
+                                                <input type="file" name="archivo_csv" id="csv_ups" class="d-none"
+                                                    accept=".csv" onchange="this.form.submit()">
+                                                <button type="button" class="btn btn-primary btn-sm w-100"
+                                                    onclick="document.getElementById('csv_ups').click()">Subir CSV</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 2. CLIENTES -->
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
+                                        <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
+                                                class="fas fa-users"></i></div>
+                                        <h6 class="fw-bold mb-2">Clientes</h6>
+                                        <div class="d-grid gap-2">
+                                            <a href="{{ url_for('management.descargar_plantilla', tipo='clientes') }}"
+                                                class="btn btn-outline-light btn-sm">Plantilla</a>
+                                            <form method="POST" enctype="multipart/form-data">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="tipo_carga" value="clientes">
+                                                <input type="file" name="archivo_csv" id="csv_cli" class="d-none"
+                                                    accept=".csv" onchange="this.form.submit()">
+                                                <button type="button" class="btn btn-primary btn-sm w-100"
+                                                    onclick="document.getElementById('csv_cli').click()">Subir CSV</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 3. BATERÍAS MODELOS -->
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
+                                        <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
+                                                class="fas fa-car-battery"></i></div>
+                                        <h6 class="fw-bold mb-2">Modelos Baterias</h6>
+                                        <div class="d-grid gap-2">
+                                            <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_modelos') }}"
+                                                class="btn btn-outline-light btn-sm">Plantilla</a>
+                                            <form method="POST" enctype="multipart/form-data">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="tipo_carga" value="baterias_modelos">
+                                                <input type="file" name="archivo_csv" id="csv_bat" class="d-none"
+                                                    accept=".csv" onchange="this.form.submit()">
+                                                <button type="button" class="btn btn-primary btn-sm w-100"
+                                                    onclick="document.getElementById('csv_bat').click()">Subir CSV</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 4. CURVAS -->
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
+                                        <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
+                                                class="fas fa-chart-line"></i></div>
+                                        <h6 class="fw-bold mb-2">Curvas Descarga</h6>
+                                        <div class="d-grid gap-2">
+                                            <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_curvas') }}"
+                                                class="btn btn-outline-light btn-sm">Plantilla</a>
+                                            <form method="POST" enctype="multipart/form-data">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="tipo_carga" value="baterias_curvas">
+                                                <input type="file" name="archivo_csv" id="csv_cur" class="d-none"
+                                                    accept=".csv" onchange="this.form.submit()">
+                                                <button type="button" class="btn btn-primary btn-sm w-100"
+                                                    onclick="document.getElementById('csv_cur').click()">Subir CSV</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- 2. CLIENTES -->
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
-                                    <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
-                                            class="fas fa-users"></i></div>
-                                    <h6 class="fw-bold mb-2">Clientes</h6>
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ url_for('management.descargar_plantilla', tipo='clientes') }}"
-                                            class="btn btn-outline-light btn-sm">Plantilla</a>
-                                        <form method="POST" enctype="multipart/form-data">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="tipo_carga" value="clientes">
-                                            <input type="file" name="archivo_csv" id="csv_cli" class="d-none"
-                                                accept=".csv" onchange="this.form.submit()">
-                                            <button type="button" class="btn btn-primary btn-sm w-100"
-                                                onclick="document.getElementById('csv_cli').click()">Subir CSV</button>
-                                        </form>
+                        </div>
+
+                    </div>
+
+                    <!-- PESTAÑA: BASE DE DATOS (BACKUP / RESTORE) -->
+                    <div class="tab-pane fade {% if active_tab == 'backup' %}show active{% endif %}" id="v-pills-backup"
+                        role="tabpanel">
+
+                        <!-- Exportar Backup -->
+                        <div class="tech-matrix mb-4">
+                            <div class="control-title mb-3"><i class="fas fa-download me-2"></i> EXPORTAR BACKUP</div>
+                            <div class="row g-4 align-items-center">
+                                <div class="col-md-7">
+                                    <p class="mb-2">Descarga un archivo <code>.sql</code> con todos los datos de la base de datos.</p>
+                                    <div class="small" style="color: #888;">
+                                        <strong style="color: #ff8a80;">Tablas incluidas:</strong>
+                                        UPS, Baterias, Clientes, Personal, Tipos de Ventilacion, Proyectos Publicados, Curvas de Descarga y Configuracion de Monitoreo.
                                     </div>
                                 </div>
-                            </div>
-                            <!-- 3. BATERÍAS MODELOS -->
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
-                                    <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
-                                            class="fas fa-car-battery"></i></div>
-                                    <h6 class="fw-bold mb-2">Modelos Baterías</h6>
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_modelos') }}"
-                                            class="btn btn-outline-light btn-sm">Plantilla</a>
-                                        <form method="POST" enctype="multipart/form-data">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="tipo_carga" value="baterias_modelos">
-                                            <input type="file" name="archivo_csv" id="csv_bat" class="d-none"
-                                                accept=".csv" onchange="this.form.submit()">
-                                            <button type="button" class="btn btn-primary btn-sm w-100"
-                                                onclick="document.getElementById('csv_bat').click()">Subir CSV</button>
-                                        </form>
-                                    </div>
+                                <div class="col-md-5">
+                                    <a href="{{ url_for('management.backup_db') }}"
+                                        class="btn btn-success w-100 fw-bold py-3" style="font-size: 1rem;">
+                                        <i class="fas fa-download me-2"></i> DESCARGAR BACKUP (.sql)
+                                    </a>
                                 </div>
                             </div>
-                            <!-- 4. CURVAS -->
-                            <div class="col-md-6 col-lg-3">
-                                <div class="card-control h-100 text-center d-flex flex-column justify-content-center">
-                                    <div class="mb-3" style="font-size: 2.5rem; color: var(--text-sec);"><i
-                                            class="fas fa-chart-line"></i></div>
-                                    <h6 class="fw-bold mb-2">Curvas Descarga</h6>
-                                    <div class="d-grid gap-2">
-                                        <a href="{{ url_for('management.descargar_plantilla', tipo='baterias_curvas') }}"
-                                            class="btn btn-outline-light btn-sm">Plantilla</a>
-                                        <form method="POST" enctype="multipart/form-data">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <input type="hidden" name="tipo_carga" value="baterias_curvas">
-                                            <input type="file" name="archivo_csv" id="csv_cur" class="d-none"
-                                                accept=".csv" onchange="this.form.submit()">
-                                            <button type="button" class="btn btn-primary btn-sm w-100"
-                                                onclick="document.getElementById('csv_cur').click()">Subir CSV</button>
-                                        </form>
+                        </div>
+
+                        <!-- Restaurar Backup -->
+                        <div class="tech-matrix">
+                            <div class="control-title mb-3"><i class="fas fa-upload me-2"></i> RESTAURAR BACKUP</div>
+
+                            {% if current_user.role == 'admin' %}
+                            <div class="row g-4">
+                                <div class="col-md-7">
+                                    <div class="p-3 rounded mb-3" style="background: rgba(255, 149, 0, 0.08); border: 1px solid rgba(255, 149, 0, 0.25); border-radius: 12px;">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <i class="fas fa-exclamation-triangle mt-1" style="color: #ff9500;"></i>
+                                            <div>
+                                                <strong style="color: #ff9500;">Advertencia</strong>
+                                                <p class="small mb-0 mt-1" style="color: #bbb;">
+                                                    Restaurar un backup <strong>reemplazara</strong> todos los datos actuales de las tablas incluidas.
+                                                    Se recomienda descargar un backup antes de restaurar.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <p class="small text-muted">
+                                        Solo se aceptan archivos <code>.sql</code> generados por este sistema.
+                                        El proceso se ejecuta dentro de una transaccion: si algo falla, no se aplica ningun cambio.
+                                    </p>
+                                </div>
+                                <div class="col-md-5">
+                                    <form method="POST" action="{{ url_for('management.restore_db') }}"
+                                        enctype="multipart/form-data"
+                                        onsubmit="return confirm('¿Esta seguro de restaurar el backup?\n\nEsto REEMPLAZARA todos los datos actuales.\n\nSe recomienda descargar un backup antes de continuar.');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="mb-3">
+                                            <label class="small fw-bold mb-1" style="color: #ff8a80;">Archivo de Backup (.sql)</label>
+                                            <input type="file" name="archivo_backup" class="form-control"
+                                                accept=".sql" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-warning w-100 fw-bold py-3" style="font-size: 1rem;">
+                                            <i class="fas fa-upload me-2"></i> RESTAURAR BACKUP
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
+                            {% else %}
+                            <div class="p-4 rounded text-center" style="background: rgba(255, 255, 255, 0.03);">
+                                <i class="fas fa-lock fa-3x mb-3 d-block" style="color: #444;"></i>
+                                <p class="text-muted mb-0">Solo los administradores pueden restaurar backups.</p>
+                                <small class="text-muted">Contacta a un administrador si necesitas restaurar datos.</small>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
