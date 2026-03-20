@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBS Monitor - Topología de Red</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .topo-container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+        /* Diagram */
+        .topo-diagram { text-align: center; padding: 2rem 1rem; margin-bottom: 2rem; }
+        .topo-server { display: inline-block; padding: 12px 24px; background: #1e293b; border: 2px solid #3b82f6; border-radius: 10px; color: #f1f5f9; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        .topo-line { width: 2px; height: 30px; background: #475569; margin: 0 auto; }
+        .topo-zt-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #64748b; letter-spacing: 2px; padding: 4px 0; }
+        .topo-sites-row { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 8px; }
+        .topo-site-col { display: flex; flex-direction: column; align-items: center; }
+        .topo-site-node { padding: 10px 18px; background: #1e293b; border: 2px solid #475569; border-radius: 8px; color: #f1f5f9; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; cursor: pointer; transition: border-color 0.3s; min-width: 140px; text-align: center; }
+        .topo-site-node:hover { border-color: #3b82f6; }
+        .topo-site-node.reachable { border-color: #22c55e; }
+        .topo-site-node.unreachable { border-color: #ef4444; }
+        .topo-device-node { padding: 8px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; margin-top: 6px; min-width: 130px; text-align: center; }
+        .topo-device-node.online { border-color: #22c55e; color: #22c55e; }
+        .topo-device-node.offline { border-color: #ef4444; color: #ef4444; }
+        .topo-add-btn { padding: 10px 18px; background: transparent; border: 2px dashed #475569; border-radius: 8px; color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; cursor: pointer; transition: all 0.3s; min-width: 140px; text-align: center; }
+        .topo-add-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+
+        /* Table */
+        .topo-table { width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+        .topo-table th { background: #1e293b; color: #64748b; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 1px; font-size: 0.65rem; }
+        .topo-table td { padding: 6px 10px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: middle; }
+        .topo-table tr:hover td { background: rgba(59,130,246,0.05); }
+
+        /* Editable cells */
+        .editable { cursor: pointer; position: relative; }
+        .editable:hover { background: rgba(59,130,246,0.1); border-radius: 3px; }
+        .editable input, .editable select { background: #0f172a; color: #f1f5f9; border: 1px solid #3b82f6; border-radius: 3px; padding: 2px 6px; font-family: inherit; font-size: inherit; width: 100%; }
+        .edit-ok { animation: editOk 0.5s; }
+        .edit-err { animation: editErr 0.5s; }
+        @keyframes editOk { 0% { box-shadow: 0 0 0 2px #22c55e; } 100% { box-shadow: none; } }
+        @keyframes editErr { 0% { box-shadow: 0 0 0 2px #ef4444; } 100% { box-shadow: none; } }
+
+        /* Site accordion */
+        .site-header { background: #1e293b; padding: 12px 16px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .site-header:hover { background: #263548; }
+        .site-header .site-name { font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600; color: #f1f5f9; }
+        .site-header .site-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #64748b; }
+        .site-body { padding: 8px 0; display: none; }
+        .site-body.open { display: block; }
+    </style>
+</head>
+<body>
+    <header class="app-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" height="32" style="opacity:0.8">
+            <div>
+                <div class="fw-bold fs-5 text-white" style="line-height:1;">TOPOLOGÍA</div>
+                <small style="color:var(--accent-red); letter-spacing:2px; font-size:0.7rem;">INVENTARIO DE RED</small>
+            </div>
+        </div>
+        <nav class="nav-segmented">
+            <div class="nav-segment nav-segment-servicio">
+                <span class="nav-segment-label">SERVICIO</span>
+                <div class="d-flex gap-1">
+                    {% if user_permisos.get('tablero', True) %}
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2 me-1"></i> TABLERO</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% if user_permisos.get('scada', True) %}
+            <div class="nav-segment-divider"></div>
+            <div class="nav-segment nav-segment-monitoreo">
+                <span class="nav-segment-label">MONITOREO</span>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('monitoreo.index') }}" class="nav-link"><i class="bi bi-activity me-1"></i> SCADA</a>
+                    <a href="{{ url_for('monitoreo.topologia') }}" class="nav-link active"><i class="bi bi-diagram-3 me-1"></i> TOPOLOGÍA</a>
+                </div>
+            </div>
+            {% endif %}
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <span id="networkStatusIndicator" class="badge bg-dark font-mono" style="font-size:0.65rem;">ZT: --</span>
+            <div class="text-end">
+                <div class="fw-bold" id="clock">00:00:00</div>
+                <small class="text-muted text-uppercase" id="date">YYYY-MM-DD</small>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="{{ url_for('auth.cambiar_password') }}"><i class="bi bi-key me-2"></i>Cambiar Contraseña</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="topo-container">
+        <!-- Network Diagram -->
+        <div class="eng-panel mb-4">
+            <div class="eng-panel-header">
+                <h5 class="eng-panel-title"><i class="bi bi-diagram-3 me-2"></i>DIAGRAMA DE RED LBS</h5>
+                <button class="btn btn-sm btn-outline-secondary font-mono" onclick="refreshTopology()" style="font-size:0.7rem;">
+                    <i class="bi bi-arrow-repeat"></i> ACTUALIZAR
+                </button>
+            </div>
+            <div class="eng-panel-body topo-diagram" id="topoDiagram">
+                <div class="text-muted">Cargando topología...</div>
+            </div>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="eng-panel">
+            <div class="eng-panel-header">
+                <h5 class="eng-panel-title"><i class="bi bi-list-columns me-2"></i>INVENTARIO DETALLADO</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary font-mono" data-bs-toggle="modal" data-bs-target="#addSiteModal" style="font-size:0.7rem;">
+                        <i class="bi bi-plus"></i> SITIO
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger font-mono" data-bs-toggle="modal" data-bs-target="#addDeviceModal" style="font-size:0.7rem;">
+                        <i class="bi bi-plus"></i> UPS
+                    </button>
+                </div>
+            </div>
+            <div class="eng-panel-body" id="inventoryPanel">
+                <div class="text-muted">Cargando inventario...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Site Modal -->
+    <div class="modal fade" id="addSiteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:#1c1c1e; border:1px solid var(--accent-red);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title font-mono" style="color:var(--accent-red);">AGREGAR SITIO</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-8">
+                            <label class="form-label text-muted small">NOMBRE</label>
+                            <input type="text" class="form-control font-mono" id="siteNombre" placeholder="Sitio 05">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small">NÚMERO</label>
+                            <input type="number" class="form-control font-mono" id="siteNumero" placeholder="5">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">IP ZT ROUTER</label>
+                            <input type="text" class="form-control font-mono" id="siteIpZt" placeholder="10.216.124.xxx">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">SUBNET</label>
+                            <input type="text" class="form-control font-mono" id="siteSubnet" placeholder="192.168.5.0/24">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">GATEWAY</label>
+                            <input type="text" class="form-control font-mono" id="siteGateway" placeholder="192.168.5.1">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">ROUTER NODE ID</label>
+                            <input type="text" class="form-control font-mono" id="siteNodeId" placeholder="01ddb81b3e">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="addSite()">AGREGAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Device Modal (simplified - same as monitoreo but with site selector) -->
+    <div class="modal fade" id="addDeviceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background:#1c1c1e; border:1px solid var(--accent-red);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title font-mono" style="color:var(--accent-red);">AGREGAR UPS</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label text-muted small">NOMBRE</label>
+                            <input type="text" class="form-control font-mono" id="newDevName" placeholder="UPS-05-01">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small">SITIO</label>
+                            <select class="form-select font-mono" id="newDevSiteId"></select>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small">IP (directa)</label>
+                            <input type="text" class="form-control font-mono" id="newDevIp" placeholder="10.216.124.130">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small">IP ZT ROUTER</label>
+                            <input type="text" class="form-control font-mono" id="newDevIpZt" placeholder="10.216.124.130">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small">IP LOCAL</label>
+                            <input type="text" class="form-control font-mono" id="newDevIpLocal" placeholder="192.168.3.10">
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label text-muted small">PROTOCOLO</label>
+                            <select class="form-select font-mono" id="newDevProtocolo">
+                                <option value="snmp">SNMP</option>
+                                <option value="modbus">Modbus</option>
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label text-muted small">PUERTO ZT</label>
+                            <input type="number" class="form-control font-mono" id="newDevPortZt" value="10161">
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label text-muted small">COMMUNITY</label>
+                            <input type="text" class="form-control font-mono" id="newDevCommunity" value="public">
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label text-muted small">TIPO UPS</label>
+                            <select class="form-select font-mono" id="newDevUpsType">
+                                <option value="ups_mib_standard">UPS-MIB</option>
+                                <option value="invt_enterprise">INVT</option>
+                                <option value="hybrid">Híbrido</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-info btn-sm font-mono" onclick="testConnection()">PROBAR CONEXIÓN</button>
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="addDeviceFromTopology()">AGREGAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/topologia.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2"></script>
+</body>
+</html>

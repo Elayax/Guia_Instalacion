@@ -1093,19 +1093,16 @@ class GestorDB:
     def agregar_monitoreo_ups(self, datos):
         try:
             with self.pool.get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT INTO monitoreo_config (ip, port, slave_id, nombre, protocolo, snmp_community, snmp_port)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ''', (
-                    datos['ip'],
-                    int(datos.get('port', 502)),
-                    int(datos.get('slave_id', 1)),
-                    datos.get('nombre', 'UPS'),
-                    datos.get('protocolo', 'modbus'),
-                    datos.get('snmp_community', 'public'),
-                    int(datos.get('snmp_port', 161))
-                ))
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+                datos_filtrados = self._filtrar_datos(cursor, 'monitoreo_config', datos)
+                if not datos_filtrados:
+                    return False
+                columnas = ', '.join(datos_filtrados.keys())
+                placeholders = ', '.join(['%s'] * len(datos_filtrados))
+                cursor.execute(
+                    f"INSERT INTO monitoreo_config ({columnas}) VALUES ({placeholders})",
+                    list(datos_filtrados.values())
+                )
                 return True
         except Exception as e:
             logger.error("Error agregando dispositivo monitoreo: %s", e)
@@ -1121,6 +1118,228 @@ class GestorDB:
         with self.pool.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM monitoreo_config WHERE id = %s", (id_device,))
+
+    def actualizar_dispositivo(self, device_id, datos):
+        """Actualiza campos de un dispositivo (edición in-place)."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+                datos_filtrados = self._filtrar_datos(cursor, 'monitoreo_config', datos)
+                if not datos_filtrados:
+                    return False
+                sets = ', '.join(f"{k} = %s" for k in datos_filtrados.keys())
+                values = list(datos_filtrados.values()) + [device_id]
+                cursor.execute(
+                    f"UPDATE monitoreo_config SET {sets} WHERE id = %s",
+                    values
+                )
+                return True
+        except Exception as e:
+            logger.error("Error actualizando dispositivo %s: %s", device_id, e)
+            return False
+
+    def actualizar_estado_dispositivo(self, device_id, fail_count, last_seen, connection_method):
+        """Actualiza estado de conexión de un dispositivo."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """UPDATE monitoreo_config
+                   SET fail_count = %s, last_seen = %s, connection_method = %s
+                   WHERE id = %s""",
+                (fail_count, last_seen, connection_method, device_id)
+            )
+
+    def actualizar_recording(self, device_id, recording, interval=None):
+        """Activa/desactiva grabación histórica de un dispositivo."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            if interval is not None:
+                cursor.execute(
+                    "UPDATE monitoreo_config SET recording = %s, recording_interval = %s WHERE id = %s",
+                    (recording, interval, device_id)
+                )
+            else:
+                cursor.execute(
+                    "UPDATE monitoreo_config SET recording = %s WHERE id = %s",
+                    (recording, device_id)
+                )
+
+    # =========================================================================
+    # LECTURAS HISTÓRICAS (ups_readings)
+    # =========================================================================
+    def guardar_lectura_ups(self, device_id, data):
+        """Inserta una lectura de telemetría en ups_readings."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO ups_readings (
+                    device_id, voltaje_in_l1, voltaje_in_l2, voltaje_in_l3, frecuencia_in,
+                    voltaje_out_l1, voltaje_out_l2, voltaje_out_l3, frecuencia_out,
+                    corriente_out_l1, corriente_out_l2, corriente_out_l3,
+                    carga_pct, power_factor, active_power, apparent_power,
+                    bateria_pct, voltaje_bateria, corriente_bateria, temperatura, battery_remain_time,
+                    power_mode, battery_status
+                ) VALUES (
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s,
+                    %s, %s
+                )
+            """, (
+                device_id,
+                data.get('voltaje_in_l1'), data.get('voltaje_in_l2'), data.get('voltaje_in_l3'),
+                data.get('frecuencia_in'),
+                data.get('voltaje_out_l1'), data.get('voltaje_out_l2'), data.get('voltaje_out_l3'),
+                data.get('frecuencia_out'),
+                data.get('corriente_out_l1'), data.get('corriente_out_l2'), data.get('corriente_out_l3'),
+                data.get('carga_pct'), data.get('power_factor'),
+                data.get('active_power'), data.get('apparent_power'),
+                data.get('bateria_pct'), data.get('voltaje_bateria'),
+                data.get('corriente_bateria'), data.get('temperatura'),
+                data.get('battery_remain_time'),
+                data.get('power_mode'), data.get('battery_status'),
+            ))
+
+    def obtener_lecturas_ups(self, device_id, desde=None, hasta=None, limit=1000):
+        """Obtiene lecturas históricas con filtros de fecha."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            query = "SELECT * FROM ups_readings WHERE device_id = %s"
+            params = [device_id]
+            if desde:
+                query += " AND timestamp >= %s"
+                params.append(desde)
+            if hasta:
+                query += " AND timestamp <= %s"
+                params.append(hasta)
+            query += " ORDER BY timestamp DESC LIMIT %s"
+            params.append(limit)
+            cursor.execute(query, params)
+            return [dict(row) for row in cursor.fetchall()]
+
+    # =========================================================================
+    # ALERTAS (ups_alerts)
+    # =========================================================================
+    def guardar_alerta_ups(self, device_id, level, code, message):
+        """Inserta alerta con deduplicación (no duplica si mismo code activo)."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            # Verificar si ya existe una alerta activa con el mismo código
+            cursor.execute(
+                "SELECT id FROM ups_alerts WHERE device_id = %s AND code = %s AND resolved = FALSE",
+                (device_id, code)
+            )
+            if cursor.fetchone():
+                return  # Ya existe, no duplicar
+            cursor.execute(
+                "INSERT INTO ups_alerts (device_id, level, code, message) VALUES (%s, %s, %s, %s)",
+                (device_id, level, code, message)
+            )
+
+    def resolver_alerta(self, alert_id):
+        """Resuelve una alerta por su ID."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE ups_alerts SET resolved = TRUE, resolved_at = NOW() WHERE id = %s",
+                (alert_id,)
+            )
+
+    def resolver_alerta_por_codigo(self, device_id, code):
+        """Auto-resuelve alertas activas de un código específico."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """UPDATE ups_alerts SET resolved = TRUE, resolved_at = NOW()
+                   WHERE device_id = %s AND code = %s AND resolved = FALSE""",
+                (device_id, code)
+            )
+
+    def obtener_alertas(self, device_id=None, solo_activas=True, limit=100):
+        """Obtiene alertas con filtros opcionales."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            query = "SELECT a.*, mc.nombre as device_name FROM ups_alerts a LEFT JOIN monitoreo_config mc ON a.device_id = mc.id WHERE 1=1"
+            params = []
+            if device_id:
+                query += " AND a.device_id = %s"
+                params.append(device_id)
+            if solo_activas:
+                query += " AND a.resolved = FALSE"
+            query += " ORDER BY a.timestamp DESC LIMIT %s"
+            params.append(limit)
+            cursor.execute(query, params)
+            return [dict(row) for row in cursor.fetchall()]
+
+    # =========================================================================
+    # SITIOS
+    # =========================================================================
+    def obtener_sitios(self):
+        """Obtiene todos los sitios registrados."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            cursor.execute("SELECT * FROM sites ORDER BY numero")
+            return [dict(row) for row in cursor.fetchall()]
+
+    def agregar_sitio(self, datos):
+        """Agrega un nuevo sitio."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+                datos_filtrados = self._filtrar_datos(cursor, 'sites', datos)
+                if not datos_filtrados:
+                    return False
+                columnas = ', '.join(datos_filtrados.keys())
+                placeholders = ', '.join(['%s'] * len(datos_filtrados))
+                cursor.execute(
+                    f"INSERT INTO sites ({columnas}) VALUES ({placeholders})",
+                    list(datos_filtrados.values())
+                )
+                return True
+        except Exception as e:
+            logger.error("Error agregando sitio: %s", e)
+            return False
+
+    def actualizar_sitio(self, site_id, datos):
+        """Actualiza un sitio existente (edición in-place)."""
+        try:
+            with self.pool.get_connection() as conn:
+                cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+                datos_filtrados = self._filtrar_datos(cursor, 'sites', datos)
+                if not datos_filtrados:
+                    return False
+                sets = ', '.join(f"{k} = %s" for k in datos_filtrados.keys())
+                values = list(datos_filtrados.values()) + [site_id]
+                cursor.execute(f"UPDATE sites SET {sets} WHERE id = %s", values)
+                return True
+        except Exception as e:
+            logger.error("Error actualizando sitio %s: %s", site_id, e)
+            return False
+
+    def eliminar_sitio(self, site_id):
+        """Elimina un sitio."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM sites WHERE id = %s", (site_id,))
+
+    def obtener_topologia(self):
+        """Obtiene estructura completa: sitios con sus dispositivos."""
+        with self.pool.get_connection() as conn:
+            cursor = conn.cursor(row_factory=self.pool.get_row_factory())
+            # Obtener sitios
+            cursor.execute("SELECT * FROM sites ORDER BY numero")
+            sites = [dict(row) for row in cursor.fetchall()]
+            # Obtener dispositivos
+            cursor.execute("SELECT * FROM monitoreo_config ORDER BY nombre")
+            devices = [dict(row) for row in cursor.fetchall()]
+            # Agrupar dispositivos por sitio
+            for site in sites:
+                site['devices'] = [d for d in devices if d.get('site_id') == site['id']]
+            # Dispositivos sin sitio asignado
+            orphan_devices = [d for d in devices if not d.get('site_id')]
+            return {'sites': sites, 'unassigned_devices': orphan_devices}
 
     # =========================================================================
     # GESTIÓN DE USUARIOS

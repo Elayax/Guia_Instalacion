@@ -1,0 +1,16 @@
+[Unit]
+Description=LBS Monitor - UPS Monitoring Web App
+After=network-online.target postgresql.service zerotier-one.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=elayax
+WorkingDirectory=/home/elayax/dev/LBS/Guia_Instalacion
+ExecStart=/usr/bin/python3 run.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

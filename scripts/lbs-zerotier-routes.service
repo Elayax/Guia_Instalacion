@@ -1,0 +1,13 @@
+[Unit]
+Description=LBS ZeroTier Static Routes
+After=zerotier-one.service
+Requires=zerotier-one.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 5
+ExecStart=/bin/bash /home/elayax/dev/LBS/Guia_Instalacion/scripts/lbs-zerotier-routes.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
